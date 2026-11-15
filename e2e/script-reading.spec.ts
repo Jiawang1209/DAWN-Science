@@ -1,5 +1,5 @@
 import { test, expect, 在项目里开会话, 进设置 } from "./fixtures.js"
-import { writeFileSync } from "node:fs"
+import { writeFileSync, realpathSync } from "node:fs"
 import { join } from "node:path"
 import type { Locator } from "@playwright/test"
 
@@ -193,7 +193,7 @@ test.describe("长路径与受限预览高度", () => {
     await expect(code).toHaveAttribute("data-highlighted", "true")
     const pathName = preview.locator(".preview-head .name")
     await expect(pathName).toHaveText("regression_model.py")
-    await expect(pathName).toHaveAttribute("aria-label", deepPath)
+    await expect(pathName).toHaveAttribute("aria-label", realpathSync(join(dawn.workspace, deepPath)).replace(/\\/g, "/"))
     await expect(pathName).toHaveAttribute("tabindex", "0")
     const bounds = (await preview.boundingBox())!
     const codeBounds = (await code.boundingBox())!

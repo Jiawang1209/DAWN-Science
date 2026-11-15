@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import Database from "better-sqlite3"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, existsSync, readFileSync, symlinkSync } from "node:fs"
+import { mkdtempSync, writeFileSync, existsSync, readFileSync, symlinkSync, realpathSync, mkdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { SessionTranscripts } from "../../src/workbench/events.js"
@@ -16,7 +16,7 @@ import { ProjectManager } from "../../src/project/manager.js"
 import { RunRecorder } from "../../src/project/run-recorder.js"
 import { SessionManager } from "../../src/session/manager.js"
 import { FakeRuntime } from "../../src/runtime/fake.js"
-import { createWorkbenchBackend } from "../../src/workbench/backend.js"
+import { createWorkbenchBackend, type WorkbenchBackendOptions } from "../../src/workbench/backend.js"
 import { MemoryStore } from "../../src/memory/store.js"
 import { SuggestionQueue } from "../../src/memory/queue.js"
 import { 待装技能 } from "../../src/memory/pending-skills.js"
@@ -109,7 +109,7 @@ function newRepo(): string {
   return dir
 }
 
-function make() {
+function make(openPath?: (path: string) => Promise<string>, remote?: WorkbenchBackendOptions['remote']) {
   const db = new Database(":memory:")
   migrate(db)
   const projectStore = new ProjectStore(db)
@@ -139,7 +139,7 @@ function make() {
     queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
-  const backend = createWorkbenchBackend({ projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder, kernels: fakeKernels as unknown as 对话内核 })
+  const backend = createWorkbenchBackend({ ...(openPath ? { openPath } : {}), ...(remote ? { remote } : {}), projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder, kernels: fakeKernels as unknown as 对话内核 })
   return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, runtime, runRecorder, fakeKernels, server: new WorkbenchServer(backend) }
 }
 
@@ -474,6 +474,70 @@ describe("真实后端 · 经服务端端到端", () => {
     expect(escape.ok).toBe(false)
     const mixed = await ctx.server.handle("listDirectory", { sessionId: a, projectId: "other", path: "" })
     expect(mixed.ok).toBe(false)
+  })
+
+  it("browser operations resolve session workspace and can browse/read/search a sibling without changing legacy guards", async () => {
+    const sid = await 开一段()
+    const originalWorkspace = ctx.sessionStore.get(sid)!.workspace
+    const workspace = realpathSync(originalWorkspace)
+    writeFileSync(join(workspace, 'session-only.txt'), 'session data')
+    const initial = await ctx.server.handle('browseDirectory', { sessionId: sid, initialPath: repo })
+    expect(initial).toMatchObject({ ok: true, data: { path: workspace, projectPath: workspace } })
+    const sibling = join(workspace, '..', 'browser-sibling')
+    mkdirSync(sibling, { recursive: true })
+    writeFileSync(join(sibling, 'sibling-only.txt'), 'sibling data')
+    const target = realpathSync(sibling)
+    expect(await ctx.server.handle('browseDirectory', { sessionId: sid, path: sibling })).toMatchObject({ ok: true, data: { path: target, projectPath: workspace } })
+    expect(await ctx.server.handle('readBrowserFile', { sessionId: sid, path: join(target, 'sibling-only.txt') })).toMatchObject({ ok: true, data: { kind: 'text', text: 'sibling data' } })
+    expect(await ctx.server.handle('searchBrowserFiles', { sessionId: sid, path: target, query: 'sibling-only' })).toMatchObject({ ok: true, data: { matches: [{ path: join(target, 'sibling-only.txt'), kind: 'file' }] } })
+    for (const op of ['listDirectory', 'readFile', 'searchFiles']) {
+      expect(await ctx.server.handle(op, { sessionId: sid, path: op === 'readFile' ? join(target, 'sibling-only.txt') : target, ...(op === 'searchFiles' ? { query: 'sibling-only' } : {}) })).toMatchObject({ ok: false })
+    }
+    expect(ctx.sessionStore.get(sid)!.workspace).toBe(originalWorkspace)
+    expect(await ctx.server.handle('browseDirectory', { sessionId: 'missing', path: repo })).toMatchObject({ ok: false, error: { code: 'not_found' } })
+    expect(await ctx.server.handle('browseDirectory', { sessionId: sid, path: join(workspace, 'missing') })).toMatchObject({ ok: false })
+  })
+
+  it("openBrowserFile canonicalizes actual local files and rejects relative paths and remote owners", async () => {
+    const open = vi.fn(async (_path: string) => '')
+    ctx = make(open)
+    const sid = await 开一段(repo)
+    const external = mkdtempSync(join(tmpdir(), 'dawn-browser-open-'))
+    writeFileSync(join(external, 'file.txt'), 'external')
+    symlinkSync(join(external, 'file.txt'), join(repo, 'linked.txt'))
+    expect(await ctx.server.handle('openBrowserFile', { sessionId: sid, path: join(repo, 'linked.txt') })).toMatchObject({ ok: true, data: {} })
+    expect(open).toHaveBeenCalledWith(realpathSync(join(external, 'file.txt')))
+    expect(await ctx.server.handle('openBrowserFile', { sessionId: sid, path: 'linked.txt' })).toMatchObject({ ok: false })
+    expect(await ctx.server.handle('openBrowserFile', { connectionId: 'remote', path: '/file.txt' })).toMatchObject({ ok: false })
+    expect(await ctx.server.handle('openBrowserFile', { sessionId: sid, path: repo })).toMatchObject({ ok: false })
+    expect(open).toHaveBeenCalledTimes(1)
+    const readOnly = new WorkbenchServer(ctx.backend, { readOnly: true })
+    expect(await readOnly.handle('openBrowserFile', { sessionId: sid, path: join(repo, 'linked.txt') })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+    expect(open).toHaveBeenCalledTimes(1)
+  })
+
+  it("remote browser preserves root and origin, skips symlink directories and refuses special files", async () => {
+    const paths = await import('node:path')
+    const realpath = vi.fn(async (path: string) => path === '.' ? '/home/user' : paths.posix.resolve('/home/user', path))
+    const lstat = vi.fn(async (path: string) => ({ kind: path.endsWith('/loop') || path === '/pipe.txt' ? 'other' : path.endsWith('.txt') ? 'file' : 'directory', size: 4, mtime: 1 }))
+    const read = vi.fn(async () => Buffer.from('data'))
+    const executor = {
+      realpath, lstat,
+      stat: vi.fn(async (path: string) => ({ directory: !path.endsWith('.txt'), size: 4 })),
+      readdir: vi.fn(async (path: string) => path === '/' ? [
+        { name: 'file.txt', directory: false, size: 4, mtimeMs: 1000 },
+        { name: 'loop', directory: true, size: 0, mtimeMs: 1000 },
+      ] : []),
+      readFile: read,
+    }
+    ctx = make(undefined, { store: {} as never, manager: { executorOf: () => executor } as never })
+    expect(await ctx.server.handle('browseDirectory', { connectionId: 'r', path: '/', initialPath: '/home/user/project' })).toMatchObject({ ok: true, data: { path: '/', parentPath: null, projectPath: '/home/user/project', entries: [expect.objectContaining({ name: 'loop', modifiedAt: '1970-01-01T00:00:01.000Z' }), expect.objectContaining({ name: 'file.txt', modifiedAt: '1970-01-01T00:00:01.000Z' })] } })
+    expect(await ctx.server.handle('browseDirectory', { connectionId: 'r', initialPath: '/home/user/project' })).toMatchObject({ ok: true, data: { path: '/home/user/project', parentPath: '/home/user', projectPath: '/home/user/project' } })
+    expect(await ctx.server.handle('searchBrowserFiles', { connectionId: 'r', path: '/', query: 'file' })).toMatchObject({ ok: true, data: { matches: [{ path: '/file.txt', kind: 'file' }], visited: 2 } })
+    expect(executor.readdir).not.toHaveBeenCalledWith('/loop')
+    expect(await ctx.server.handle('readBrowserFile', { connectionId: 'r', path: '/file.txt' })).toMatchObject({ ok: true, data: { kind: 'text', text: 'data' } })
+    expect(await ctx.server.handle('readBrowserFile', { connectionId: 'r', path: '/pipe.txt' })).toMatchObject({ ok: false })
+    expect(read).toHaveBeenCalledTimes(1)
   })
 
   it("无租约写入 → conflict，而不是 internal_error", async () => {

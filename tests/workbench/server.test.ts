@@ -52,6 +52,10 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
+    browseDirectory: async () => ({ path: '/w', parentPath: '/', projectPath: '/w', entries: [], ignored: 0, omitted: 0 }),
+    readBrowserFile: async () => ({ kind: 'text', mediaType: 'text/plain', text: '', bytes: 0 }),
+    searchBrowserFiles: async () => ({ matches: [], visited: 0, skippedDirs: 0, unreadable: 0 }),
+    openBrowserFile: async () => ({}),
     ...createArtifactOperations({session:()=>undefined}),
     getTerminalAgentAttachments: async () => ({ revision: 0, pending: [] }),
     updateTerminalAgentAttachments: async () => { throw new Error('Terminal unavailable in this fixture') },

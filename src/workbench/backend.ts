@@ -1,3 +1,4 @@
+import { browseLocalDirectory, readLocalBrowserFile, resolveLocalBrowserFile, searchLocalBrowserFiles } from '../files/browser.js'
 import {projectAcceptedArtifacts,checkAcceptedArtifact} from '../orchestration/accepted-artifacts.js'
 import {readToolRecord} from './tool-record.js'
 import {childDiagnostics} from '../subagent/diagnostics.js'
@@ -97,7 +98,7 @@ import { 读调用策略, 写调用策略, type 调用档 } from "../skills/invo
 import { 预检 as 预检技能, 导入 as 导入技能 } from "../skills/import.js"
 import { 忽略目录 } from "../enhance/retrieve.js"
 import { readdir, readFile as 读本地, writeFile, rename, rm, stat, copyFile } from "node:fs/promises"
-import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep } from "node:path"
+import { join as 拼路径, relative as 相对, resolve, dirname, basename, sep, posix } from "node:path"
 import { 工作区内相对路径 } from "../files/paths.js"
 import { 文件类按名字, type 文件类 } from "../files/file-kind.js"
 import { IlinkClient } from "../channels/weixin/ilink.js"
@@ -830,6 +831,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     const e = 远端().manager.executorOf(connectionId)
     if (!e) throw fault("invalid_request", "这台服务器还没连上——先连上再看它的文件")
     return e
+  }
+
+  const browserWorkspace = (owner: { projectId?: string | undefined; sessionId?: string | undefined }) => {
+    const target = owner.sessionId ? sessions.get(owner.sessionId) : projectStore.get(owner.projectId!)
+    if (!target) throw fault("not_found", "文件浏览目标不存在")
+    if (owner.sessionId && sessions.get(owner.sessionId)?.connectionId) throw fault("invalid_request", "远端会话请按 connectionId 浏览")
+    return target.workspace
   }
 
   /**
@@ -5224,6 +5232,47 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
      * **工作区从项目取，不从请求取**——让调用方传工作区，
      * 等于把路径守卫的起点也交给它，那守卫就形同虚设。
      */
+    browseDirectory: async ({ projectId, sessionId, connectionId, path, initialPath }) => {
+      if (!connectionId) return browseLocalDirectory(browserWorkspace({ projectId, sessionId }), path)
+      const executor = 连着的(connectionId)
+      const projectPath = posix.normalize(await executor.realpath(initialPath || '.'))
+      const canonical = posix.normalize(await executor.realpath(path || projectPath))
+      if (!(await executor.stat(canonical)).directory) throw new UserFacingError(`${canonical} 不是目录`)
+      const listing = await 远端列目录(connectionId, canonical)
+      const parentPath = posix.dirname(canonical)
+      return { ...listing, path: canonical, parentPath: parentPath === canonical ? null : parentPath, projectPath }
+    },
+
+    readBrowserFile: async ({ projectId, sessionId, connectionId, path }) => {
+      if (!connectionId) return readLocalBrowserFile(browserWorkspace({ projectId, sessionId }), path)
+      const executor = 连着的(connectionId)
+      const canonical = await executor.realpath(path)
+      if ((await executor.lstat(canonical)).kind !== 'file') throw new UserFacingError(`${path} 不是普通文件`)
+      return 远端读文件(connectionId, canonical)
+    },
+
+    searchBrowserFiles: async ({ projectId, sessionId, connectionId, path, query }) => {
+      if (!connectionId) return searchLocalBrowserFiles(browserWorkspace({ projectId, sessionId }), path, query)
+      const executor = 连着的(connectionId)
+      const root = posix.normalize(await executor.realpath(path || '.'))
+      if (!(await executor.stat(root)).directory) throw new UserFacingError(`${root} 不是目录`)
+      return 搜文件名(async dir => {
+        // Inspect each queued directory once without following links; avoid one SFTP request per entry.
+        if ((await executor.lstat(dir)).kind !== 'directory') return []
+        return (await executor.readdir(dir)).map(entry => ({
+          name: entry.name,
+          kind: entry.directory ? 'dir' as const : 'file' as const,
+        }))
+      }, root, query)
+    },
+
+    openBrowserFile: async ({ projectId, sessionId, path }) => {
+      const file = resolveLocalBrowserFile(browserWorkspace({ projectId, sessionId }), path)
+      if (!openPath) return { problem: "本次运行没有装配「用系统程序打开」的能力" }
+      const problem = await openPath(file)
+      return problem ? { problem } : {}
+    },
+
     listDirectory: async ({ projectId, sessionId, connectionId, path, includeIgnored }) => {
       if (connectionId) return 远端列目录(connectionId, path)
       const p = sessionId ? sessions.get(sessionId) : projectStore.get(projectId!)

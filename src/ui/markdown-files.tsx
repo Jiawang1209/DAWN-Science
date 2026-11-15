@@ -21,7 +21,7 @@ export function resolveMarkdownFile(document: string, reference: string): string
     if (part === '..') { if (!parts.length) return; parts.pop() }
     else parts.push(part)
   }
-  return parts.length ? (document.startsWith('/') ? '/' : '') + parts.join('/') : undefined
+  return parts.length ? (document.startsWith('//') ? '//' : document.startsWith('/') ? '/' : '') + parts.join('/') : undefined
 }
 
 export function markdownFilePath(url: string | undefined): string | undefined {

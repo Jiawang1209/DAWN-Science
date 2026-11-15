@@ -16,6 +16,16 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "复制当前目录完整路径": "Copy current directory's full path",
+  "复制路径": "Copy path",
+  "输入目录路径": "Enter directory path",
+  "前往路径": "Go to path",
+  "当前位置": "Current location",
+  "项目：{0}": "Project: {0}",
+  "回到项目": "Return to project",
+  "项目外 · 会话工作目录保持不变": "Outside project · Session working directory unchanged",
+  "打开所在目录": "Open containing folder",
+  "在此处浏览：{0}": "Browse folder: {0}",
   "收起信息卡": "Dismiss project information",
   "项目信息": "Project information",
   "项目信息：{0}": "Project information: {0}",

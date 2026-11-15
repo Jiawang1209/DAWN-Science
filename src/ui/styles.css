@@ -2347,6 +2347,27 @@ pre {
   white-space: nowrap;
 }
 .files-where > .btn { flex: 0 0 auto; }
+.files-navigation-controls { display: flex; align-items: center; gap: var(--dawn-space-1); }
+.files-forward-icon { display: inline-flex; transform: rotate(180deg); }
+.files-browser-location { flex: 1 0 100%; min-width: 0; display: grid; gap: var(--dawn-space-2); white-space: normal; }
+.files-address-bar { display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; padding: var(--dawn-space-1); background: var(--dawn-surface-input); border: var(--dawn-hairline) solid var(--dawn-stroke-3); border-radius: var(--dawn-radius-sm); }
+.files-breadcrumbs { flex: 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+.files-breadcrumbs > span { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.files-breadcrumbs .btn { white-space: normal; overflow-wrap: anywhere; text-align: start; min-width: 0; }
+.files-breadcrumbs [aria-current="location"] { color: var(--dawn-accent); font-weight: var(--dawn-weight-medium); }
+.files-path-separator { color: var(--dawn-text-3); padding: 0 var(--dawn-space-1); }
+.files-address-editor { display: flex; align-items: center; flex: 1; min-width: 0; gap: var(--dawn-space-1); }
+.files-address-editor input { flex: 1; width: 0; min-width: 0; font-family: var(--dawn-font-mono); font-size: var(--dawn-fs-meta); }
+.files-copy-path { flex-shrink: 0; color: var(--dawn-accent); }
+.files-project-shortcut { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--dawn-space-2); color: var(--dawn-text-3); font-size: var(--dawn-fs-badge); }
+.files-project-shortcut > span { display: flex; align-items: center; gap: var(--dawn-space-1); min-width: 0; overflow-wrap: anywhere; }
+.files-project-shortcut > .btn { color: var(--dawn-accent); }
+.files-project-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--dawn-space-2); }
+.files-project-actions > .btn-text { color: var(--dawn-accent); }
+.files-copy-note, .files-browser-scope, .files-navigation-error { margin: 0; white-space: normal; overflow-wrap: anywhere; }
+.files-navigation-error { flex-basis: 100%; }
+.tree-node > .tree-browse-button { position: absolute; top: 3px; right: 32px; color: var(--dawn-text-3); }
+.tree-node:has(> .tree-browse-button) > .tree-row { padding-right: 64px; }
 .files-where-name { font-weight: var(--dawn-weight-semibold); color: var(--dawn-text-1); }
 .files-root-context {
   flex: 1 0 100%;

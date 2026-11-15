@@ -3,13 +3,14 @@ import { createPortal } from 'react-dom'
 import { Button } from './primitives.js'
 import { PreviewCloseButton } from './preview-close-button.js'
 import { PdfCanvas } from './pdf-canvas.js'
-import { PDF文件图标, 图片文件图标, 返回图标, 下载图标, 关闭图标, 放大预览图标, 外部打开图标 } from './icons.js'
+import { PDF文件图标, 图片文件图标, 返回图标, 下载图标, 关闭图标, 放大预览图标, 外部打开图标, 文件夹描边图标 } from './icons.js'
 import { t, tf } from './i18n/index.js'
 import type { FileContent } from './files.js'
 
 type VisualContent = Extract<FileContent, { kind: 'image' | 'pdf' }>
 export type PreviewNavigation = { onBack: () => void; onLocate: () => void }
-export function VisualFilePreview({ path, content, onOpenExternally, onDownload, onDelete, 进废纸篓, navigation, fitContainer = false, onClosePreview }: {
+export function VisualFilePreview({ path, content, onOpenExternally, onDownload, onDelete, 进废纸篓, navigation, fitContainer = false, onClosePreview, onLocate }: {
+  onLocate?: (() => void) | undefined
   path: string; content: VisualContent; onOpenExternally?: ((path: string) => void) | undefined
   onDownload?: ((path: string) => void) | undefined
   onDelete?: ((path: string) => void) | undefined
@@ -43,6 +44,7 @@ export function VisualFilePreview({ path, content, onOpenExternally, onDownload,
       <span className="visual-file-icon">{content.kind === 'pdf' ? <PDF文件图标 /> : <图片文件图标 />}</span>
       <span className="name">{name}</span>
       <div className="visual-preview-actions">
+        {onLocate ? <Button variant="ghost" size="icon" aria-label={t("打开所在目录")} onClick={onLocate}><文件夹描边图标 /></Button> : null}
         <Button ref={trigger} variant="ghost" size="icon" aria-label={t("放大预览")} onClick={() => setExpanded(true)}><放大预览图标 /></Button>
         {onOpenExternally ? <Button variant="ghost" size="icon" aria-label={t("用系统程序打开")} onClick={() => onOpenExternally(path)}><外部打开图标 /></Button> : null}
         {onDownload ? <Button variant="ghost" size="icon" aria-label={t("下载")} onClick={() => onDownload(path)}><下载图标 /></Button> : null}

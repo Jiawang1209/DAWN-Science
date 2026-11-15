@@ -13,6 +13,8 @@
  */
 
 export interface FilesMemory {
+  /** 当前浏览目录，与目录展开和所选文件分别保存。 */
+  directory?: string | undefined
   /** 展开着的目录（相对路径；根是 `""`） */
   expanded: readonly string[]
   /** 选中的文件（相对路径） */
@@ -32,17 +34,18 @@ export function 清洗记忆(raw: unknown, 根 = ""): FilesMemory {
   const 默认: FilesMemory = { expanded: [根] }
   if (!raw || typeof raw !== "object") return 默认
   const o = raw as Record<string, unknown>
-  const 合法 = (x: unknown): x is string => typeof x === "string" && !x.split("/").includes("..")
+  const 合法 = (x: unknown): x is string => typeof x === "string" && !/[\x00-\x1f]/.test(x) && !x.split(/[\\/]/).includes("..")
   const 展开 = Array.isArray(o["expanded"]) ? [...new Set(o["expanded"].filter(合法))].slice(0, 最多记几个目录) : []
   const 根收着 = o["rootClosed"] === true
   const expanded = 根收着 || 展开.includes(根) ? 展开 : [根, ...展开]
   const selected = 合法(o["selected"]) && o["selected"] ? o["selected"] : undefined
-  return { expanded, ...(selected ? { selected } : {}) }
+  const directory = 合法(o["directory"]) && /^(?:\/|[a-z]:[\\/]|\\\\)/i.test(o["directory"]) ? o["directory"] : undefined
+  return { expanded, ...(selected ? { selected } : {}), ...(directory ? { directory } : {}) }
 }
 
-export function 读记忆(身份: string, 根 = "", storage: Pick<Storage, "getItem"> = localStorage): FilesMemory {
+export function 读记忆(身份: string, 根 = "", storage: Pick<Storage, "getItem"> = localStorage, legacyIdentity?: string): FilesMemory {
   try {
-    const raw = storage.getItem(KEY(身份))
+    const raw = storage.getItem(KEY(身份)) ?? (legacyIdentity ? storage.getItem(KEY(legacyIdentity)) : null)
     if (!raw) return { expanded: [根] }
     return 清洗记忆(JSON.parse(raw), 根)
   } catch {
@@ -62,6 +65,7 @@ function 真写(身份: string, m: FilesMemory, 根: string, storage: Pick<Stora
         // 根被人收起来了要记住，不然下次读回来又给它展开
         ...(m.expanded.includes(根) ? {} : { rootClosed: true }),
         ...(m.selected ? { selected: m.selected } : {}),
+        ...(m.directory ? { directory: m.directory } : {}),
       }),
     )
   } catch (e) {

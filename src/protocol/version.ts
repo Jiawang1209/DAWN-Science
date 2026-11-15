@@ -610,7 +610,8 @@
 /** 8.50 (2026-11-08): approved automatic arrangements bind to frozen Team tasks; answerPlan adds explicit execute/stop/finish; snapshots expose plan mapping and pause state. */
 /** 8.51: accepted task artifact sources and explicit content checks. */
 /** 8.53: optional explicit missing-unit facts in confirmed templates and scientific acceptance. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.53"
+/** 8.54: explicit user file browsing beyond the workspace, with canonical directory identity. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.54"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

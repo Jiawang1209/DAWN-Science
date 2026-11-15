@@ -10,6 +10,7 @@ const content = (text: string) => ({ kind: 'text' as const, mediaType: 'text/mar
 describe('Markdown workspace file references', () => {
   it('normalizes document-relative paths and rejects encoded escape or URL schemes', () => {
     expect(resolveMarkdownFile('reports/记录.md', '../figures/图%20一.png#caption')).toBe('figures/图 一.png')
+    expect(resolveMarkdownFile('//server/share/reports/记录.md', '../figures/图.png')).toBe('//server/share/figures/图.png')
     expect(resolveMarkdownFile('reports/记录.md', '%2e%2e/%2e%2e/private.png')).toBeUndefined()
     expect(resolveMarkdownFile('report.md', '%2fetc/passwd')).toBeUndefined()
     expect(resolveMarkdownFile('report.md', 'https://example.com/figure.png')).toBeUndefined()

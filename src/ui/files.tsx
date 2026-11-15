@@ -1,4 +1,7 @@
 import { FileUploadMenu } from "./file-upload-menu.js"
+import { FileNavigationBar, FileNavigationControls } from "./file-navigation-bar.js"
+import { absoluteFilePath, parentFilePath } from "./file-navigation.js"
+import type { DirectoryNavigation } from "./state/file-navigation.js"
 /**
  * 文件浏览与预览（②-A′ · F3/F4）。
  *
@@ -43,6 +46,8 @@ import {
   PDF文件图标,
   下载图标,
   上传图标,
+  返回图标,
+  外部打开图标,
 } from "./icons.js"
 import { 文件类按名字, type 文件类 } from "./file-kind.js"
 
@@ -122,6 +127,7 @@ export function 拖进来的本机路径(files: readonly File[]): { 有: string[
  * 路径怎么算由 `FilesView` 给（本地 = 工作区 + 相对；远端 = 本来就是绝对的）。
  */
 export interface 行操作 {
+  canModify?: ((path: string) => boolean) | undefined
   onDownloadDir?: ((path: string) => void) | undefined
   /** 回 `{ 相对, 绝对 }`。本地相对工作区、绝对拼上工作区；远端绝对就是路径本身、相对是去掉树根 */
   路径: (path: string) => { 相对: string; 绝对: string }
@@ -175,13 +181,13 @@ function TreeRowMenu({ path, name, kind, 操作, 位置, onClose }: { path: stri
         <Button variant="ghost" size="inline" role="menuitem" onClick={() => 复制(绝对, tf("已复制绝对路径：{0}", 绝对))}>
           {t("复制绝对路径")}
         </Button>
-        {操作.onInsert ? (
+        {操作.onInsert && 操作.canModify?.(path) !== false ? (
           <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onClose(); 操作.onInsert!(`@${相对}`) }}>
             {t("插进输入框")}
           </Button>
         ) : null}
         {kind === "dir" && 操作.onDownloadDir ? <Button variant="ghost" size="inline" role="menuitem" onClick={() => { onClose(); 操作.onDownloadDir!(path) }}>{t("下载文件夹")}</Button> : null}
-        {操作.onDelete ? (
+        {操作.onDelete && 操作.canModify?.(path) !== false ? (
           <Button variant="text" size="inline" role="menuitem" className="menu-danger" onClick={() => { onClose(); 操作.onDelete!(path, kind) }}>
             {t("删除")}
           </Button>
@@ -289,7 +295,11 @@ function DirNode({
   展开,
   onToggle,
   浮,
+  onBrowse,
+  focusedDirectory,
 }: {
+  onBrowse?: ((path: string) => void) | undefined
+  focusedDirectory?: string | undefined
   path: string
   name: string
   depth: number
@@ -384,6 +394,7 @@ function DirNode({
     >
       <Row
         className="tree-row"
+        active={focusedDirectory === path}
         /* 缩进量**是数据**（树的层级），不是设计决定——与内核占比条同一条理由 */
         style={{ paddingLeft: `calc(var(--dawn-space-2) + ${depth} * var(--dawn-space-3))` }}
         onClick={() => setOpen((v) => !v)}
@@ -405,6 +416,7 @@ function DirNode({
           {name || "／"}
         </span>
       </Row>
+      {onBrowse && depth > 0 ? <Button variant="ghost" size="icon" className="tree-browse-button" aria-label={tf("在此处浏览：{0}", name)} onClick={() => onBrowse(path)}><span className="files-forward-icon"><返回图标 /></span></Button> : null}
       {悬着 ? <span className="tree-upload-hint" role="status">{t("松开后确认上传到此目录，本机文件保留")}</span> : null}
       {/**
         * **目录的删除入口：一颗常驻的「⋯」**（2026-08-18）。
@@ -432,11 +444,13 @@ function DirNode({
               e.kind === "dir" ? (
                 <DirNode
                   key={e.name}
-                  path={path ? `${path}/${e.name}` : e.name}
+                  path={path ? absoluteFilePath(e.name, path) : e.name}
                   name={e.name}
                   depth={depth + 1}
                   selected={selected}
                   onSelect={onSelect}
+                  onBrowse={onBrowse}
+                  focusedDirectory={focusedDirectory}
                   load={load}
                   {...(刷新令牌 === undefined ? {} : { 刷新令牌 })}
                   {...(操作 ? { 操作 } : {})}
@@ -448,7 +462,7 @@ function DirNode({
               ) : (
                 <FileRow
                   key={e.name}
-                  path={path ? `${path}/${e.name}` : e.name}
+                  path={path ? absoluteFilePath(e.name, path) : e.name}
                   entry={e}
                   depth={depth}
                   selected={selected}
@@ -501,7 +515,9 @@ export function FilePreview({
   onClosePreview,
   readFile,
   onOpenFile,
+  onLocate,
 }: {
+  onLocate?: (() => void) | undefined
   path: string | undefined
   content: FileContent | undefined
   onOpenExternally?: ((path: string) => void) | undefined
@@ -524,9 +540,11 @@ export function FilePreview({
     return <EmptyState title={t("选一个文件")} description={t("上面是这台机器上的目录。")} />
   }
   if (!content) return <Loader label={t("正在读文件")} />
-  if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} onClosePreview={onClosePreview} />
+  if (content.kind === "pdf" || content.kind === "image") return <VisualFilePreview path={path} content={content} onOpenExternally={onOpenExternally} onDownload={onDownload} onDelete={onDelete} 进废纸篓={进废纸篓} navigation={navigation} fitContainer={fitContainer} onClosePreview={onClosePreview} onLocate={onLocate} />
   const script = content.kind === "text" && content.mediaType !== "text/markdown"
   const actions = <>
+    {onLocate ? <Button variant="ghost" size="icon" aria-label={t("打开所在目录")} onClick={onLocate}><文件夹描边图标 /></Button> : null}
+    {onLocate && onOpenExternally ? <Button variant="ghost" size="icon" aria-label={t("用系统程序打开")} onClick={() => onOpenExternally(path)}><外部打开图标 /></Button> : null}
     {canExpandFilePreview(content) && onToggleReading ? <Button variant="ghost" size="sm" aria-expanded={readingExpanded} onClick={onToggleReading}>
         {readingExpanded ? t("还原") : t("展开阅读")}
       </Button> : null}
@@ -787,7 +805,11 @@ export function FilesView({
   onInsert,
   展开,
   onToggle,
+  navigation,
+  canModifyPath,
 }: {
+  navigation?: DirectoryNavigation | undefined
+  canModifyPath?: ((path: string) => boolean) | undefined
   previewOpen?: boolean
   onClosePreview?: (() => void) | undefined
   selected: string | undefined
@@ -795,7 +817,7 @@ export function FilesView({
   loadDir: (path: string) => Promise<Listing>
   readFile?: ((path: string) => Promise<FileContent>) | undefined
   onSelect: (path: string) => void
-  onOpenExternally: (path: string) => void
+  onOpenExternally?: ((path: string) => void) | undefined
   /**
    * 按科研目录结构初始化（2026-08-14）。
    *
@@ -943,7 +965,16 @@ export function FilesView({
    * **路径不存在不用我们报**：换了根之后 `DirNode` 自己会把 `readdir`
    * 的错误显示出来。多写一处校验就是多一份会说不同话的实现。
    */
-  const [根, 设根] = useState(初始根 ?? "")
+  const [legacyRoot, setLegacyRoot] = useState(初始根 ?? "")
+  const 根 = navigation?.directory?.path ?? legacyRoot
+  const 设根 = (path: string) => { if (navigation) void navigation.navigate(path); else setLegacyRoot(path) }
+  const previousRoot = useRef(根)
+  const [focusedDirectory, setFocusedDirectory] = useState<string>()
+  useEffect(() => {
+    setFocusedDirectory(parentFilePath(previousRoot.current) === 根 ? previousRoot.current : undefined)
+    previousRoot.current = 根
+  }, [根])
+  const rootExpanded = useMemo(() => navigation && 展开 ? new Set([...展开, 根]) : 展开, [navigation, 展开, 根])
   // 仅作位置说明：本地操作仍传相对路径，远端仍传原绝对路径。
   const 根目录路径 = 路径?.(初始根 ?? "").绝对 || 初始根 || ""
   const 根目录名称 = 根目录路径.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || 根目录路径
@@ -995,9 +1026,10 @@ export function FilesView({
             onDelete: onDelete || onDeleteDir ? (p, kind) => (kind === "dir" ? onDeleteDir?.(p) : onDelete?.(p)) : undefined,
             onNote: 设行注,
             onDownloadDir: onDownloadDirectory,
+            canModify: canModifyPath,
           }
         : undefined,
-    [路径, onInsert, onDelete, onDeleteDir, onDownloadDirectory],
+    [路径, onInsert, onDelete, onDeleteDir, onDownloadDirectory, canModifyPath],
   )
   // 打字停 250ms 再搜；结果回来时查询已经变了就丢掉——晚到的旧结果不许盖新的
   useEffect(() => {
@@ -1130,6 +1162,7 @@ export function FilesView({
       <HoverCard 浮着的={浮着的} />
       <div className="files-where" hidden={readingExpanded}>
         <span className="files-where-name">{机器 ?? t("本机")}</span>
+        {navigation ? <FileNavigationControls navigation={navigation} /> : null}
         {搜着 && search ? (
           <input
             className="control files-jump files-search"
@@ -1145,7 +1178,7 @@ export function FilesView({
               }
             }}
           />
-        ) : (
+        ) : navigation ? null : (
           <input
             className="control files-jump"
             value={跳到}
@@ -1206,7 +1239,7 @@ export function FilesView({
           <刷新图标 />{directoryLoads > 0 || 搜忙 ? t("正在刷新") : t("刷新")}
         </Button>
         {onUpload ? <FileUploadMenu onFile={() => onUpload(根)} {...(onUploadDirectory ? { onFolder: () => onUploadDirectory(根) } : {})} /> : null}
-        {根 !== (初始根 ?? "") ? (
+        {!navigation && 根 !== (初始根 ?? "") ? (
           <Button
             variant="ghost"
             size="sm"
@@ -1239,10 +1272,14 @@ export function FilesView({
             {t("收窄")}
           </Button>
         ) : null}
-        {根目录路径 || onInitLayout ? (
+        {navigation ? <FileNavigationBar path={navigation.directory?.path ?? ""} projectPath={navigation.directory?.projectPath ?? 根目录路径} navigate={navigation.navigate} projectAction={onInitLayout ? <Button variant="primary" size="sm" onClick={onInitLayout}><加号图标 />{t("初始化科研目录")}</Button> : undefined} /> : null}
+        {navigation && layoutNote ? <div className="tree-actions"><p className="caveat" role="status">{layoutNote}</p></div> : null}
+        {navigation?.busy ? <span className="hint" role="status">{t("正在读目录")}</span> : null}
+        {navigation?.error ? <p className="caveat files-navigation-error" role="alert">{navigation.error}</p> : null}
+        {!navigation && (根目录路径 || onInitLayout) ? (
           <div className="files-root-context" role="group" aria-label={t("文件根目录")}>
             <div className="files-root-header">
-              {根目录路径 ? (
+              {!navigation && 根目录路径 ? (
                 <div className="files-root-identity">
                   <span className="files-root-icon"><文件夹描边图标 /></span>
                   <div className="files-root-name">
@@ -1259,7 +1296,7 @@ export function FilesView({
                 </div>
               ) : null}
             </div>
-            {根目录路径 ? <>
+            {!navigation && 根目录路径 ? <>
               <div className="files-root-location">
                 <span className="files-root-parent">{上级目录提示}</span>
                 <Button variant="text" size="inline" aria-expanded={路径展开} aria-controls={路径区域Id} onClick={() => 设路径展开(v => !v)}>
@@ -1310,21 +1347,23 @@ export function FilesView({
             * 而重挂会把每一层展开状态清零。它现在作为 prop 往下走，
             * 每一层自己重读——**展开的还展开着**。
             */}
-          <DirNode
+          {navigation && !navigation.directory ? null : <DirNode
             key={根}
             path={根}
-            name={根 || 根目录名称}
+            name={navigation ? 根.split("/").filter(Boolean).at(-1) || 根 : 根 || 根目录名称}
             depth={0}
             selected={selected}
             onSelect={onSelect}
+            onBrowse={navigation ? 设根 : undefined}
+            focusedDirectory={focusedDirectory}
             load={trackedLoadDir}
             刷新令牌={合令牌}
             {...(操作 ? { 操作 } : {})}
             浮={设浮着的}
             {...(onDropUpload ? { onDrop: onDropUpload } : {})}
-            {...(展开 ? { 展开 } : {})}
+            {...(rootExpanded ? { 展开: rootExpanded } : {})}
             {...(onToggle ? { onToggle } : {})}
-          />
+          />}
         </ul>
       </nav>
       )}
@@ -1351,6 +1390,7 @@ export function FilesView({
           readFile={readFile}
           onOpenFile={onSelect}
           onOpenExternally={onOpenExternally}
+          onLocate={navigation && selected ? () => { const parent = parentFilePath(selected); if (parent) 设根(parent) } : undefined}
           fitContainer
           {...(onClosePreview ? { onClosePreview: closePreview } : {})}
           readingExpanded={readingExpanded}
@@ -1359,7 +1399,7 @@ export function FilesView({
             setReadingPath(readingExpanded ? undefined : selected)
           }}
           {...(onDownload ? { onDownload } : {})}
-          {...(onDelete ? { onDelete } : {})}
+          {...(onDelete && (!selected || canModifyPath?.(selected) !== false) ? { onDelete } : {})}
           {...(进废纸篓 === undefined ? {} : { 进废纸篓 })}
         />
       </section> : null}

@@ -7,6 +7,26 @@ function 假存储() {
 }
 
 describe("文件面板的记忆", () => {
+  it("reads legacy project memory only when an explicit compatible fallback identity is supplied", () => {
+    const s = 假存储()
+    s.setItem("dawn.files.本机:p1.memory", JSON.stringify({ expanded: ["", "results"], selected: "results/a.csv" }))
+    expect(读记忆("本机:p1:/work", "", s, "本机:p1")).toEqual({ expanded: ["", "results"], selected: "results/a.csv" })
+    expect(读记忆("本机:p1:/other-session", "", s)).toEqual({ expanded: [""] })
+    s.setItem("dawn.files.本机:p1:/work.memory", JSON.stringify({ expanded: [""], directory: "/sibling" }))
+    expect(读记忆("本机:p1:/work", "", s, "本机:p1").directory).toBe("/sibling")
+    expect(s.getItem("dawn.files.本机:p1.memory")).toContain("results")
+  })
+  it("persists the browser directory separately from selection and rejects malformed locations", () => {
+    const s = 假存储()
+    const memory = { expanded: ["", "/research"], directory: "/research/sibling", selected: "/research/sibling/a.csv" }
+    记记忆("本机:one:/research/project", memory, "", s)
+    立刻写完()
+    expect(读记忆("本机:one:/research/project", "", s)).toEqual(memory)
+    expect(读记忆("本机:one:/other", "", s)).toEqual({ expanded: [""] })
+    expect(清洗记忆({ directory: "../outside" })).toEqual({ expanded: [""] })
+    expect(清洗记忆({ directory: "C:\\研究\\data" }).directory).toBe("C:\\研究\\data")
+    expect(清洗记忆({ directory: "C:\\研究\\..\\data" }).directory).toBeUndefined()
+  })
   it("清洗：坏形状退回默认、绝对路径与 .. 扔掉、根永远展开、最多 300 个", () => {
     expect(清洗记忆(null)).toEqual({ expanded: [""] })
     expect(清洗记忆("x")).toEqual({ expanded: [""] })

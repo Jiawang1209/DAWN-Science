@@ -23,7 +23,9 @@ import { App } from "../../src/ui/App.js"
 import { createClient, type RawResponse } from "../../src/ui/client.js"
 import { OPERATIONS, WORKBENCH_PROTOCOL_VERSION } from "../../src/protocol/index.js"
 import type { SessionUpdate } from "../../src/protocol/index.js"
-import { setRightDockOpen } from "../../src/ui/state/right-dock.js"
+import { setRightDockOpen, setRightDockTenant } from "../../src/ui/state/right-dock.js"
+import { setActiveProjectId } from "../../src/ui/state/view.js"
+import { $notes } from "../../src/ui/state/connection.js"
 
 const RUN = {
   runId: "r1",
@@ -105,10 +107,12 @@ function harness(
     pty?: boolean
     /** 建出来的会话是 cli（外部 CLI 的对话模式），可带模型清单 */
     cliAgent?: { models?: string[] | undefined }
+    deferBrowserFile?: boolean
   } = {},
 ) {
   const calls: { op: string; req: unknown }[] = []
   let releaseCreate: (() => void) | undefined
+  let rejectBrowserFile: ((error: Error) => void) | undefined
   const listeners = new Set<(raw: unknown) => void>()
 
   const projects = [...(over.projects ?? [])]
@@ -131,6 +135,11 @@ function harness(
         }
       case "listProjects":
         return projects
+      case "browseDirectory": {
+        const owner = (req as { projectId?: string }).projectId
+        const path = owner === "p2" ? "/w/other" : "/w/proj"
+        return { path, parentPath: "/w", projectPath: path, entries: [{ name: "late.txt", kind: "file", modifiedAt: "2026-11-15T00:00:00Z" }], ignored: 0, omitted: 0 }
+      }
       case "listCredentials":
         return { configured: ["ds"], encrypted: true }
       case "getProviders":
@@ -249,6 +258,7 @@ function harness(
 
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
+    if (op === "readBrowserFile" && over.deferBrowserFile) await new Promise<never>((_resolve, reject) => { rejectBrowserFile = reject })
     if ((op === "createSession" || op === "createTemporarySession" || op === "createTask") && over.deferCreateSession) {
       await new Promise<void>((r) => (releaseCreate = r))
     }
@@ -282,6 +292,7 @@ function harness(
     push: (e: unknown) => act(() => { for (const listener of [...listeners]) listener(e) }),
     /** 放行挂起的 createSession */
     releaseCreateSession: () => act(() => releaseCreate?.()),
+    rejectBrowserFile: (error: Error) => rejectBrowserFile?.(error),
   }
 }
 
@@ -303,6 +314,20 @@ it("keeps overview and transcript deliveries independent when either harness sub
 })
 
 type Harness = ReturnType<typeof harness>
+
+it("discards a previous project's pending preview failure and keeps the new owner's selection empty", async () => {
+  const h = harness({ projects: [proj("/w/proj"), { ...proj("/w/other"), projectId: "p2" }], deferBrowserFile: true })
+  render(<App client={h.client} />)
+  await waitFor(() => expect(h.calls.some(c => c.op === "listProjects")).toBe(true))
+  act(() => { setActiveProjectId("p1"); setRightDockTenant("files"); setRightDockOpen(true) })
+  fireEvent.click(await screen.findByRole("button", { name: /^late\.txt/ }))
+  await waitFor(() => expect(h.calls.some(c => c.op === "readBrowserFile")).toBe(true))
+  act(() => { setActiveProjectId("p2") })
+  await waitFor(() => expect(document.querySelector('.files-breadcrumbs [aria-current="location"]')?.textContent).toBe("other"))
+  await act(async () => { h.rejectBrowserFile(new Error("old-owner-preview-error")); await Promise.resolve() })
+  expect(JSON.stringify($notes.get())).not.toContain("old-owner-preview-error")
+  expect(document.querySelector(".file-preview .preview-head")).toBeNull()
+})
 
 /** 服务端推的是**累积后的整条**——界面按 id 覆盖，不必自己拼增量 */
 const agentSays = (text: string, revision: number, final = false): SessionUpdate =>

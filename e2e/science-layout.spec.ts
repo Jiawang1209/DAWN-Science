@@ -9,24 +9,23 @@
  * 按下去不说话就跟坏了一模一样。
  */
 import { readdirSync } from "node:fs"
-import { test, expect, 开一段临时会话, 进坞 } from "./fixtures.js"
+import { test, expect, 在项目里开会话, 进坞 } from "./fixtures.js"
 
 test("文件那一屏能按下去，目录真的建出来，且它说了自己做了什么", async ({ dawn }) => {
   const { page, workspace } = dawn
   await expect(page.locator(".app-shell")).toBeVisible()
-  await 开一段临时会话(page)
+  await 在项目里开会话(page)
 
   await 进坞(page, "文件")
   const 项目栏 = page.getByRole("group", { name: "文件根目录" })
   const 按钮 = 项目栏.getByRole("button", { name: "初始化科研目录" })
   await expect(按钮, "文件这一屏上够不着这个动作").toBeVisible()
   await expect(按钮).toHaveClass(/btn-primary/)
-  await expect(项目栏.locator(".files-root-path")).toBeHidden()
-  await 项目栏.getByRole("button", { name: "完整路径" }).click()
-  await expect(项目栏.locator(".files-root-path")).toBeVisible()
-  await expect(项目栏.locator(".files-root-path")).toContainText(workspace)
-  await 项目栏.getByRole("button", { name: "收起路径" }).click()
-  await expect(项目栏.locator(".files-root-path")).toBeHidden()
+  await page.getByRole("button", { name: "输入目录路径", exact: true }).click()
+  const address = page.getByRole("textbox", { name: "跳到路径", exact: true })
+  await expect(address).toHaveValue(new RegExp(workspace.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
+  await address.press("Escape")
+  await expect(address).toBeHidden()
   await 按钮.click()
 
   /**

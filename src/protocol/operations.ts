@@ -1,3 +1,4 @@
+import { fileBrowserOperations } from './file-browser.js'
 import {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
 import {ToolRecordRequestSchema,ToolRecordResponseSchema} from './tool-record.js'
 import {RunOverviewSchema} from './run-overview.js'
@@ -2886,6 +2887,8 @@ export const OPERATIONS = {
     response: z.object({}).strict(),
     mutating: true,
   },
+
+  ...fileBrowserOperations,
 
   listDirectory: {
     request: z

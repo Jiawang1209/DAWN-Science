@@ -1,0 +1,40 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { expect, it, vi } from "vitest"
+import { FileNavigationBar } from "../../src/ui/file-navigation-bar.js"
+
+it("copies the entered directory, never an unsubmitted address, with truthful success/failure feedback", async () => {
+  const copy = vi.fn().mockResolvedValue(undefined)
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: copy } })
+  const navigate = vi.fn()
+  const { rerender } = render(<FileNavigationBar path="/work/project/results" projectPath="/work/project" navigate={navigate} />)
+  fireEvent.click(screen.getByRole("button", { name: "复制当前目录完整路径" }))
+  await waitFor(() => expect(copy).toHaveBeenCalledWith("/work/project/results"))
+  expect(await screen.findByText("已复制")).toBeTruthy()
+  fireEvent.click(screen.getByRole("button", { name: "输入目录路径" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "跳到路径" }), { target: { value: "/draft" } })
+  fireEvent.click(screen.getByRole("button", { name: "复制当前目录完整路径" }))
+  await waitFor(() => expect(copy).toHaveBeenLastCalledWith("/work/project/results"))
+  copy.mockRejectedValueOnce(new Error("denied"))
+  await waitFor(() => expect(screen.getByRole("button", { name: "复制当前目录完整路径" }).hasAttribute("disabled")).toBe(false))
+  fireEvent.click(screen.getByRole("button", { name: "复制当前目录完整路径" }))
+  expect((await screen.findByRole("status")).textContent).toContain("复制不了")
+  expect(screen.queryByText("已复制")).toBeNull()
+  rerender(<FileNavigationBar path="/work" projectPath="/work/project" navigate={navigate} />)
+  expect(screen.queryByText("已复制")).toBeNull()
+})
+
+it("navigates ancestors, edits with Enter and cancels with Escape", () => {
+  const navigate = vi.fn()
+  render(<FileNavigationBar path="/work/project/results" projectPath="/work/project" navigate={navigate} />)
+  fireEvent.click(screen.getByRole("button", { name: "project" }))
+  expect(navigate).toHaveBeenLastCalledWith("/work/project")
+  fireEvent.click(screen.getByRole("button", { name: "输入目录路径" }))
+  fireEvent.change(screen.getByRole("textbox", { name: "跳到路径" }), { target: { value: "/work/sibling" } })
+  fireEvent.keyDown(screen.getByRole("textbox", { name: "跳到路径" }), { key: "Enter" })
+  expect(navigate).toHaveBeenLastCalledWith("/work/sibling")
+  fireEvent.click(screen.getByRole("button", { name: "输入目录路径" }))
+  fireEvent.keyDown(screen.getByRole("textbox", { name: "跳到路径" }), { key: "Escape" })
+  expect(screen.queryByRole("textbox")).toBeNull()
+  fireEvent.click(screen.getByRole("button", { name: "回到项目" }))
+  expect(navigate).toHaveBeenLastCalledWith("/work/project")
+})

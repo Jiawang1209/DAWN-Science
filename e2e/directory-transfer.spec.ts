@@ -49,11 +49,13 @@ test("文件夹通过真实界面往返，保留空目录和二进制，批次�
 })
 test("权限失败清单与手动重试可见，取消保留已完成文件",async({dawn})=>{
  const {page,app}=dawn;await remote(page);const files=page.locator(".files-view")
+ await files.getByRole("button",{name:"输入目录路径",exact:true}).click()
  await files.getByLabel("跳到路径",{exact:true}).fill("/home/dawn/只读");await files.getByLabel("跳到路径",{exact:true}).press("Enter")
  await files.getByRole("button",{name:"上传",exact:true}).click();await page.getByRole("menuitem",{name:"上传文件夹",exact:true}).click();await page.getByRole("button",{name:"开始上传",exact:true}).click()
  await page.getByRole("button",{name:"传输任务",exact:true}).click();
  const failed=page.locator(".transfer-job").first();await expect(failed.locator(".transfer-state").first()).toHaveText("失败");await expect(failed).toContainText("Permission denied")
  await failed.getByRole("button",{name:"重传未完成项",exact:true}).click();await expect(failed).toContainText("Permission denied")
+ await files.getByRole("button",{name:"输入目录路径",exact:true}).click()
  await files.getByLabel("跳到路径",{exact:true}).fill("/home/dawn");await files.getByLabel("跳到路径",{exact:true}).press("Enter")
  writeFileSync(join(input,"slow.bin"),Buffer.alloc(4*1024*1024,3))
  await app.evaluate(()=>{process.env.DAWN_FAKE_SSH_TRANSFER_DELAY_MS="40"})

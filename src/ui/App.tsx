@@ -95,6 +95,8 @@ import { ReviewPanel, type 审阅数据 } from "./review.js"
 import { FilesView, 拖进来的本机路径, type FileContent, type Listing, type SearchResult } from "./files.js"
 import { RemoteAssistantView, useSessionChoices, type FeishuStatus, type NotifySettings, type WeixinStatus } from "./remote-assistant.js"
 import { 读记忆, 记记忆, type FilesMemory } from "./state/files-memory.js"
+import { useDirectoryNavigation, type BrowserDirectory } from "./state/file-navigation.js"
+import { absoluteFilePath, isAbsoluteFilePath, relativeFilePath, normalizeFilePath, browserWorkspacePath, toggleExpandedFiles } from "./file-navigation.js"
 import { $优化输入, 请求优化输入, type EnhanceMode, type EnhanceOutcome } from "./enhance.js"
 import {
   AgentSkillsView,
@@ -1384,7 +1386,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       const 票 = ++读票.current
       client.get<FileContent>("readFile", 去哪读)
         .then((c) => { if (票 === 读票.current) setFileContent(c) })
-        .catch(fail)
+        .catch(error => { if (票 === 读票.current) fail(error) })
     },
     [client, projectId, sessionId, 文件所在],
   )
@@ -3679,7 +3681,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 .then(() => {
                   // 删掉的目录里可能就有正在预览的那个
                   // 删的是目录时只清它**底下**的预览（`out` 不该连带 `out2/x.png`）——2026-08-23 审查抓的
-                  if (filePath === path || filePath?.startsWith(`${path.replace(/\/+$/, "")}/`)) {
+                  const selected = filePath && !远端的 && currentWorkspace ? relativeFilePath(currentWorkspace, absoluteFilePath(filePath, 当前工作区路径 ?? currentWorkspace)) : filePath
+                  if (selected === path || selected?.startsWith(`${path.replace(/\/+$/, "")}/`)) {
                     setFilePath(undefined)
                     setFileContent(undefined)
                   }
@@ -3691,7 +3694,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         })
         .catch(fail)
     },
-    [client, projectId, 文件所在, filePath],
+    [client, projectId, 文件所在, filePath, currentWorkspace, 当前工作区路径],
   )
 
   const 删一个 = useCallback(
@@ -3712,7 +3715,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
              * 留着一张已经不存在的图，是这个项目最不能忍的
              * 那种「看起来一切正常」。
              */
-            if (filePath === path) {
+            const selected = filePath && !远端的 && currentWorkspace ? relativeFilePath(currentWorkspace, absoluteFilePath(filePath, 当前工作区路径 ?? currentWorkspace)) : filePath
+            if (selected === path) {
               setFilePath(undefined)
               setFileContent(undefined)
             }
@@ -3730,7 +3734,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onConfirm: 干,
       })
     },
-    [client, projectId, 文件所在, filePath],
+    [client, projectId, 文件所在, filePath, currentWorkspace, 当前工作区路径],
   )
 
   /**
@@ -3775,7 +3779,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
   const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
 
-  const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}`
+  const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}:${当前工作区路径 ?? currentWorkspace ?? ""}`
 
   /**
    * **这棵树的记忆**（2026-08-21）：展开过哪些目录、选中的是哪个文件，按身份记在 localStorage，
@@ -3787,16 +3791,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 远端树上的本来就是绝对路径，相对是去掉会话 cwd 那一截。
    * 插进输入框：追加到**当前会话**的草稿末尾，`@相对路径 `——没有会话就没有这一项。
    */
-  const 行路径 = useCallback(
-    (path: string) => {
-      if (文件所在) {
-        const 前缀 = 树根 ? `${树根.replace(/\/+$/, "")}/` : ""
-        return { 相对: 前缀 && path.startsWith(前缀) ? path.slice(前缀.length) : path, 绝对: path }
-      }
-      return { 相对: path, 绝对: currentWorkspace ? `${currentWorkspace.replace(/\/+$/, "")}/${path}` : path }
-    },
-    [文件所在, 树根, currentWorkspace],
-  )
   const 插进输入框 = useCallback(
     (text: string) => {
       if (!sessionId) return
@@ -3805,48 +3799,97 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     },
     [sessionId],
   )
-  const [树记忆, 设树记忆] = useState<FilesMemory>(() => 读记忆(文件面板身份, 树根))
+  const legacyMemoryIdentity = !文件所在 && projectId && normalizeFilePath(当前工作区路径 ?? currentWorkspace ?? "") === normalizeFilePath(currentWorkspace ?? "") ? `本机:${projectId}` : undefined
+  const readPanelMemory = useCallback(() => 读记忆(文件面板身份, 树根, localStorage, legacyMemoryIdentity), [文件面板身份, 树根, legacyMemoryIdentity])
+  const [ownedTreeMemory, setOwnedTreeMemory] = useState(() => ({ identity: 文件面板身份, memory: readPanelMemory() }))
+  const 树记忆 = ownedTreeMemory.identity === 文件面板身份 ? ownedTreeMemory.memory : readPanelMemory()
+  const 设树记忆 = useCallback((update: FilesMemory | ((previous: FilesMemory) => FilesMemory)) => {
+    setOwnedTreeMemory(previous => {
+      const memory = previous.identity === 文件面板身份 ? previous.memory : readPanelMemory()
+      const next = typeof update === "function" ? update(memory) : update
+      return previous.identity === 文件面板身份 && next === memory ? previous : { identity: 文件面板身份, memory: next }
+    })
+  }, [文件面板身份, readPanelMemory])
   const 树记忆身份 = useRef(文件面板身份)
   useEffect(() => {
     if (树记忆身份.current === 文件面板身份) return
+    const 票 = ++读票.current
     树记忆身份.current = 文件面板身份
     setFilePreviewOpen(true)
-    const m = 读记忆(文件面板身份, 树根)
+    const m = readPanelMemory()
     设树记忆(m)
     // 选中的那个文件也跟着回来——**没有就清掉**，不把上一棵树的文件留在预览里。
     // **不经 `openFile`**（2026-08-23 审查抓的：它第一句是「点开文件面板」——切会话会擅自把坞弹出来、房客换成文件）
     if (m.selected) {
       setFilePath(m.selected)
       setFileContent(undefined)
-      const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path: m.selected } : projectId ? { projectId, path: m.selected } : undefined
+      const 去哪读 = 文件所在 ? { connectionId: 文件所在.connectionId, path: m.selected } : sessionId ? { sessionId, path: m.selected } : projectId ? { projectId, path: m.selected } : undefined
       if (去哪读) {
-        const 票 = ++读票.current
-        client.get<FileContent>("readFile", 去哪读)
+        client.get<FileContent>(isAbsoluteFilePath(m.selected) ? "readBrowserFile" : "readFile", 去哪读)
           .then((c) => { if (票 === 读票.current) setFileContent(c) })
-          .catch(fail)
+          .catch(error => { if (票 === 读票.current) fail(error) })
       }
     } else {
       setFilePath(undefined)
       setFileContent(undefined)
     }
-  }, [文件面板身份, 树根, client, projectId, 文件所在])
+  }, [文件面板身份, 树根, client, projectId, sessionId, 文件所在, readPanelMemory, 设树记忆])
   useEffect(() => {
     记记忆(文件面板身份, 树记忆, 树根)
   }, [文件面板身份, 树记忆, 树根])
-  const 展开集合 = useMemo(() => new Set(树记忆.expanded), [树记忆.expanded])
-  const 切展开 = useCallback(
-    (path: string, open: boolean) =>
-      设树记忆((前) => {
-        const 有 = 前.expanded.includes(path)
-        if (有 === open) return 前
-        return { ...前, expanded: open ? [...前.expanded, path] : 前.expanded.filter((p) => p !== path && !p.startsWith(`${path}/`)) }
-      }),
-    [],
-  )
   // 选中的文件变了就记下（只记相对路径，绝对的是远端那条线的事）
+  const rememberedSelectionOwner = useRef(文件面板身份)
   useEffect(() => {
+    if (rememberedSelectionOwner.current !== 文件面板身份) { rememberedSelectionOwner.current = 文件面板身份; return }
     设树记忆((前) => (前.selected === filePath ? 前 : filePath ? { ...前, selected: filePath } : (({ selected: _, ...rest }) => rest)(前)))
-  }, [filePath])
+  }, [filePath, 文件面板身份, 设树记忆])
+
+  const browserOwner = useMemo(() => 文件所在 ? { connectionId: 文件所在.connectionId } : sessionId ? { sessionId } : projectId ? { projectId } : undefined, [文件所在?.connectionId, sessionId, projectId])
+  const loadBrowserDirectory = useCallback(async (path: string): Promise<BrowserDirectory> => {
+    if (!browserOwner) throw new Error(t("还没有选中项目"))
+    return client.get<BrowserDirectory>("browseDirectory", { ...browserOwner, path, ...(文件所在 ? { initialPath: 文件所在.cwd } : {}) })
+  }, [client, browserOwner, 文件所在?.cwd])
+  const readBrowserFile = useCallback(async (path: string) => {
+    if (!browserOwner) throw new Error(t("还没有选中项目"))
+    return client.get<FileContent>("readBrowserFile", { ...browserOwner, path })
+  }, [client, browserOwner])
+  const browserNavigation = useDirectoryNavigation({
+    identity: 文件面板身份,
+    enabled: ready && rightDockOpen && rightDockTenant === "files" && !!browserOwner,
+    initialPath: 树记忆.directory ?? 树根,
+    homePath: 树根,
+    readDirectory: loadBrowserDirectory,
+    onDirectory: path => 设树记忆(memory => ({ ...memory, directory: path })),
+  })
+  const browserProjectPath = browserNavigation.directory?.projectPath ?? 文件所在?.cwd ?? 当前工作区路径 ?? currentWorkspace ?? ""
+  const ownerWorkspacePath = 当前工作区路径 ?? currentWorkspace ?? ""
+  const 行路径 = useCallback((path: string) => {
+    const absolute = absoluteFilePath(path, browserProjectPath)
+    return { 相对: relativeFilePath(browserProjectPath, absolute) ?? absolute, 绝对: absolute }
+  }, [browserProjectPath])
+  const 切展开 = useCallback((path: string, open: boolean) => 设树记忆(memory => ({ ...memory, expanded: toggleExpandedFiles(memory.expanded, path, open, browserProjectPath) })), [设树记忆, browserProjectPath])
+  const 展开集合 = useMemo(() => new Set(树记忆.expanded.map(path => 文件所在 || !browserProjectPath ? path : absoluteFilePath(path, browserProjectPath))), [树记忆.expanded, 文件所在, browserProjectPath])
+  const selectedBrowserPath = 树记忆身份.current === 文件面板身份 && filePath ? absoluteFilePath(filePath, browserProjectPath) : undefined
+  const openBrowserFile = (path: string) => {
+    点开文件面板()
+    setFilePreviewOpen(true)
+    setFilePath(文件所在 ? path : relativeFilePath(browserProjectPath, path) ?? path)
+    setFileContent(undefined)
+    const ticket = ++读票.current
+    void readBrowserFile(path).then(content => { if (ticket === 读票.current) setFileContent(content) }).catch(error => { if (ticket === 读票.current) fail(error) })
+  }
+  const browserSearch = useCallback(async (query: string, path: string) => {
+    if (!browserOwner) throw new Error(t("还没有选中项目"))
+    return client.get<SearchResult>("searchBrowserFiles", { ...browserOwner, path, query })
+  }, [client, browserOwner])
+  const openBrowserExternally = 文件所在 ? undefined : (path: string) => {
+    if (!browserOwner) return
+    void client.get<{ problem?: string }>("openBrowserFile", { ...browserOwner, path }).then(result => { if (result.problem) fail(new Error(result.problem)) }).catch(fail)
+  }
+  const browserWorkspaceRelative = (path: string) => browserWorkspacePath(browserProjectPath, ownerWorkspacePath, currentWorkspace ?? "", path)
+  const browserCanModify = (path: string) => !!文件所在 || (!!projectId && browserWorkspaceRelative(path) !== undefined)
+  const deleteBrowserFile = (path: string) => { if (文件所在) 删一个(path); else { const relative = browserWorkspaceRelative(path); if (relative) 删一个(relative) } }
+  const deleteBrowserDirectory = (path: string) => { if (文件所在) 删一个目录(path); else { const relative = browserWorkspaceRelative(path); if (relative) 删一个目录(relative) } }
 
   /**
    * 文件那一片**只有一份实现，两个摆法**（2026-08-19）。
@@ -3894,7 +3937,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 : {}),
             })}
         机器={文件所在?.label ?? t("本机")}
-        初始根={文件所在?.cwd ?? ""}
+        初始根={browserProjectPath}
+        navigation={browserNavigation}
+        canModifyPath={browserCanModify}
         {...(文件所在
           ? {
               onDownload: 下载,
@@ -3920,21 +3965,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           : {})}
         directoryTransfers={<TransferBatchesPanel client={client} onCompleted={目录批次完成} />}
         刷新令牌={刷新令牌}
-        onDelete={删一个}
-        onDeleteDir={删一个目录}
+        onDelete={deleteBrowserFile}
+        onDeleteDir={deleteBrowserDirectory}
         进废纸篓={!文件所在}
-        selected={filePath}
+        selected={selectedBrowserPath}
         展开={展开集合}
         onToggle={切展开}
         content={fileContent}
-        loadDir={loadDir}
-        readFile={读产物}
-        search={searchFiles}
+        loadDir={loadBrowserDirectory}
+        readFile={readBrowserFile}
+        search={browserSearch}
         路径={行路径}
         {...(sessionId ? { onInsert: 插进输入框 } : {})}
-        onSelect={openFile}
-        onOpenExternally={openExternally}
-        {...(projectId
+        onSelect={openBrowserFile}
+        onOpenExternally={openBrowserExternally}
+        {...(projectId && relativeFilePath(currentWorkspace ?? "", ownerWorkspacePath) === ""
           ? {
               onInitLayout: () => {
                 client

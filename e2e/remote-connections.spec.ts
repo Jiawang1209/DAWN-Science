@@ -720,6 +720,7 @@ test.describe("上传", () => {
     }).toBe("completed")
 
     // ① 树上真的多了那个文件
+    await 面板.getByRole("button", { name: "输入目录路径", exact: true }).click()
     await 面板.getByRole("textbox", { name: "跳到路径" }).fill("/home/dawn")
     await 面板.getByRole("textbox", { name: "跳到路径" }).press("Enter")
     await expect(面板.getByRole("button", { name: /^dawn-上传的\.txt/ })).toBeVisible({ timeout: 30_000 })

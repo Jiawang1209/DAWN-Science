@@ -228,6 +228,66 @@ describe('chat script associations', () => {
     expect(store.prepareLinkedEdit(scope.key, '普通问题')).toBe('普通问题')
   })
 
+  it('keeps literal and unknown marker questions attached to the latest draft', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    store.edit(id, 'print(2) # 最新草稿')
+    const instruction = '解释 <!-- dawn-script-edit:example --> 是什么意思'
+    const prompt = store.prepareLinkedEdit(scope.key, instruction)
+    expect(prompt).not.toBe(instruction)
+    expect(prompt).toContain('print(2) # 最新草稿')
+    expect(store.$editRequests.get().at(-1)).toMatchObject({ source: 'linked', baseline: 'print(2) # 最新草稿', prompt })
+  })
+
+  it('preserves actual pending one-shot precedence after textarea newline normalization', () => {
+    const store = createCodeEditorStore(services())
+    const text = 'x = 1\r\nprint(x)\r\n'
+    const id = store.openSource(scope, 'linked-crlf', text, 'python')
+    store.linkScript(id, 'a.py')
+    store.setSelection(id, { from: 6, to: 14, text: 'print(x)' })
+    const oneShot = store.prepareEdit(id, 'a.py')
+    const textarea = document.createElement('textarea')
+    textarea.value = oneShot.prompt + '\r\n修改颜色'
+    expect(textarea.value).not.toContain('\r')
+    expect(store.prepareLinkedEdit(scope.key, textarea.value)).toBe(textarea.value)
+    expect(store.$editRequests.get()).toEqual([oneShot])
+  })
+
+  it('ignores expired and other-scope one-shot prompts for automatic snapshot precedence', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)', 'python')
+    store.linkScript(id, 'a.py')
+    store.setSelection(id, { from: 0, to: 8, text: 'print(1)' })
+    const expired = store.prepareEdit(id, 'a.py')
+    store.prepareEdit(id, 'a.py')
+    const otherScope = { ...scope, key: 'other-session', sessionId: 'other-session' }
+    const other = store.openSource(otherScope, 'one-shot', 'print(3)', 'python')
+    store.setSelection(other, { from: 0, to: 8, text: 'print(3)' })
+    const outside = store.prepareEdit(other, 'b.py')
+    for (const instruction of [expired.prompt, outside.prompt]) {
+      const prompt = store.prepareLinkedEdit(scope.key, instruction)
+      expect(prompt).not.toBe(instruction)
+      expect(store.$editRequests.get().at(-1)).toMatchObject({ source: 'linked', documentId: id, baseline: 'print(1)' })
+    }
+  })
+
+  it('rejects copied prior linked envelopes without creating nested snapshots or disturbing queued requests', () => {
+    const store = createCodeEditorStore(services())
+    const id = store.openSource(scope, 'linked', 'print(1)\r\n', 'python')
+    store.linkScript(id, 'a.py')
+    const previous = store.prepareLinkedEdit(scope.key, '改颜色')
+    const retained = store.$editRequests.get()
+    for (const pasted of [previous, previous.replace(/\r\n/g, '\n') + '\n继续改标题']) {
+      expect(() => store.prepareLinkedEdit(scope.key, pasted)).toThrow('请只填写本轮要求，脚本草稿会自动附上')
+      expect(store.$editRequests.get()).toEqual(retained)
+    }
+    // Rejection also covers a prior request no longer retained in this window.
+    store.$editRequests.set([])
+    expect(() => store.prepareLinkedEdit(scope.key, previous)).toThrow('请只填写本轮要求，脚本草稿会自动附上')
+    expect(store.$editRequests.get()).toEqual([])
+  })
+
   it('supports empty drafts and uses the saved path as its current label', async () => {
     const api = services(), store = createCodeEditorStore(api)
     const id = store.openSource(scope, 'linked-empty', '', 'python')

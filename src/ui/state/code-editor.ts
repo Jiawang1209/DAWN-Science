@@ -1,7 +1,7 @@
 import { atom } from 'nanostores'
 import { t } from '../i18n/index.js'
 import { isAbsoluteFilePath } from '../file-navigation.js'
-import { createLinkedScriptEditRequest, createScriptEditRequest, hasScriptEditContext, scriptEditResult, type ScriptEditRequest } from '../code-editor-ai.js'
+import { createLinkedScriptEditRequest, createScriptEditRequest, scriptEditResult, splitLinkedScriptPrompt, type ScriptEditRequest } from '../code-editor-ai.js'
 
 export type CodeOwner = { projectId?: string; sessionId?: string; connectionId?: string }
 export interface EditorScope {
@@ -112,7 +112,14 @@ export function createCodeEditorStore(services: EditorServices) {
       select(scopeKey, linked.document.id)
     },
     prepareLinkedEdit(scopeKey: string, text: string) {
-      if (!$linkedScripts.get()[scopeKey] || hasScriptEditContext(text)) return text
+      if (!$linkedScripts.get()[scopeKey]) return text
+      // Match actual retained one-shot snapshots, not marker-looking prose in a question.
+      const canonical = (value: string) => value.replace(/\r\n?/g, '\n')
+      const userText = canonical(text)
+      for (const ending of userText.matchAll(/<!-- dawn-linked-script-end:[A-Za-z0-9_-]{1,128} -->/g)) {
+        if (splitLinkedScriptPrompt(userText.slice(0, ending.index + ending[0].length))) throw new Error(t("请只填写本轮要求，脚本草稿会自动附上"))
+      }
+      if ($editRequests.get().some(request => request.source !== 'linked' && request.scopeKey === scopeKey && userText.includes(canonical(request.prompt)))) return text
       const linked = linkedScript(scopeKey)
       if (!linked) throw new Error(t("关联的脚本草稿不存在，请重新关联"))
       const doc = linked.document

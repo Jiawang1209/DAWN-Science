@@ -10,22 +10,22 @@
 
 ### Task 1: Store and context generation
 Files: `src/ui/state/code-editor.ts`, `src/ui/code-editor-ai.ts`, their existing unit tests.
-- [ ] RED: link without selection, apply then edit then prepare another submission, latest text/path, scope isolation, switch visible file without retargeting, unlink, stale baseline, oversized draft failure, explicit one-shot precedence, independent queued requests.
-- [ ] GREEN: `$linkedScripts` record; `linkScript(id,label)`, `unlinkScript(scopeKey)`, `linkedScript(scopeKey)`, `openLinkedScript(scopeKey)`, `prepareLinkedEdit(scopeKey,text):string`. Association stores documentId and fallback label. Reject unsupported scope/commands at integration boundary; never silently lose context on failure. Whole-script context supports empty drafts, LF/CRLF, safe fences and 128KiB cap. Preserve request association and manual preview/apply.
-- [ ] Verify with `npx vitest run tests/ui/code-editor-state.test.ts tests/ui/code-editor-ai.test.ts`.
+- [x] RED: link without selection, apply then edit then prepare another submission, latest text/path, scope isolation, switch visible file without retargeting, unlink, stale baseline, oversized draft failure, explicit one-shot precedence, independent queued requests.
+- [x] GREEN: `$linkedScripts` record; `linkScript(id,label)`, `unlinkScript(scopeKey)`, `linkedScript(scopeKey)`, `openLinkedScript(scopeKey)`, `prepareLinkedEdit(scopeKey,text):string`. Association stores documentId and fallback label. Reject unsupported scope/commands at integration boundary; never silently lose context on failure. Whole-script context supports empty drafts, LF/CRLF, safe fences and 128KiB cap. Preserve request association and manual preview/apply.
+- [x] Verify with `npx vitest run tests/ui/code-editor-state.test.ts tests/ui/code-editor-ai.test.ts`.
 
 ### Task 2: Chat-first UI and send integration
 Files: `src/ui/code-editor.tsx`, `src/ui/App.tsx`, `src/ui/views.tsx`, a focused linked-script UI component, styles, `src/ui/i18n/en.ts`, focused UI tests.
-- [ ] RED: editor opening links without a selection; visible composer association can reopen/unlink; ordinary submit context appears identically in echo/send; failure preserves original user input and attachments; queue uses prepared payload; slash/Bot commands and other-session composers remain unchanged.
-- [ ] GREEN: automatic editor activation and compact composer chip. Optional synchronous `prepareMessage` prop invoked after command handling, before optimistic clearing/echo. App guards current scope/session and native main conversation. Closing editor preserves link; opening another script editor retargets it, preserving the old draft. A linked request includes user instruction separately from full source so transcript can show instruction with a collapsed exact snapshot.
-- [ ] Verify targeted editor/composer/i18n/design-contract tests and typecheck.
+- [x] RED: editor opening links without a selection; visible composer association can reopen/unlink; ordinary submit context appears identically in echo/send; failure preserves original user input and attachments; queue uses prepared payload; slash/Bot commands and other-session composers remain unchanged.
+- [x] GREEN: automatic editor activation and compact composer chip. Optional synchronous `prepareMessage` prop invoked after command handling, before optimistic clearing/echo. App guards current scope/session and native main conversation. Closing editor preserves link; opening another script editor retargets it, preserving the old draft. A linked request includes user instruction separately from full source so transcript can show instruction with a collapsed exact snapshot.
+- [x] Verify targeted editor/composer/i18n/design-contract tests and typecheck.
 
 ### Task 3: Integration review and usable preview
 Files: `e2e/code-editor-ai.spec.ts` or a new focused spec, `docs/DESIGN.md`, `docs/reviews/2026-11-15-linked-script.md`.
-- [ ] E2E: two linked rounds without reselection, manual edits between rounds, review/apply into original draft, stale refusal, detach returns to ordinary chat, close/reopen and session boundaries.
-- [ ] Independent spec review then quality review; resolve concrete findings.
-- [ ] Full build, node/UI tests and serial focused editor/composer/plot E2Es. Record actual validation and limits.
-- [ ] Preserve all live dirty drafts/composer text before any preview restart. Keep real-model profile/credential source. Never auto-save user files. Launch verified branch only if state can be safely preserved; no merge or push in this task.
+- [x] E2E: two linked rounds without reselection, manual edits between rounds, review/apply into original draft, stale refusal, detach returns to ordinary chat, close/reopen and session boundaries.
+- [x] Independent spec review then quality review; resolve concrete findings.
+- [x] Full build, node/UI tests and serial focused editor/composer/plot E2Es. Record actual validation and limits.
+- [ ] Preserve all live dirty drafts/composer text before any preview restart. **Main remains untouched and five drafts were backed up; the isolated preview process is launched but awaits the user's macOS keychain authorization.** Keep real-model profile/credential source. Never auto-save user files. Launch verified branch only if state can be safely preserved; no merge or push in this task.
 
 ## Accepted UX refinement
 

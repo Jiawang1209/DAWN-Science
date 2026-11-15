@@ -6338,7 +6338,7 @@ function TranscriptRowImpl({
           {...(onOpenWeb ? { onOpenLocal: onOpenWeb } : {})}
         />
         {linkedPrompt ? <details className="linked-script-snapshot">
-          <summary>{tf("本轮脚本快照：{0}", linkedPrompt.label)}</summary>
+          <summary aria-label={tf("本轮脚本快照：{0}", linkedPrompt.label)}>{tf("本轮脚本快照：{0}", linkedPrompt.label.split(/[\\/]/).pop() || linkedPrompt.label)}</summary>
           <pre>{linkedPrompt.context}</pre>
         </details> : null}
         {/**

@@ -59,13 +59,14 @@ describe('chat script association', () => {
   })
   it('collapses exact attached source in the user turn and displays the modification request first', () => {
     const { store, scope, id } = setup()
-    const req = createLinkedScriptEditRequest(store.$documents.get()[id]!, 'plot.R', '请更改标题', 'collapse')
+    const req = createLinkedScriptEditRequest(store.$documents.get()[id]!, '/work/project/plot.R', '请更改标题', 'collapse')
     const { container } = render(<ConversationView session={{ sessionId: 's', projectId: 'p', agentId: 'ds-chat', kind: 'native', pinned: false, sortOrder: 1, state: 'alive', createdAt: '' }} items={[{ type: 'turn', who: 'user', id: 'u', text: req.prompt, final: true }]} onSend={() => {}} />)
     expect(container.querySelector('.turn.user .text')?.textContent).toBe('请更改标题')
     const details = container.querySelector<HTMLDetailsElement>('.linked-script-snapshot')!
     expect(details).toBeTruthy()
     expect(details.open).toBe(false)
     expect(details.querySelector('pre')?.textContent).toContain('print(1)')
-    expect(details.querySelector('summary')?.textContent).toContain('plot.R')
+    expect(details.querySelector('summary')?.textContent).toBe('本轮脚本快照：plot.R')
+    expect(details.querySelector('summary')?.getAttribute('aria-label')).toBe('本轮脚本快照：/work/project/plot.R')
   })
 })

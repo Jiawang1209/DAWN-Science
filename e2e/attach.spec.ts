@@ -571,8 +571,8 @@ test("**内置对话有「上传图片」，内核会话没有**", async ({ dawn
   await expect(page.getByRole("menuitem", { name: "上传图片", exact: true })).toHaveCount(0)
 })
 
-/** 环境在输入区上方；底栏固定两行，添加/权限与模型/发送各自对齐。 */
-test("输入卡：环境在顶部，工具与模型固定两行，各行对齐且不溢出", async ({ dawn }) => {
+/** 环境在输入区上方；底栏默认单行，空间充分时工具与模型/发送齐平。 */
+test("输入卡：环境在顶部，工具与模型同排且不溢出", async ({ dawn }) => {
   const { page } = dawn
   await page.setViewportSize({ width: 1920, height: 900 })
   await 开一段临时会话(page)
@@ -601,7 +601,8 @@ test("输入卡：环境在顶部，工具与模型固定两行，各行对齐�
     expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(2)
     expect(row[1]!.x).toBeGreaterThanOrEqual(row[0]!.x + row[0]!.width)
   }
-  expect(bounds[2]!.y).toBeGreaterThanOrEqual(Math.max(...bounds.slice(0, 2).map(b => b.y + b.height)))
+  const centers = bounds.map(b => b.y + b.height / 2)
+  expect(Math.max(...centers) - Math.min(...centers)).toBeLessThanOrEqual(2)
   expect(card.x + card.width - bounds.at(-1)!.x - bounds.at(-1)!.width).toBeLessThan(24)
   const add = footer.getByRole("button", { name: "添加内容", exact: true })
   await expect(add).toHaveAttribute("aria-haspopup", "menu")

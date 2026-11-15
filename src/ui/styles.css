@@ -8533,7 +8533,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .composer-tools .enhance-word { display: inline; }
 .composer-footer .composer-status { display: flex; flex-wrap: nowrap; min-height: var(--composer-footer-row); margin-left: 0; padding: 0; gap: var(--dawn-space-1); }
 .composer-footer .composer-status:empty { display: none; }
-.composer-footer .composer-controls { flex: 1 1 100%; justify-content: flex-end; margin-left: auto; }
+.composer-footer .composer-controls { flex: 1 1 0; justify-content: flex-end; margin-left: auto; }
 .composer-tools .attach-trigger { width: 36px; height: 36px; }
 .composer-tools .attach-trigger > .icon,
 .composer-tools .dock-toggle > .icon { color: var(--dawn-accent); }
@@ -8576,9 +8576,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .composer-footer .model-trigger { padding-inline: var(--dawn-space-1); }
   .composer-footer .model-trigger .svc-mark { display: none; }
   .composer-footer .send-btn { margin-left: 0; }
+  .composer-footer .perm-pill-label, .composer-footer .ctx-meter-value { display: none; }
+  .composer-tools .perm-pill-trigger { padding-inline: var(--dawn-space-1); gap: var(--dawn-space-1); }
 }
-/* 两行底栏在所有宽度保持一致；极窄时只缩短模型文字，不再增加一行。 */
+/* 默认单行；极窄或含额外配置时让模型组独占一行，保留可用的按钮宽度。 */
 @container (max-width: 360px) {
+  .composer-footer:has(.config-pill) .composer-controls,
+  .composer-footer:has(.composer-status:not(:empty)) .composer-controls { flex-basis: 100%; }
   .composer-footer .composer-controls { gap: var(--dawn-space-1); }
   .composer-footer .composer-controls > .model-pill,
   .composer-footer .composer-controls > .agent-pill { flex: 0 1 auto; }
@@ -8587,6 +8591,9 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
   .composer-footer .composer-status { flex: 1 1 0; min-width: 0; }
   .composer-footer .composer-status > .sess-config { min-width: 0; max-width: 100%; }
   .composer-footer .composer-status .sess-config-trigger { max-width: 100%; overflow: hidden; white-space: nowrap; }
+}
+@container (max-width: 320px) {
+  .composer-footer .composer-controls { flex-basis: 100%; }
 }
 
 .composer-add-menu[hidden] { display: none; }

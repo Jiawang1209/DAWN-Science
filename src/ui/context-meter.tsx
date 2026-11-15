@@ -239,7 +239,7 @@ export function ContextMeter({
           * 现在那就是缺省。按钮的名字由 `aria-label` 带全句，读屏听到的始终是「上下文 37%」（快满了带「· 快满了」）；
           * 快满了在屏幕上只靠红色提醒，按钮始终只显示环 + 数。
           */}
-        {读数.值}
+        <span className="ctx-meter-value">{读数.值}</span>
       </Button>
       {开着 ? (
         <div className="menu ctx-meter-pop" role="dialog" aria-label={t("上下文")}>

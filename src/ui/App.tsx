@@ -1,4 +1,8 @@
 import { LocalToolsPanel } from './local-tools.js'
+import { AppHome, HomeButton } from './app-home.js'
+import { $appPage, showHome, showWorkbench, appPageRevision } from './state/app-page.js'
+import { setTempSessions, setProjects } from './state/catalog.js'
+import { 导航图标 } from './icons.js'
 import { LinkedScript, followEditorScript, openEditorFile } from "./linked-script.js"
 import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
 import { CodeEditingContext } from './code-editing-context.js'
@@ -28,23 +32,7 @@ import { 标记待回答, $待回答的会话 } from "./state/catalog.js"
 import { StatusNotices } from "./status-notices.js"
 import { AppStatusBar } from "./app-statusbar.js"
 import { 拆模型名 } from "./format.js"
-/**
- * 外壳。
- *
- * **信息架构学 Claude app：打开就是对话，侧栏常驻。**
- *
- * 2026-08-08 修正（作者反馈「和 Claude app 完全不一样」）。初版有三处偏差，
- * 第一处是坏的：
- *   1. **UI 里根本没有「新建会话」入口**——`createSession` 一次都没被调用，
- *      也就是说这个 app 做不了它最该做的那件事
- *   2. 侧栏默认隐藏——我把 Rho 的 agent-first 单栏照搬过来，
- *      **却没察觉它与「模仿 Claude app」直接冲突**
- *   3. 打开后看到的是一页统计面板——我把作者说想知道的四样
- *      （状态/产出/成本/历史）做成了首页，但那是**偶尔查**的东西，
- *      不是**打开时要看**的东西
- *
- * 现在：侧栏常驻、新建会话是主动作、默认进对话、项目概览降为侧栏底部入口。
- */
+/** First-run guide → project/session home → conversation-first workbench. */
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import rpIcon from "../../packaging/icon.svg"
 import { 图廊根 } from "./case-cards.js"
@@ -287,6 +275,7 @@ const CodeEditorPanel = lazy(() => import('./code-editor.js').then(module => ({ 
 
 export function App({ client: injected }: { client?: WorkbenchClient }) {
   const client = useMemo(() => injected ?? createClient(), [injected])
+  const appPage = useStore($appPage)
 
   /**
    * 状态**全部住在 state/ 里，按权威分家**（`state/index.ts` 的文件头有分家表）。
@@ -542,12 +531,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
        */
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault()
+        showWorkbench()
         坞上位()
         点开房客("files")
       } else if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "g") {
         e.preventDefault()
+        showWorkbench()
         坞上位()
         点开房客("review")
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        // The palette retains its existing keyboard handler inside the workbench.
+        showWorkbench()
       }
     }
     document.addEventListener("keydown", onKey)
@@ -1567,7 +1561,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 副作用是个好的：**点一下不再冒出一行「新任务」**。
    * 一段还没说过话的对话本来就不该占据侧栏的一行。
    */
+  const [homeWorkspaceIntent, setHomeWorkspaceIntent] = useState<{ path: string | undefined }>()
   const 回到初始画面 = useCallback(() => {
+    setHomeWorkspaceIntent({ path: undefined })
     setActiveSessionId(undefined)
     setView("conversation")
   }, [])
@@ -1632,6 +1628,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
      * **「只在忙的时候错」不是偶发，是窗口小。**
      */
     const from = $view.get()
+    const pageRevision = appPageRevision()
+    const stillOnPage = () => appPageRevision() === pageRevision
     try {
       const t = await client.get<import("../protocol/index.js").TaskSummary>("createTask", {
         agentId,
@@ -1659,8 +1657,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         await loadProjects(client)
         const 新家 = $projects.get().find((p) => p.workspace === workspace)?.projectId
         if (新家) {
-          if (!opts.不切过去) setActiveProjectId(新家)
-          await loadSessions(client, 新家)
+          if (!opts.不切过去 && stillOnPage()) setActiveProjectId(新家)
+          const latest = await client.get<SessionSummary[]>('listSessions', { projectId: 新家 })
+          if (stillOnPage()) setSessions(latest)
         }
       } else {
         /**
@@ -1758,7 +1757,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
          *
          * 「人还在原地才进对话」那条守卫保留：**他自己切走了就尊重他的选择**。
          */
-        if (opts.不切过去) return t.sessionId
+        if (opts.不切过去 || !stillOnPage()) return t.sessionId
         /**
          * **回显**（A1 补，空态第一句）：第一句已经写进去了，切过去之后还要等订阅那一份快照回来才看得见它——
          * 那一下屏幕上是「还没有对话」（探针量到约 40ms）。先把这句作为**这一段的**回显放进主槽，
@@ -1996,6 +1995,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 换运行时另起一段 = async (agentId: string, choice?: ModelChoice, source = session, acpChoice?: { configId: string; value: string }, sourceSlot = 主槽) => {
     if (!source) return
+    const pageRevision = appPageRevision()
     const 原侧边地方 = sourceSlot === 侧槽 ? $侧边地方.get() : undefined
     const 当前源 = () => sourceSlot === 侧槽 ? $侧边会话id.get() : $activeSessionId.get()
     const 旧任务 = tasks.find((t) => t.sessionId === source.sessionId)
@@ -2042,7 +2042,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     if (projectId) await loadSessions(client, projectId)
     if (sourceSlot === 侧槽) {
       if (原侧边地方 && 当前源() === source.sessionId) 挂进坞(原侧边地方, t.sessionId)
-    } else {
+    } else if (appPageRevision() === pageRevision && 当前源() === source.sessionId) {
       setActiveSessionId(t.sessionId)
       setView("conversation")
     }
@@ -2060,6 +2060,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     /** 建好了不切过去（坞里「另开一段」用，2026-09-24）：主区不动，id 回给调用点 */
     opts: { 不切过去?: boolean; agentId?: string; contextFromSessionId?: string } = {},
   ): Promise<string | undefined> => {
+    const pageRevision = appPageRevision()
     if (creatingRemoteTasks.current.has(c.id)) return undefined
     setConnProblemId(c.id)
     // **只从手能到服务器的里面挑**（T3）；codex-acp / cli / kernel 会在本机跑，不算
@@ -2092,7 +2093,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       })
       await Promise.all([loadConnections(client), loadTasks(client), loadTempSessions(client)])
       if (!t.sessionId) throw new Error("任务建好了却没有会话——这一步不该悄悄过去")
-      if (!opts.不切过去) {
+      if (!opts.不切过去 && appPageRevision() === pageRevision) {
         setActiveSessionId(t.sessionId)
         setView("conversation")
       }
@@ -3757,16 +3758,23 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 这个值也就无关紧要了（侧栏那边会去重）。
    */
   const [刚选的工作区, 设刚选的工作区] = useState<string | undefined>(undefined)
+  const enterHomeProject = (project?: ProjectSummary) => {
+    回到初始画面()
+    setHomeWorkspaceIntent({ path: project?.workspace })
+    设刚选的工作区(project?.workspace)
+    setActiveProjectId(project?.projectId)
+  }
 
   // 两个入口共用选目录、注册项目与刷新列表；添加工作区不切换会话或清空草稿。
-  async function chooseWorkspaceDirectory(selected?: string): Promise<{ path: string; projectId: string } | null> {
+  async function chooseWorkspaceDirectory(selected?: string, rethrow = false): Promise<{ path: string; projectId: string } | null> {
     try {
       const path = selected ?? await client.pickDirectory(默认工作区?.path)
       if (!path) return null
       const project = await client.get<{ projectId: string }>("openProject", { workspace: path })
-      await loadProjects(client)
+      if (rethrow) setProjects(await client.get<ProjectSummary[]>('listProjects', {}))
+      else await loadProjects(client)
       return { path, projectId: project.projectId }
-    } catch (error) { fail(error); return null }
+    } catch (error) { if (rethrow) throw error; fail(error); return null }
   }
 
   const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
@@ -5348,7 +5356,32 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     )
   })() : null
   return (<>
-    <div className="app-shell" data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
+    {appPage === 'home' ? <div className="app-shell app-home-shell" inert={向导中 && !跳过向导}>
+      <header className="topbar"><span className="brand"><img className="brand-mark" src={rpIcon} alt="" />DAWN Science</span><span className="hint">{t("首页")}</span></header>
+      <AppHome client={client} projects={projects} onProjectsLoaded={setProjects} ready={ready}
+        onNewChat={() => enterHomeProject()}
+        onOpenProject={enterHomeProject}
+        onChooseProject={async () => {
+          const selected = await chooseWorkspaceDirectory(undefined, true)
+          if (selected) enterHomeProject($projects.get().find(project => project.projectId === selected.projectId))
+        }}
+        onOpenSession={async selected => {
+          // Install summaries before selecting: another project's session is not in the active cache yet.
+          const temporary = projects.find(project => project.projectId === selected.projectId)?.temporary
+          const latest = await client.get<SessionSummary[]>(temporary ? 'listTemporarySessions' : 'listSessions', temporary ? {} : { projectId: selected.projectId })
+          if (!latest.some(row => row.sessionId === selected.sessionId && !row.archivedAt)) throw new Error(t("这段会话已不在最近列表中，请刷新后重试。"))
+          if (temporary) setTempSessions(latest)
+          else { setSessions(latest); setActiveProjectId(selected.projectId) }
+          标未读(selected.sessionId, false)
+          setActiveSessionId(selected.sessionId)
+          setView('conversation')
+        }} />
+      <footer className="statusbar app-home-status"><span>{t("本机")}</span><div>
+        <Button variant="ghost" size="status" onClick={打开首次引导}><导航图标 />{t("导航栏")}</Button>
+        <Button variant="ghost" size="status" onClick={() => { showWorkbench(); 开设置栏('about') }}>{更新回执?.状态.当前 ? `v${更新回执.状态.当前.replace(/^v/, '')}` : '—'}</Button>
+      </div></footer>
+    </div> : null}
+    <div className="app-shell" hidden={appPage === 'home'} inert={appPage === 'home' || (向导中 && !跳过向导)} data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
       <div className="topbar">
         <div className="topbar-navigation">
         {/**
@@ -5386,6 +5419,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           }}
         ><键盘图标 /></Button>
         </div>
+        <HomeButton onClick={() => { 设快捷键开着(false); 设搜索开着(false); closePalette(); showHome() }} />
         <div className="topbar-conversation" data-tabs={Boolean(会话页签)}>
           {会话页签 ? <div className="topbar-session-group"><文件夹描边图标 className="conv-title-icon" />{会话页签}</div> : null}
           <div className="topbar-conversation-slot" ref={setConversationHeaderTarget} />
@@ -5941,6 +5975,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             </>
           ) : (
             <EmptyConversation
+              workspaceIntent={homeWorkspaceIntent}
               agents={agentIds}
               agentLabel={agentLabel}
               /**

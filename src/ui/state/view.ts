@@ -10,6 +10,7 @@
 import { splitLinkedScriptPrompt } from "../../protocol/script-context.js"
 import { atom } from "nanostores"
 import { setValue } from "./identity.js"
+import { showWorkbench } from './app-page.js'
 
 /** `files` 是 ②-A′ 加的：工作区目录树 + 预览 */
 /**
@@ -246,7 +247,7 @@ export function togglePalette(): void {
   else openPalette()
 }
 
-export const setView = (v: View) => setValue($view, v)
+export const setView = (v: View) => { showWorkbench(); setValue($view, v) }
 export const setActiveProjectId = (v: string | undefined) => setValue($activeProjectId, v)
 export const setActiveSessionId = (v: string | undefined) => setValue($activeSessionId, v)
 

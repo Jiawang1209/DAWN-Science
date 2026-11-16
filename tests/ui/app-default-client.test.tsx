@@ -107,6 +107,21 @@ describe("App · 默认 client 路径（生产环境唯一走的那条）", () =
     expect(within(wizard).getByRole("heading", { name: "让研究工作在这里衔接" })).toBeTruthy()
   })
 
+  it("完成引导后先显示首页，再进入工作台并能返回", async () => {
+    const { showHome } = await import('../../src/ui/state/app-page.js')
+    showHome()
+    installBridge()
+    render(<App />)
+    await settle()
+    expect(screen.getByRole("heading", { name: "继续你的研究" })).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "新建对话" }))
+    expect(screen.queryByRole("heading", { name: "继续你的研究" })).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "首页" }))
+    expect(screen.getByRole("heading", { name: "继续你的研究" })).toBeTruthy()
+    fireEvent.keyDown(document, { key: 'k', metaKey: true })
+    expect(screen.getByRole('dialog', { name: '命令面板' })).toBeTruthy()
+  })
+
   it("不传 client 时也不空转 —— 取数次数必须收敛", async () => {
     const { invokes } = installBridge()
     render(<App />)

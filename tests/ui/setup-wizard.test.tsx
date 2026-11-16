@@ -46,7 +46,7 @@ describe("SetupWizard", () => {
     fireEvent.click(screen.getByRole("button", { name: "下一页" }))
     expect(screen.getByRole("heading", { name: "连接你的计算环境" })).toBeTruthy()
     expect(onProbe).toHaveBeenCalledTimes(1)
-    fireEvent.click(screen.getByRole("button", { name: "跳过，进入工作台" }))
+    fireEvent.click(screen.getByRole("button", { name: "跳过，进入首页" }))
     expect(onStart).toHaveBeenCalledTimes(1)
   })
 
@@ -55,7 +55,7 @@ describe("SetupWizard", () => {
     render(<SetupWizard initialStep="key" {...基本} configured={[]} onSaveKey={async () => {}} onSkip={onSkip} />)
     fireEvent.click(screen.getByRole("button", { name: "稍后配置" }))
     expect(screen.getByText("尚未配置可用的 API Key，进入后可在设置中补充。")).toBeTruthy()
-    fireEvent.click(screen.getByRole("button", { name: "跳过，进入工作台" }))
+    fireEvent.click(screen.getByRole("button", { name: "跳过，进入首页" }))
     expect(onSkip).toHaveBeenCalledTimes(1)
   })
 
@@ -210,10 +210,10 @@ describe("SetupWizard", () => {
     fireEvent.click(screen.getByRole("button", { name: "粘贴路径…" }))
     fireEvent.change(screen.getByLabelText("可执行文件的完整路径"), { target: { value: "/missing/python" } })
     fireEvent.click(screen.getByRole("button", { name: "用这个" }))
-    expect((screen.getByRole("button", { name: "跳过，进入工作台" }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole("button", { name: "跳过，进入首页" }) as HTMLButtonElement).disabled).toBe(true)
     await act(async () => rejectSave(new Error("路径不存在")))
     expect(screen.getByRole("alert").textContent).toBe("Python 解释器未配置成功：路径不存在")
-    expect((screen.getByRole("button", { name: "跳过，进入工作台" }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole("button", { name: "跳过，进入首页" }) as HTMLButtonElement).disabled).toBe(false)
   })
 
   it("已有多模型连接只补填密钥时不重写连接", async () => {

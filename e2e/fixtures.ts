@@ -507,6 +507,8 @@ export interface DawnOptions {
    * 不预置的话**每条用例的第一屏都是向导**——本项目 2026-08-12 那种「十几条同时红」。只有向导自己的用例开它。
    */
   showSetup?: boolean
+  /** Keep the real launch home for homepage tests; other suites explicitly enter the workbench. */
+  showHome?: boolean
 }
 
 /** 声明式的 toolCall 规格 → mock 那一侧要的回调。**状态机只此一份** */
@@ -941,6 +943,12 @@ export const test = base.extend<{ dawnOptions: DawnOptions; dawn: DawnFixture }>
       }, Boolean(dawnOptions.showSetup))
       // `addInitScript` 只对之后的导航生效，首帧已经画过了，所以要重来一次
       await p.reload()
+      if (!dawnOptions.showSetup && !dawnOptions.showHome) {
+        const enter = p.locator('.app-home').getByRole('button', { name: '新建对话', exact: true })
+        // Same-window reloads retain workbench; a fresh window starts at home.
+        await expect(p.locator('.app-shell:not([hidden])')).toBeVisible()
+        if (await enter.count()) await enter.click()
+      }
     }
 
     let page = 接线(await app.firstWindow())

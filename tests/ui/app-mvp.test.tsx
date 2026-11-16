@@ -644,6 +644,33 @@ describe("MVP 主路径 · 异常要出声", () => {
 })
 
 describe("慢的会话创建不该把人从当前视图上拽走", () => {
+  it("首页项目入口的首句使用该项目目录", async () => {
+    const h = harness({ projects: [proj('/w/proj')] })
+    render(<App client={h.client} />)
+    fireEvent.click(screen.getByRole('button', { name: '首页' }))
+    const button = await screen.findByRole('button', { name: /proj.*\/w\/proj/ })
+    fireEvent.click(button)
+    const box = await screen.findByPlaceholderText(/输入问题/) as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: '项目第一句' } })
+    fireEvent.submit(box.form!)
+    await waitFor(() => expect((h.calls.find(call => call.op === 'createTask')?.req as { workspace?: string }).workspace).toBe('/w/proj'))
+    await waitFor(() => expect(h.calls.some(call => call.op === 'subscribeSession')).toBe(true))
+    await 从首页开始('新的普通任务')
+    await waitFor(() => expect(h.calls.filter(call => call.op === 'createTask')).toHaveLength(2))
+    expect((h.calls.filter(call => call.op === 'createTask')[1]!.req as { workspace?: string }).workspace).toBeUndefined()
+  })
+
+  it("创建首句期间返回首页，后台完成仍停在首页", async () => {
+    const h = harness({ projects: [proj('/w/proj')], deferCreateSession: true })
+    render(<App client={h.client} />)
+    await 从首页开始()
+    await waitFor(() => expect(h.calls.some(call => call.op === 'createTask')).toBe(true))
+    fireEvent.click(screen.getByRole('button', { name: '首页' }))
+    h.releaseCreateSession()
+    await waitFor(() => expect(h.calls.some(call => call.op === 'writeToSession')).toBe(true))
+    await act(async () => { for (let n = 0; n < 20; n++) await Promise.resolve() })
+    expect(screen.getByRole('heading', { name: '继续你的研究' })).toBeTruthy()
+  })
   /**
    * **2026-08-09 由 e2e 在负载下抓到的真实缺陷。**
    *

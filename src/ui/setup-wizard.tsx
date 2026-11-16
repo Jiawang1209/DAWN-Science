@@ -411,7 +411,7 @@ export function SetupWizard({
             <Button variant="text" disabled={saving} onClick={() => setStep(3)}>{t("稍后配置")}</Button>
             <Button variant="primary" disabled={!有key || saving} onClick={() => setStep(3)}>{t("下一页")}</Button>
           </> : step === 3 ? (
-            <Button variant="primary" disabled={busy} onClick={完成}>{(interpreters.python && !interpreterErrors.python) || (interpreters.r && !interpreterErrors.R) ? t("开始使用 →") : t("跳过，进入工作台")}</Button>
+            <Button variant="primary" disabled={busy} onClick={完成}>{(interpreters.python && !interpreterErrors.python) || (interpreters.r && !interpreterErrors.R) ? t("开始使用 →") : t("跳过，进入首页")}</Button>
           ) : <Button variant="primary" onClick={() => setStep(step + 1)}>{t("下一页")}</Button>}
         </div>
       </footer>

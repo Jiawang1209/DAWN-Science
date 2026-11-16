@@ -1,4 +1,5 @@
 import {clearCollaborationReturn} from './collaboration-return.js'
+import { showHome } from './app-page.js'
 import {resetCollaborationViews} from './collaboration-view.js'
 import {$deliveryViews} from './delivery.js'
 import { $routeViews } from "./route-navigation.js"
@@ -279,6 +280,7 @@ import { $sessionRecovery } from "./session-recovery.js"
  * 那条路径也应当走这里，而不是各自 `set()` 一遍。
  */
 export function resetAllState(): void {
+  showHome()
   resetCollaborationViews()
   clearCollaborationReturn()
   $deliveryViews.set(new Map())

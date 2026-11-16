@@ -7145,6 +7145,7 @@ const OPENERS: readonly { 标题: string; 说明: string; 发出去的话: strin
 
 /** 还没有任何会话时的主区域。**给出下一步动作，而不是一片空白。** */
 export function EmptyConversation({
+  workspaceIntent,
   agents,
   agentLabel,
   agentKind,
@@ -7164,6 +7165,7 @@ export function EmptyConversation({
   workspaceMenu,
   先出方案,
 }: {
+  workspaceIntent?: { path: string | undefined } | undefined
   agents: readonly string[]
   /** agent id → 该怎么称呼（`ds-chat` → `DeepSeek`）。缺省时用 id */
   agentLabel?: ((agentId: string) => string) | undefined
@@ -7250,7 +7252,10 @@ export function EmptyConversation({
    * 还没建任务，所以工作目录先记在这一屏上（2026-08-12）。
    * 发出去的那一刻它跟着 `onStart` 一起走——**归到哪一栏由它决定**。
    */
-  const [工作目录, 设工作目录] = useState<string | undefined>(undefined)
+  const [工作目录, 设工作目录] = useState<string | undefined>(workspaceIntent?.path)
+  useLayoutEffect(() => {
+    if (workspaceIntent) 设工作目录(workspaceIntent.path)
+  }, [workspaceIntent])
   /** 与对话里那份同一个理由（2026-08-25）：插过文件路径也算「带上了」 */
   const [空态附过, 设空态附过] = useState(false)
   /**

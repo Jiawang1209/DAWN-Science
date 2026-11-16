@@ -17,6 +17,7 @@ import { afterEach, beforeEach } from "vitest"
 import { resetAllState } from "../../src/ui/state/index.js"
 import { $lang } from "../../src/ui/i18n/index.js"
 import { 记跳过, 记引导完成 } from "../../src/ui/setup-wizard.js"
+import { showWorkbench } from '../../src/ui/state/app-page.js'
 
 /**
  * jsdom 没有实现 `ResizeObserver`，但真实 Chromium 有。
@@ -81,6 +82,8 @@ if (typeof globalThis.matchMedia === "undefined") {
  */
 beforeEach(() => {
   resetAllState()
+  // Most component suites exercise the workbench, not launch navigation.
+  showWorkbench()
   $lang.set("zh")
   /**
    * 预置「首启向导已跳过」（2026-08-28）。向导的判据修成「目录与凭证都到手且没凭证」之后，

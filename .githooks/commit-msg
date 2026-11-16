@@ -16,3 +16,6 @@ sed -e '/^Co-Authored-By: Claude/d' \
     -e '/^Claude-Session: /d' \
     -e '/^Co-Authored-By: .*@anthropic\.com>/d' "$1" > "$tmp"
 mv "$tmp" "$1"
+
+# The final commit message does not exist yet when pre-commit runs.
+node scripts/secret-guard.mjs --message "$1"

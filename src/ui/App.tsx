@@ -276,6 +276,8 @@ const CodeEditorPanel = lazy(() => import('./code-editor.js').then(module => ({ 
 export function App({ client: injected }: { client?: WorkbenchClient }) {
   const client = useMemo(() => injected ?? createClient(), [injected])
   const appPage = useStore($appPage)
+  // Closing a tab is window presentation state, never a persisted archive action.
+  const [closedSessionTabs, setClosedSessionTabs] = useState<ReadonlySet<string>>(() => new Set())
 
   /**
    * 状态**全部住在 state/ 里，按权威分家**（`state/index.ts` 的文件头有分家表）。
@@ -324,6 +326,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 设置在场 = useStore($设置在场)
   const sessionId = useStore($activeSessionId)
+  useEffect(() => {
+    if (!sessionId) return
+    setClosedSessionTabs(previous => {
+      if (!previous.has(sessionId)) return previous
+      const next = new Set(previous); next.delete(sessionId); return next
+    })
+  }, [sessionId])
   const routeController = useMemo(() => new RouteController(), [])
   const routeState = useStore(routeController.$state)
   const routeResult = routeState.sessionId === sessionId ? routeState.result : undefined
@@ -5298,7 +5307,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     // 侧栏「会话」那一组的也不画（与坞的 `t:` 同一个判据；宿主可能是占着临时根的普通项目，只看 `temporary` 会漏）
     if (!远端 && (!项目 || 项目.temporary || 在会话那一组(session, tasks))) return null
     // 远端会话住在 `tempSessions`（2026-08-23 审查抓的：只筛 `sessions` 时远端那一条分栏永远是空的）
-    const 同处 = (远端 ? tempSessions : sessions).filter((x) => 能进坞(x) && !x.archivedAt && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
+    const 同处 = (远端 ? tempSessions : sessions).filter((x) => 能进坞(x) && !x.archivedAt && (!closedSessionTabs.has(x.sessionId) || x.sessionId === session.sessionId) && (远端 ? x.remote?.connectionId === 远端 : !x.remote && x.projectId === session.projectId))
     if (!同处.some(x => x.sessionId === session.sessionId)) 同处.push(session)
     return (
       <SessionTabs
@@ -5310,12 +5319,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           setActiveSessionId(id)
         }}
         onClose={(id) => {
+          setClosedSessionTabs(previous => new Set([...previous, id]))
           // 关掉当前这段之前，先跳到相邻的一段，别把人晾在空屏上
           if (id === session.sessionId) {
             const 兄弟 = 同处.find((x) => x.sessionId !== id)
-            if (兄弟) setActiveSessionId(兄弟.sessionId)
+            setActiveSessionId(兄弟?.sessionId)
           }
-          void 归档几段([id]).catch(fail)
         }}
         onReorder={reorderSessions}
         onSessionActions={(id) => {

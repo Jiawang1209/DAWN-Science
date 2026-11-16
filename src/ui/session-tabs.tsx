@@ -41,7 +41,7 @@ export function SessionTabs({
   onPick: (sessionId: string) => void
   /** 在同一处再开一段；没有就不画「＋」 */
   onNew?: (() => void) | undefined
-  /** 关掉一段 = 收进归档（藏，不是删；侧栏「已归档」能找回）。不给就不画那颗 × */
+  /** Only close this window's tab; the session remains available in the sidebar. */
   onClose?: ((sessionId: string) => void) | undefined
   /**
    * 右键「放进坞里」（侧边对话，2026-09-24）。只给此回调时保留原来的单项菜单。
@@ -161,7 +161,7 @@ export function SessionTabs({
                 variant="ghost"
                 size="inline"
                 className="session-tab-close"
-                aria-label={tf("关掉「{0}」（收进归档）", x.title)}
+                aria-label={tf("关闭页签：{0}", x.title)}
                 onClick={() => onClose(x.sessionId)}
               >
                 <关闭图标 />

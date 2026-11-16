@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefO
 import { createPortal } from 'react-dom'
 import type { InterpreterCandidate, KernelState } from '../protocol/index.js'
 import { Button } from './primitives.js'
-import { 插件图标, 技能图标, 设置图标, 对话图标 } from './icons.js'
+import { 插件图标, 技能图标, 设置图标, 对话图标, 导航图标 } from './icons.js'
 import { ServiceMark } from './service-mark.js'
 import { SessionMenu } from './session-menu-items.js'
 import { t, tf } from './i18n/index.js'
@@ -142,7 +142,7 @@ export function AppStatusBar({ model, environment, counts, scopeLabel, version, 
           aria-haspopup="menu" aria-expanded={extensionsOpen} onClick={() => { setDetail(undefined); setExtensionsOpen(!extensionsOpen) }}>
           <插件图标 /><span>{t("扩展")}</span>
         </Button>
-        {onOpenGuide ? <Button variant="ghost" size="status" onClick={() => { setDetail(undefined); setExtensionsOpen(false); onOpenGuide() }}>{t("导航栏")}</Button> : null}
+        {onOpenGuide ? <Button variant="ghost" size="status" onClick={() => { setDetail(undefined); setExtensionsOpen(false); onOpenGuide() }}><导航图标 /><span>{t("导航栏")}</span></Button> : null}
         <Button variant="ghost" size="status" className="app-status-version" aria-label={tf("版本 {0}", version ? `v${version.replace(/^v/, '')}` : '—')}
           onClick={() => openSettings('about')}>{version ? `v${version.replace(/^v/, '')}` : '—'}</Button>
       </div>

@@ -291,6 +291,15 @@ export function 文件图标({ className }: 图标属性 = {}) {
   )
 }
 
+/** 导航。一枚罗盘，用于重新查看应用引导。 */
+export function 导航图标({ className }: 图标属性 = {}) {
+  return (
+    <壳 {...(className ? { className } : {})}>
+      <path fillRule="evenodd" d="M8 1.3a6.7 6.7 0 1 0 0 13.4A6.7 6.7 0 0 0 8 1.3Zm0 1.4a5.3 5.3 0 1 1 0 10.6A5.3 5.3 0 0 1 8 2.7Zm3.1 2.2L9.2 9.2l-4.3 1.9 1.9-4.3 4.3-1.9ZM8 7.1a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Z" />
+    </壳>
+  )
+}
+
 /** 概览。三根长短不一的柱子 */
 export function 概览图标({ className }: 图标属性 = {}) {
   return (

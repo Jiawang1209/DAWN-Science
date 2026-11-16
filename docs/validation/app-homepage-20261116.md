@@ -21,3 +21,9 @@ Branch: codex/app-homepage. Base: 216dcdc0. Implemented the approved home design
 - Inspected real Electron light and dark/narrow screenshots. The home content has no horizontal overflow at the tested 700px viewport.
 
 Electron checks used isolated profiles and the shared mock inference server; no real model requests or user credential changes were made. Native R/Python plotting and Windows execution were not rerun for this UI change.
+
+## Merge-review follow-up
+
+The review found older asynchronous fork, archive, delete and unarchive callbacks could still switch back to the workbench after the user returned home. These operations now preserve the page generation while retaining necessary data updates. Batch session/project removal uses the same navigation guard. Forking from a non-selected sidebar session remains supported by comparing the selection captured when the action started.
+
+Four delayed-operation regressions and one non-selected-session fork regression failed before their respective fixes. The three focused App/home suites then passed all 47 tests, and typechecking passed. A second independent read-only review found no further confirmed P1/P2 issues in these changes. Existing user archive records remain untouched.

@@ -2730,6 +2730,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         safety: <>{t("账本不动：这个会话对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
         confirmLabel: t("删除会话"),
         onConfirm: () => {
+          const pageRevision = appPageRevision()
           client
             .get<{ ledgerKept: number; transcriptTrashed: boolean; problem?: string }>("deleteSession", { sessionId: s.sessionId })
             .then((r) => {
@@ -2739,7 +2740,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               // 删的正好是当前这个，就把选中清掉——**不要留一个指向空的选中**
               if ($activeSessionId.get() === s.sessionId) {
                 setActiveSessionId(undefined)
-                setView("conversation")
+                if (appPageRevision() === pageRevision) setView("conversation")
               }
               const pid = $activeProjectId.get()
               if (pid) void loadSessions(client, pid)
@@ -2804,6 +2805,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    */
   const 归档几段 = useCallback(
     async (ids: readonly string[]) => {
+      const pageRevision = appPageRevision()
       const 没成: string[] = []
       for (const id of ids) {
         try {
@@ -2814,7 +2816,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       }
       if ($activeSessionId.get() && ids.includes($activeSessionId.get()!)) {
         setActiveSessionId(undefined)
-        setView("conversation")
+        if (appPageRevision() === pageRevision) setView("conversation")
       }
       坞里那段没了(ids.filter((id) => !没成.includes(id)), t("坞里那段对话已归档，已从坞里拿下"))
       await 重取会话()
@@ -2847,12 +2849,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         return
       }
       // fork
+      const pageRevision = appPageRevision()
+      const selectionAtStart = $activeSessionId.get()
       const 最后一句 = [...$items.get()].reverse().find((x) => x.type === "turn" && x.who === "agent" && x.final)
       void client
         .get<{ sessionId?: string }>("createTask", { agentId: s.agentId, ...(s.remote ? { connectionId: s.remote.connectionId } : task.workspace ? { workspace: task.workspace } : {}) })
         .then(async (r) => {
           await loadTasks(client)
-          if (s.projectId) await loadSessions(client, s.projectId)
+          if (s.projectId) {
+            const rows = await client.get<SessionSummary[]>('listSessions', { projectId: s.projectId })
+            if (appPageRevision() === pageRevision) setSessions(rows)
+          }
           if (!r.sessionId) return
           const 引子 = 最后一句 && 最后一句.type === "turn" && $activeSessionId.get() === s.sessionId ? `接着上一段「${标题}」的结论：
 > ${最后一句.text.trim().slice(0, 600).replace(/\n/g, "\n> ")}
@@ -2861,6 +2868,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
 
 `
           setDraft(r.sessionId, 引子)
+          if (appPageRevision() !== pageRevision || $activeSessionId.get() !== selectionAtStart) return
           setActiveSessionId(r.sessionId)
           setView("conversation")
         })
@@ -2939,6 +2947,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         safety: <>{t("账本不动：它们对文件做过什么，记录仍然留在坞的「概览」里。")}</>,
         confirmLabel: tf("删除 {0} 段", targets.length),
         onConfirm: () => {
+          const pageRevision = appPageRevision()
           /**
            * **一条条删，不并发**。后端每次删都要停进程、动库、算账本，
            * 十几条同时发过去只会让失败更难归因——而这里最要紧的是
@@ -2962,7 +2971,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             坞里那段没了(删掉的, t("坞里那段对话已删除，已从坞里拿下"))
             if ($activeSessionId.get() && targets.some((t) => t.sessionId === $activeSessionId.get())) {
               setActiveSessionId(undefined)
-              setView("conversation")
+              if (appPageRevision() === pageRevision) setView("conversation")
             }
             const pid = $activeProjectId.get()
             if (pid) await loadSessions(client, pid)
@@ -3034,6 +3043,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         ),
         confirmLabel: 只删几段 ? tf("删除 {0} 段", 会话数) : tf("移除 {0} 个", groups.length),
         onConfirm: () => {
+          const pageRevision = appPageRevision()
           void (async () => {
             const 没删掉: string[] = []
             /** 真删掉了的会话（坞里那段在里面就得拿下并说一句，侧边对话 2026-09-24） */
@@ -3067,7 +3077,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             if (pid && groups.some((g) => g.projectId === pid)) {
               setActiveProjectId(undefined)
               setActiveSessionId(undefined)
-              setView("conversation")
+              if (appPageRevision() === pageRevision) setView("conversation")
             }
             await loadTempSessions(client)
             await loadTasks(client)
@@ -3110,6 +3120,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           ),
           confirmLabel: t("移除项目"),
           onConfirm: () => {
+            const pageRevision = appPageRevision()
             client
               .get("deleteProject", { projectId: pid,...(impact.retained?.count?{deleteRetained:true,retainedRevision:impact.retained.revision}:{}) })
               .then(() => {
@@ -3124,7 +3135,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 if (删的是当前) {
                   setActiveProjectId(undefined)
                   setActiveSessionId(undefined)
-                  setView("conversation")
+                  if (appPageRevision() === pageRevision) setView("conversation")
                 }
                 /**
                  * **把会话列表也清掉**（2026-08-11 补）。
@@ -4228,16 +4239,21 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }
 
   /** 取消归档并打开（原先写在「已归档」那屏的 `onOpen` 里；2026-09-27 抽出来——全文搜索点到归档了的走同一条） */
-  const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }): Promise<"unarchived" | undefined> =>
-    client
+  const 取消归档并打开 = (s: { sessionId: string; projectId?: string | undefined }): Promise<"unarchived" | undefined> => {
+    const pageRevision = appPageRevision()
+    return client
       .get("setSessionArchived", { sessionId: s.sessionId, archived: false })
       .then(async () => {
-        if (s.projectId && !projects.find((p) => p.projectId === s.projectId)?.temporary) setActiveProjectId(s.projectId)
-        if (s.projectId) await loadSessions(client, s.projectId)
+        if (s.projectId && !projects.find((p) => p.projectId === s.projectId)?.temporary && appPageRevision() === pageRevision) setActiveProjectId(s.projectId)
+        if (s.projectId) {
+          const rows = await client.get<SessionSummary[]>('listSessions', { projectId: s.projectId })
+          if (appPageRevision() === pageRevision) setSessions(rows)
+        }
         await loadTasks(client)
         // 临时会话摘要就绪后再选中，避免项目列表刷新时短暂丢失会话、重挂并丢掉搜索命中。
         await loadTempSessions(client)
         await 重取归档数()
+        if (appPageRevision() !== pageRevision) return "unarchived" as const
         setActiveSessionId(s.sessionId)
         // 从侧栏搜索点进来时整页设置可能开着：走 `关掉设置`（它会把被顶掉的坞房客还回去）
         if ($view.get() === "settings") 关掉设置()
@@ -4248,6 +4264,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         fail(e)
         return undefined
       })
+  }
 
   /**
    * 点了一条全文搜索结果（2026-09-27，spec §2.3）。**不另开一条打开会话的路**：

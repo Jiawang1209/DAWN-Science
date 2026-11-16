@@ -108,11 +108,14 @@ function harness(
     /** 建出来的会话是 cli（外部 CLI 的对话模式），可带模型清单 */
     cliAgent?: { models?: string[] | undefined }
     deferBrowserFile?: boolean
+    deferOperation?: string
+    archivedSessions?: unknown[]
   } = {},
 ) {
   const calls: { op: string; req: unknown }[] = []
   let releaseCreate: (() => void) | undefined
   let rejectBrowserFile: ((error: Error) => void) | undefined
+  let releaseOperation: (() => void) | undefined
   const listeners = new Set<(raw: unknown) => void>()
 
   const projects = [...(over.projects ?? [])]
@@ -135,6 +138,10 @@ function harness(
         }
       case "listProjects":
         return projects
+      case "listArchivedSessions":
+        return { sessions: over.archivedSessions ?? [] }
+      case "deleteSession":
+        return { ledgerKept: 0, transcriptTrashed: true }
       case "browseDirectory": {
         const owner = (req as { projectId?: string }).projectId
         const path = owner === "p2" ? "/w/other" : "/w/proj"
@@ -258,6 +265,7 @@ function harness(
 
   const invoke = async (op: string, req: unknown): Promise<RawResponse> => {
     calls.push({ op, req })
+    if (op === over.deferOperation) await new Promise<void>(resolve => { releaseOperation = resolve })
     if (op === "readBrowserFile" && over.deferBrowserFile) await new Promise<never>((_resolve, reject) => { rejectBrowserFile = reject })
     if ((op === "createSession" || op === "createTemporarySession" || op === "createTask") && over.deferCreateSession) {
       await new Promise<void>((r) => (releaseCreate = r))
@@ -293,6 +301,7 @@ function harness(
     /** 放行挂起的 createSession */
     releaseCreateSession: () => act(() => releaseCreate?.()),
     rejectBrowserFile: (error: Error) => rejectBrowserFile?.(error),
+    releaseOperation: () => act(() => releaseOperation?.()),
   }
 }
 
@@ -644,6 +653,40 @@ describe("MVP 主路径 · 异常要出声", () => {
 })
 
 describe("慢的会话创建不该把人从当前视图上拽走", () => {
+  it('允许从未选中的侧栏会话在新会话中继续', async () => {
+    const h = harness({ projects: [proj('/w/proj')] })
+    await openAndStart(h)
+    fireEvent.click(screen.getByRole('button', { name: '新建任务' }))
+    fireEvent.contextMenu(document.querySelector('.sess-item')!)
+    fireEvent.click(await screen.findByRole('menuitem', { name: '在新会话中继续' }))
+    await waitFor(() => expect(h.calls.filter(call => call.op === 'createTask')).toHaveLength(2))
+    await act(async () => { for (let count = 0; count < 50; count++) await Promise.resolve() })
+    expect((screen.getByPlaceholderText(/输入问题/) as HTMLTextAreaElement).value).toMatch(/^接着上一段/)
+  })
+
+  it.each(['fork', 'archive', 'delete', 'unarchive'] as const)('返回首页后，迟到的 %s 操作不抢回工作台', async action => {
+    const options = { projects: [proj('/w/proj')], deferOperation: '', archivedSessions: action === 'unarchive' ? [{ ...SESSION, archivedAt: '2026-11-01T00:00:00Z', projectName: 'proj', workspace: '/w/proj' }] : [] }
+    const h = harness(options)
+    await openAndStart(h)
+    const pendingOp = action === 'fork' ? 'createTask' : action === 'delete' ? 'deleteSession' : 'setSessionArchived'
+    const before = h.calls.filter(call => call.op === pendingOp).length
+    options.deferOperation = pendingOp
+    if (action === 'unarchive') {
+      fireEvent.click(screen.getByRole('button', { name: /^已归档/ }))
+      await waitFor(() => expect(document.querySelector('.archived-row-main')).toBeTruthy())
+      fireEvent.click(document.querySelector('.archived-row-main')!)
+    } else {
+      fireEvent.contextMenu(document.querySelector('.sess-item')!)
+      fireEvent.click(await screen.findByRole('menuitem', { name: action === 'fork' ? '在新会话中继续' : action === 'archive' ? '收进归档' : '删除' }))
+      if (action === 'delete') fireEvent.click(screen.getByRole('button', { name: '删除会话' }))
+    }
+    await waitFor(() => expect(h.calls.filter(call => call.op === pendingOp)).toHaveLength(before + 1))
+    fireEvent.click(screen.getByRole('button', { name: '首页' }))
+    h.releaseOperation()
+    await act(async () => { for (let count = 0; count < 50; count++) await Promise.resolve() })
+    expect(screen.getByRole('heading', { name: '继续你的研究' })).toBeTruthy()
+  })
+
   it("首页项目入口的首句使用该项目目录", async () => {
     const h = harness({ projects: [proj('/w/proj')] })
     render(<App client={h.client} />)

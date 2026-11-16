@@ -1160,6 +1160,9 @@ pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   overflow-y: auto;
+  /* Native text and its highlight mirror must reserve the same scrollbar width,
+     including while an edit crosses the scrolling threshold. */
+  scrollbar-gutter: stable;
   padding: var(--dawn-space-2);
   border: 0;
   background: transparent;

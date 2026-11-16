@@ -9856,7 +9856,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 
 /* Kernel plots stay in their conversation; inspecting one never replaces the editor. */
 .kernel-plot-image { min-width: 0; }
-.kernel-plot-trigger { display: block; max-width: 100%; cursor: zoom-in; }
+.kernel-plot-trigger { display: block; max-width: 100%; margin-inline: auto; cursor: zoom-in; }
 .kernel-plot-trigger .kout-img { display: block; }
 .kernel-plot-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--dawn-space-2); }
 .kernel-plot-notice { margin: var(--dawn-space-1) 0; color: var(--dawn-text-3); font-size: var(--dawn-fs-sub); }

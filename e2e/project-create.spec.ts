@@ -26,6 +26,15 @@ test.describe('new project from the approved homepage', () => {
     expect(existsSync(join(target, 'analysis/scripts'))).toBe(true)
     expect(readFileSync(join(target, 'AGENTS.md'), 'utf8')).toContain('DAWN_PROJECT_CONTEXT_ACCEPT')
     expect(readFileSync(join(target, 'AGENTS.md'), 'utf8')).not.toContain('DAWN_DISPLAY_DESCRIPTION_PRIVATE')
+    const reopened = await page.evaluate(async ({ workspace, target }) => {
+      const before = (await window.dawn!.invoke('listProjects', {})).data as { projectId: string; workspace: string }[]
+      const opened = await window.dawn!.invoke('openProject', { workspace })
+      if (!opened.ok) throw new Error(JSON.stringify(opened.error))
+      const after = (await window.dawn!.invoke('listProjects', {})).data as unknown[]
+      return { expected: before.find(row => row.workspace === target)?.projectId, actual: (opened.data as { projectId: string }).projectId, countChanged: before.length !== after.length }
+    }, { workspace: join(dawn.dir, name), target })
+    expect(reopened.actual).toBe(reopened.expected)
+    expect(reopened.countChanged).toBe(false)
     await page.locator('.composer textarea').fill('项目上下文验收')
     await page.getByRole('button', { name: '发送', exact: true }).click()
     await expect(page.getByText('项目约定：已读取；展示说明：未发送', { exact: false }).last()).toBeVisible()

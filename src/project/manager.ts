@@ -5,7 +5,7 @@
  * 这一层把三个 store 拼成协议实体，是 Workbench 后端的主要数据来源。
  */
 import { randomUUID } from "node:crypto"
-import { mkdirSync } from "node:fs"
+import { mkdirSync, realpathSync } from "node:fs"
 import { basename, join, resolve, isAbsolute } from "node:path"
 import type { ProviderRegistry } from "../config/schema.js"
 import type { ProjectRecord, ProjectStore } from "../store/projects.js"
@@ -65,6 +65,19 @@ export class ProjectManager {
     const normalized = resolve(workspace)
     const existing = this.projectStore.findByWorkspace(normalized)
     if (existing) return existing
+
+    // Explicit creation stores the real parent path. Reopening through filesystem aliases
+    // (including macOS /var -> /private/var) must reuse that identity and its history.
+    // Keep exact legacy records above, and preserve open()'s support for not-yet-created paths.
+    let physicalWorkspace: string | undefined
+    try { physicalWorkspace = realpathSync(normalized) }
+    catch (error) {
+      if (!['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error
+    }
+    if (physicalWorkspace && physicalWorkspace !== normalized) {
+      const physicalProject = this.projectStore.findByWorkspace(physicalWorkspace)
+      if (physicalProject) return physicalProject
+    }
 
     const rec: ProjectRecord = {
       projectId: randomUUID(),

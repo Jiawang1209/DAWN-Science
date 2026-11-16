@@ -29,7 +29,7 @@ text: content.map(c => c.text ?? "").join("").slice(0, RESULT_PREVIEW_CHARS)  //
 
 ### 一处对上一轮判断的更正
 
-pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`packages/agent/src/harness/messages.ts:20-26`），不是通用的工具结果字段。此前记录的「pi 已有与 wisp 相同的设计」**说过头了**：pi 只对 bash 有，wisp 是所有文本工具统一预算。
+pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`packages/agent/src/harness/messages.ts:20-26`），不是通用的工具结果字段。**不能把 bash 的特例视为所有工具都有的契约**：pi 只对 bash 提供这两个字段，DAWN 的事件流仍需要通用文本输出预算。
 
 ---
 
@@ -60,8 +60,8 @@ pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`
   signature = calls.map(c => `${c.name}:${stableStringify(c.input)}`).join("|")
   ```
 - **效果**：模型退化时不再一路烧到上限。**pi 确实没有这个**（全包 grep `stuck|repeated|no_progress` 零命中）
-- **来源**：wisp-science `crates/wisp-core/src/agent.rs`（其自身移植自 mangopi-cli）
-- **对标 —— 直接从窗口式起步，不重走它的弯路**：wisp 的注释与测试名留下了一道疤——`interspersed_tool_call_loop_breaks_the_loop`，注释写着 *"the case the **old consecutive-only guard** let run to max_iter"*。**连续式会被 A/B/A/B 绕过去**，他们踩过，我们不必再踩
+- **设计依据**：窗口内累计重复调用；原始调研来源见 Git 历史
+- **验收要求**：连续重复与 `A/B/A/B` 交替重复都必须被识别；只比较相邻批次会漏掉后一类
 - **不出声地停是不允许的**：中断必须带原因进 transcript（规格 7.5）
 
 ### R2 · 工具输出双份处理 ✅ `10ff8c6`
@@ -76,8 +76,8 @@ pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`
   ```
   **删掉 `RESULT_PREVIEW_CHARS` 那个静默 slice。** 截断只允许发生在一处，且必须带齐三个字段
 - **效果**：用户能拿到全文；界面的「还有 N 行」第一次是**真数**
-- **来源**：wisp 的 `budget_tool_result`（溢出到 `.wisp/tool-output/`）
-- **对标**：wisp 的省略标记直接把路径和用法写进去——*"full output at &lt;path&gt; — **read/grep narrow ranges; do not load the whole file**"*。我们的标记同样要可执行，不能只说"已截断"
+- **设计依据**：输出超出事件流预算时写入会话隔离的 `tool-output/` 目录
+- **验收要求**：截断标记说明全文位置以及按范围读取、检索的方法，不能只说「已截断」
 - **不做**：模型侧的上下文预算。**那是 pi 的职责**，我们不越界重做一套
 
 ### R3 · 溯源快照 ✅ `b579262`
@@ -89,8 +89,8 @@ pi 的 `truncated` / `fullOutputPath` **只在 `role: "bashExecution"` 上**（`
                 → 放行 → tool_end → snapshot(after) → diff → 写进那条 Run
   ```
 - **效果**：**不变式 5 的物理载体**。第一次能回答「**哪个工具**改了这个文件」，而不只是「这个会话改了这些」
-- **来源**：wisp 在循环里每次工具调用前后各拍一次快照
-- **对标 —— 成本控制在入口**：wisp 用 `provenance::is_producing(&name)` 先判断这个工具会不会产出，不会就不拍。我们的白名单先只放 `write` / `edit` / `bash`；`read`/`grep`/`find`/`ls` **一律不拍**——大仓库上 git status 不便宜
+- **设计依据**：对可能写文件的工具在调用前后各拍一次快照，比较实际文件变化
+- **成本控制在入口**：先判断工具是否可能产出。白名单先只放 `write` / `edit` / `bash`；`read`/`grep`/`find`/`ls` **一律不拍**——大仓库上 git status 不便宜
 - **不变式挂点**：**不变式 5**（产出从 git 事实算，不听 agent 声明）
 
 ---
@@ -266,7 +266,7 @@ pi 默认只从 `~/.pi/agent/agents/`（家目录）加载；项目里的定义�
   ```
 - **效果**：能把一件事拆开并行做
 - **来源**：pi `packages/coding-agent/examples/extensions/subagent/`（1,015 + 126 行）
-- **对标 —— 进程隔离恰好是不变式 1 的最强实现**：验证者拿不到生产者的上下文，不是因为我们过滤了，而是因为**它在另一个进程里**。**过滤会漏，进程边界不会。** 这一点比 wisp 的同进程子会话更彻底
+- **对标 —— 进程隔离恰好是不变式 1 的最强实现**：验证者拿不到生产者的上下文，不是因为我们过滤了，而是因为**它在另一个进程里**。**过滤会漏，进程边界不会。** 测试应直接核对进程间实际传递的上下文
 - **不变式挂点（现在就做，不等阶段 ④）**：
   - **不变式 3**：每个子 agent 的回合**落 Run**，`parent_run_id` 指向发起它的那次工具调用。子 agent 干的活也是账本上的条目
   - 上界从第一天钉死。**没有上界的 fan-out 是一张空白支票**
@@ -302,7 +302,7 @@ pi 默认只从 `~/.pi/agent/agents/`（家目录）加载；项目里的定义�
 | 子句 | 落在哪 | 怎么验的 | 判定 |
 |---|---|---|---|
 | 不悄悄丢内容 | R2 删掉 runtime 层那个静默 `slice(0, 2000)`；截断必带 `resultTruncated` + `resultBytes` + `fullOutputPath` | 单测断言三件套同行；界面「还有 N 行」用的是真数 | ✅ |
-| 卡死不烧到上限 | R1 窗口式守卫，中断带原因进 transcript | 单测含 `A/B/A/B` 交替式（wisp 踩过连续式的坑） | ✅ |
+| 卡死不烧到上限 | R1 窗口式守卫，中断带原因进 transcript | 单测含 `A/B/A/B` 交替式（连续式检测会漏报） | ✅ |
 | 工具改了哪些文件看得见 | R3 逐次快照 → U4 变更 pane | **e2e 跑构建产物**：假模型真调一次 `write`，文件名出现在面板上；另一条验「不知道」与「没改」措辞不同 | ✅ |
 | 模型能在界面里换 | U2 会话级覆盖 | **e2e 断言假后端记下的请求体里 `model` 真的变了**——从外部证明切换发生 | ✅ |
 

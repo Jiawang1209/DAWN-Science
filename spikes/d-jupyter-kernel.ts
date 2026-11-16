@@ -6,7 +6,7 @@
  *
  * 三个必须回答的问题（实施计划 Task 0.5 Step 5）：
  *   Q1 能否起内核并拿到 iopub 输出？
- *   Q2 **能否中断正在执行的 cell？**（规格 10.4 硬要求，wisp-science 的自研方案就败在这条）
+ *   Q2 **能否中断正在执行的 cell？**（规格 10.4 硬要求，必须真正停止执行并保持内核可用）
  *   Q3 zeromq 原生模块是否可用？
  *
  * ⚠️ rxjs 版本分裂（实测）：@nteract/messaging 与 @nteract/types 各自嵌套 rxjs 6.6.7，

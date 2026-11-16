@@ -20,7 +20,7 @@
  * 字节数    →  真数，供界面说「还有多少」
  * ```
  *
- * 学自 wisp 的 `budget_tool_result`。**模型侧的上下文预算不归我们管**——
+ * **模型侧的上下文预算不归我们管**——
  * 那是 pi 的职责（它对 bash 已有 `fullOutputPath`），我们不越界重做一套。
  */
 import { mkdirSync, writeFileSync } from "node:fs"

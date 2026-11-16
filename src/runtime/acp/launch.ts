@@ -12,8 +12,7 @@
  * 它是 `npx.cmd`。`child_process.spawn` **不走 shell**（走 shell 是命令注入的门），
  * 于是 `spawn("npx")` 在 Windows 上直接 ENOENT——
  * 而症状是「加了 agent，一点就说起不来」，没人会想到是三个字母的事。
- * wisp 的文档也踩过，它写着 *「on Windows prefer `npx.cmd`」*——
- * **但那是让用户自己去填**。我们替他填。
+ * 因此在 Windows 上自动把 `npx` 解析为 `npx.cmd`，避免要求用户手工调整配置。
  *
  * ### 二、更该做的是**根本不依赖用户的 Node**
  *

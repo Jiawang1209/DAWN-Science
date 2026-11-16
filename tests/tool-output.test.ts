@@ -20,7 +20,7 @@
  * 字节数    →  真数，供界面说「还有多少」
  * ```
  *
- * 学自 wisp 的 `budget_tool_result`。**模型侧的上下文预算不归我们管**——
+ * **模型侧的上下文预算不归我们管**——
  * 那是 pi 的职责，我们不越界重做一套。
  */
 import { describe, expect, it } from "vitest"
@@ -85,7 +85,7 @@ describe("长输出：截断 + 写盘 + 出声", () => {
   it("省略标记要**可执行**：说清省了多少、去哪拿、怎么拿", () => {
     const d = dir()
     const r = budgetToolResult(long(), { sessionDir: d, toolName: "bash" })
-    // wisp 的标记直接把路径和用法写进去，而不只说「已截断」
+    // 截断标记必须包含全文路径和读取方法，而不只说「已截断」
     expect(r.text).toMatch(/省略|omitted/)
     expect(r.text).toContain(r.fullOutputPath!)
     rmSync(d, { recursive: true, force: true })

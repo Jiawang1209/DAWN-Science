@@ -1,9 +1,9 @@
-# 桌面应用怎么写：从 Hermes / Rho / wisp-science 读到的
+# 桌面应用怎么写：设计调研与工程约束
 
 - **日期**：2026-08-08
 - **状态**：待作者审核
 - **触发**：作者三次打开 DAWN，三次发现界面不可用（无「新建会话」→ `window.prompt` 抛错致白屏 → 渲染进程无限循环吃满 4 GB）。作者的判断：**「你不要光靠你自己看的结果去推算，应该去读成熟项目的源代码。」**
-- **参照**：`hermes-agent`（MIT，Nous Research，`apps/desktop` 为 Electron + React + Vite，**与 DAWN 同栈**，1,211 个 TS/TSX 文件、256,929 行）；`Rho`（MIT）；`wisp-science`（AGPL）
+- **参照**：`hermes-agent`（MIT，Nous Research，`apps/desktop` 为 Electron + React + Vite，**与 DAWN 同栈**，1,211 个 TS/TSX 文件、256,929 行）；`Rho`（MIT）；其余早期调研来源见 Git 历史
 - **纪律**：规格 §3——**只读设计，不复用代码**。本文档记录的是原则与机制，不搬运实现。
 
 ---
@@ -201,4 +201,4 @@ Hermes 的 `onboarding.spec.ts` 说明它有专门的首次使用流程。**门�
 
 1. **要不要引入 `@assistant-ui/react` 这类对话 UI 库？** 引入省很多事，但它会决定对话区的形态，且是又一个「坐在哪一层」的决策——按规格 §4 的纪律，得先写明层与放弃项。
 2. **Playwright 进 devDependencies 可以吗？** 它会拉一个浏览器二进制（体积可观）。
-3. **`docs/DESIGN.md` 的参考视觉基准哪来？** wisp-science 用截图对比，但那要有参考图。DAWN 目前没有设计稿——是先按原则做、以后再补基准，还是你给一个参考对象？
+3. **`docs/DESIGN.md` 的参考视觉基准哪来？** 截图对比需要先确定可信的参考图。DAWN 目前没有设计稿——是先按原则做、以后再补基准，还是你给一个参考对象？

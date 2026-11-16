@@ -28,8 +28,8 @@ ACP agent ──stdio/MCP──▶ scripts/dawn-mcp-server.mjs ──socket+令�
 四件工具给了三件（技能 ×2、溯源、记一笔）。**一个文件工具、一个 bash 工具都没给**
 ——它自己就有，再给一份只是多一个重复实现。
 
-**每一次调用落一条 Run，父账挂在那一轮 ACP 回合上**——这就是与 wisp
-那套能力网关的实质区别：我们不是在裁剪能力（裁不动，它有自己的 bash），
+**每一次调用落一条 Run，父账挂在那一轮 ACP 回合上**——这条通道
+负责记录执行事实，而不能裁剪外部进程的全部能力（它有自己的 bash），
 **是在延伸账本**。
 
 ### B′：第四件工具也给了
@@ -143,14 +143,13 @@ setter 回 `-32601`，`set_model`/`set_mode` 回空 `{}`）；
 
 ## 为什么现在做这件事
 
-作者：*「有没有什么正规的办法，可以让 cli 当成 API 嵌入到 dawn-science 去使用呢？
-我看 wisp-science 里面是可以这样做的。」*
+需求：通过正规的协议把 CLI agent 嵌入 DAWN，使其能参与现有会话和执行账本。
 
 有，叫 **ACP**（Agent Client Protocol，agentclientprotocol.com，Zed 牵头，v1），
-本地 stdio 上的 JSON-RPC。wisp-science 用的就是它（`docs/acp-agents.md` + `crates/wisp-acp`）。
+通过本地 stdio 传输 JSON-RPC 消息。
 
-**它不直接跑 `claude` / `codex`。** wisp 的文档专门写了一句：
-*「不要在 ACP 表单里填 `codex`、`claude` 或 `claude -p`——那些 CLI 不是 ACP agent。」*
+**它不直接跑 `claude` / `codex`。** ACP 表单需要配置实现 ACP 的适配器；
+`codex`、`claude` 或 `claude -p` 本身不能当作 ACP agent。
 跑的是官方适配器（2026-08-16 查 npm，四个包都在）：
 
 ```
@@ -215,9 +214,9 @@ ACP 的 `Usage` 是**整个会话累计**的（SDK 类型注释原文：
 
 ---
 
-## 第四条：我们自己的工具怎么给 ACP 用——**我不建议照抄 wisp**
+## 第四条：通过 MCP 向 ACP 提供具名工具
 
-作者：*「能不能做出与 wisp 的另外一条路线和方式呢？实在迫不得已，我们再照抄。」*
+设计目标：复用协议接入能力，同时让外部 agent 的工具调用进入 DAWN 的运行账本。
 
 ### 协议这一侧是现成的
 
@@ -230,11 +229,11 @@ mcpServers: Array<McpServer>   // "List of MCP servers the agent should connect 
 **我们把自己做成一台 MCP 服务器递进去**，claude/codex 就能反过来调我们的东西。
 我们已经有 MCP **客户端**了，缺的是反过来那一半。
 
-### wisp 的做法（路线 A）
+### 通用能力网关（路线 A）
 
-一个**能力网关**：`wisp_search_tools` / `wisp_use_tool` 这样的通用门面，
-外加 `list_skills` / `run_in_context` / `get_research_graph` 等十来个。
-理由写得很清楚：*「这是一个能力网关，不是把每一个内部对象都导出去。」*
+一种可选方案是提供 `search_tools` / `use_tool` 通用门面，
+再配合技能、执行上下文与研究图查询工具，避免逐一暴露内部对象。
+这种做法压缩了 schema 体积，但需要额外记录门面背后的实际调用。
 
 ### 我原本的担心是错的
 
@@ -242,7 +241,7 @@ mcpServers: Array<McpServer>   // "List of MCP servers the agent should connect 
 **这句话不成立**，而想清楚它为什么不成立，正是另一条路的出发点：
 
 > **ACP 进程有它自己的 bash 和文件工具。** 它以我们的用户身份跑在我们的项目目录里，
-> OS 权限就是全部权限。wisp 自己的文档也承认这一点。
+> 能访问的系统资源由该进程的 OS 权限决定。
 >
 > 也就是说：**它绕过权限门这件事，在我们递出任何一个工具之前就已经完成了。**
 > 少给几个工具，一分钱安全都买不到。
@@ -263,12 +262,12 @@ mcpServers: Array<McpServer>   // "List of MCP servers the agent should connect 
 
 **一个文件工具、一个 bash 工具都不给**——它自己有，给了只是多一份重复实现。
 
-与 wisp 的**实质区别**（不是包装上的不同）：
+路线 B 的设计约束：
 
 1. **它不是能力裁剪，是账本延伸。** 每一次 `dawn_*` 调用都落一条 Run，
    `parent_run_id` 挂在那一轮 ACP 回合上，文件事实照旧从 git 算。
    于是**一个外部 agent 在我们项目里干的活，仍然产出完整的账本**——
-   这正是 DAWN 的立身之本（不变式 5），而 wisp 的网关是围绕「能力范围」设计的。
+   这直接服务于不变式 5：记录可核对的执行事实。
 2. **不做 `search_tools` / `use_tool` 这种门面。** 它省的是 schema 体积，
    代价是**账本上留下的是一句 `use_tool`，而不是「它到底调了什么」**。
    我们宁可多几个具名工具。

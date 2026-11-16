@@ -50,7 +50,7 @@
 
 ### 3.1 三条纪律
 
-参考项目（尤其 wisp-science 与 wispterm）**只读设计，不复用代码**：
+参考项目**只读设计，不复用代码**；完整早期调研来源保留在 Git 历史：
 
 1. **概念可以学，表达不能抄** —— 架构思路、契约设计、失败处理策略可自由借鉴；具体代码、独特命名与文件结构不照搬。
 2. **从问题出发，不从他们的代码出发** —— 理解其设计动机，按自身理解重新实现。
@@ -75,7 +75,7 @@
 
 ### 3.4 代价
 
-以下能力原本可从 wisp-science 直接获得，现需自建：
+以下能力需要在所选架构中单独实现：
 
 | 自建项 | 难度 | 备注 |
 |---|---|---|
@@ -102,8 +102,8 @@
 |---|---|---|
 | Mailbox kernel（fan-in / quorum / wait-all / dead-letter / retry lineage） | ccb | 为跨机器大规模 agent 通信设计，对单机数个 worker 是过度设计。任务依赖已足够 |
 | 移动端网关、多 provider CLI 深度适配 | ccb | 范围失控风险 |
-| 生物信息学工具链 | wisp-science | 领域不符；后续可作为可插拔扩展引入 |
-| 出版工作区、Evidence Capsule | wisp-science | 与核心命题正交 |
+| 生物信息学工具链 | 领域扩展 | 领域不符；后续可作为可插拔扩展引入 |
+| 出版工作区、Evidence Capsule | 发表级证据管理 | 与核心命题正交 |
 | GPU shader、终端主题系统、SSH 端口转发、内嵌浏览器、图形协议 | wispterm | 与核心命题正交 |
 | Marketplace、远程访问中继 | hive | 与核心命题正交 |
 | 消息平台网关（Telegram / Slack / 飞书 等） | Hermes | 需求中不存在 |
@@ -299,7 +299,6 @@ agent 说"可合并"，但 diff 与计划不一致     → 回到 REWORKING
 | **pi-subagents** | MIT | 📐 抄形态 | 零配置委派的产品形态（周下载为 pi-crew 的 36 倍） |
 | **Buzz**（Block, Inc.） | Apache-2.0 | ✅ **可读可用代码** | 进程组终止、截断保全、上下文恢复阶梯、双协议解耦、**agent 作为一等成员 + 统一事件日志**。见 7.18–7.23 |
 | **Rho** | MIT | 📐 只读设计 | Ark + Jupyter 协议路线；双进程隔离；前端与传输解耦的协议分层 |
-| **wisp-science** | AGPL-3.0 | 📐 **只读设计，不碰代码** | 委派任务契约、capability 授权模型、降级投递与 reviewer 豁免、审批快照失效、崩溃恢复语义 |
 | **wispterm** | MIT | 📐 **只读设计，不碰代码** | 终端输入租约；分屏与标签交互；多 CLI 会话检测与恢复 |
 | **ccb** | AGPL-3.0 | 📐 只读设计 | provider 适配契约、completion contract |
 | **hive** | BUSL-1.1 | 🎨 只看交互 | team 面板与 worker 终端墙的视觉与交互 |
@@ -857,7 +856,7 @@ claude 内置的 Read / Edit / Bash 不经过我方注入的 MCP，故不可见�
 
 二者不冲突：一个记事实，一个记内容。实体 21c「Entry / Run 序列存储」即指这两层。
 
-> **同时修正一处此前的误判**：实体清单把 #21b Project 管理的来源写作「Claude app / Codex app / Hermes 的信息架构」，并把 wisp-science 列为参考。**实测 wisp-science 没有 project / workspace 概念**——其 UI 是 `notebook.rs` / `channels_view.rs` 的平铺结构，不是项目制。故「模仿 wisp-science 的项目管理」不成立；Claude app / Codex app 只能提供**信息架构外壳**（项目=文件夹、侧栏），**实质模型来自 Rho**。
+> **项目管理的设计依据**：Claude app / Codex app 提供项目与侧栏的信息架构外壳，**实质模型来自 Rho** 的 ProjectSummary / WorkspaceStatus。项目模型必须显式表达 workspace 与执行环境。
 
 ---
 
@@ -872,7 +871,7 @@ claude 内置的 Read / Edit / Bash 不经过我方注入的 MCP，故不可见�
 | | 形态 | 代表 |
 |---|---|---|
 | **A · 纯对话** | 只有消息流，代码执行结果内联 | Claude app |
-| **B · 对话 + 独立笔记本** | 左聊天，右可编辑 notebook | wisp-science |
+| **B · 对话 + 独立笔记本** | 左聊天，右可编辑 notebook | 交互方案 |
 | **C · 对话即笔记本** | 消息流本身就是可重跑的 cell 序列 | 少见，但对科研自然 |
 
 **本项目三者全要——因为它们是同一份数据的三种视图，不是三套实现。**
@@ -1149,7 +1148,7 @@ Marketplace（一个 git 仓库，列出可装的 plugin）
 | 市场注册表 | `known_marketplaces.json`，用户可添加任意 git 仓库 | 📐 Claude Code |
 | 已装清单 | `installed_plugins.json`，含版本 | 📐 Claude Code |
 | 本地缓存 | `plugins/cache/<marketplace>/<plugin>/<version>/` | 📐 Claude Code |
-| **渐进式加载** | `description` 常驻上下文，正文按需加载——目录不塞满提示词 | 📐 wisp-science `wisp-skills` |
+| **渐进式加载** | `description` 常驻上下文，正文按需加载——目录不塞满提示词 | 设计约束：按需加载正文 |
 | 触发 | `/` 选择器；或由 `description` 让模型自行判断何时调用 | 📐 Claude Code |
 
 **科研任务模板 = 结构化的 Skill。** 普通 Skill 是「做某类事的指导」；任务模板额外声明**流程骨架**（步骤、每步的验收标准、需要的执行环境与数据），使「问题 → 规划 → 调用工具 → 执行流程」这条主线可被模板化复用。
@@ -1505,11 +1504,11 @@ graph LR
 
 | 设计 | 来自 |
 |---|---|
-| 用真 Jupyter 协议而非自研 JSON-lines | **Rho**（对比 wisp-science 的自研 worker：无中断、每语言一套） |
+| 用真 Jupyter 协议而非自研 JSON-lines | **Rho**（一套 Jupyter 协议覆盖多语言，必须支持中断） |
 | 只用协议不引入 Jupyter Server | **Rho** 明确的边界划分 |
 | 中断是 kernel-manager 职责（进程组信号） | **Rho**，且其亦列为前置门 |
 | 结构化 Console，xterm.js 只给真 shell | **Rho** 的明确禁令 |
-| 变量清单与输出上限 | **wisp-science** `kernel_worker.py`（1MB 截断 / 200 对象） |
+| 变量清单与输出上限 | 设计约束：1MB 截断 / 200 对象 |
 
 **验收**：R 与 Python 会话均可持久、**可中断**、可渲染图与表；两者共用同一套协议实现。
 
@@ -1531,10 +1530,10 @@ graph LR
 
 | 设计 | 来自 |
 |---|---|
-| 执行环境模型（本地/WSL/SSH/GPU + 独立解释器路径） | **wisp-science** |
-| Run 管理（预检 / 心跳 / 有界日志 / 环境快照） | **wisp-science** |
-| 凭证只进密钥环 | **wisp-science** |
-| Skills 渐进式加载 | **wisp-science** `wisp-skills` |
+| 执行环境模型（本地/WSL/SSH/GPU + 独立解释器路径） | 设计约束（历史调研见 Git） |
+| Run 管理（预检 / 心跳 / 有界日志 / 环境快照） | 设计约束（历史调研见 Git） |
+| 凭证只进密钥环 | 设计约束（历史调研见 Git） |
+| Skills 渐进式加载 | 设计约束：元数据常驻，正文按需读取 |
 | 产物按引用传递、成果标准化 | 跨任务协作综述（见 7.13 / 7.14） |
 
 **验收**：能在本地与一台远程 SSH 主机上分别跑同一份分析；长任务可提交、可监控、可取消；重启后 Run 状态可恢复。
@@ -1576,7 +1575,7 @@ graph LR
 | 四层架构（Evidence / Context / Orchestration / Repo Runtime） | 同上 |
 | `review-verdict/v1` + 缺口检测 | **AgentDeck** `review_verdict.py` |
 | Planner / Orchestrator 拆分、预览确认、无静默回退 | **AgentDeck** |
-| capability 授权、worktree + 冲突检查合并、降级投递 | **wisp-science** `delegation_policy.rs` / `delegation_isolation.rs` |
+| capability 授权、worktree + 冲突检查合并、降级投递 | 设计约束：宿主解析权限，隔离工作树，结构化回报 |
 | 协作拓扑（`cross_validate` / `arbitrate`） | **hermes-multi-agent-demo** `orchestrator.py` |
 | team 终端墙交互 | **hive**（只看交互，不碰代码） |
 | 工具网关 + 结果缓存、SLA、环形依赖检测 | 跨任务协作综述 |

@@ -48,7 +48,7 @@
 | **agent 浏览器旁观**：坞「网页」格一格两子页签，旁观 agent 的 headless 浏览器 | `specs/2026-08-25-agent浏览器旁观-design.md` |
 | **记忆**：三轨确认制长期记忆 + 技能沉淀，插件第三卡（学自 dsh-memory-evolve） | `specs/2026-08-25-记忆-design.md` · 解读在 `ccb_hive_code_learn/dsh-memory-evolve-解读.md` |
 | **飞书通道**：远程助理第二格，设备流扫码建应用 + WS 长连接（学自 dsh-feishu/dsh-im） | `specs/2026-08-25-飞书通道-design.md` · 解读在 `ccb_hive_code_learn/dsh-feishu-im-解读.md` |
-| **产物**：对话里 `GENERATED · N` + 坞「产物」格实时清单（学自 wisp-science；`data-platform` 分支主线第一步） | `specs/2026-08-26-产物-design.md` |
+| **产物**：对话里 `GENERATED · N` + 坞「产物」格实时清单（`data-platform` 分支主线第一步） | `specs/2026-08-26-产物-design.md` |
 | **笔记本**：坞里一格，看 agent 的内核 cell 流、在同一台内核里自己敲、敲的记进对话（主线第二轮） | `specs/2026-08-26-笔记本-design.md` |
 | **远程内核**：远端会话里 `run_code` 在服务器上你自己装的 ipykernel 里跑，五个端口隧道回本地，通道原样复用（主线第三轮，分支 `remote-kernel`） | `specs/2026-09-03-远程内核-design.md` |
 | **远端内核猝死与接回**：心跳报警 + `kill -0` 结论；意外掉线进 `detached`、重连认领回来，按「断开」照旧停干净（分支 `kernel-reattach`，勾全打完） | `specs/2026-09-04-远端内核猝死与接回-design.md` + `plans/2026-09-04-远端内核猝死与接回.md` |
@@ -162,7 +162,7 @@ npm run app           # 构建并启动
 
 - **依赖决策必须写明坐在哪一层**（规格 §4）：①具体到导出符号 ②放弃了什么
   ③我们的不变式挂在哪个钩子上。只写「使用 X」不算决策。
-- **pi 是运行依赖，不是参考项目**。Hermes / Rho / wisp-science 是「读设计、不复用代码」；
+- **pi 是运行依赖，不是参考项目**。Hermes / Rho 等参考项目是「读设计、不复用代码」；
   pi 是直接坐在上面。混淆这两者，下一步就会变成「学会了，自己写一个」。
 - **看不见的能力等于不存在。** 2026-08-10 一天之内犯了两次：「新建项目」是个
   没有标签的 `＋`，删除键是 `opacity: 0` 的裸 `×`——两次作者的反馈都是「没有这个功能」，

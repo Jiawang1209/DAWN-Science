@@ -41,7 +41,7 @@ import { fsDiff, fsSnapshot, FS_SNAPSHOT_CAP, type FsSnapshot } from "../project
  * 会产出文件的工具。**白名单，不是黑名单。**
  *
  * 成本控制在入口：`git status` 在大仓库上不便宜，而 `read`/`grep`/`find`/`ls`
- * 每轮会被调很多次却永远不改文件。学自 wisp 的 `provenance::is_producing`。
+ * 每轮会被调很多次却永远不改文件，因此只对可能产出文件的工具拍快照。
  *
  * 不认识的工具名**不观察**——保守优于昂贵。代价是新工具要来这里登记一次，
  * 这个代价是刻意的：它逼人回答「这个工具会不会写文件」。

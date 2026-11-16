@@ -7,13 +7,8 @@
  *
  * ## 为什么是窗口式，不是连续式
  *
- * wisp-science 在这里留了一道疤。它的测试名字就叫
- * `interspersed_tool_call_loop_breaks_the_loop`，注释写着：
- *
- * > *"the case the **old consecutive-only guard** let run to max_iter"*
- *
  * **连续式守卫会被 A/B/A/B 绕过去**：任意相邻两批都不相同，但整体在原地打转。
- * 他们踩过一次才改成窗口式。**别人的疤是可以不重复的**，所以我们直接从窗口式起步。
+ * 因此使用滑动窗口累计重复调用，测试必须同时覆盖连续重复与交替重复。
  *
  * ## 它不是正确性机制
  *

@@ -2,7 +2,7 @@
 
 - **日期**：2026-08-08
 - **取代**：`2026-08-07-master-roadmap.md`（已降为存根）
-- **依据**：本次重写前完整阅读了 **Hermes**（`apps/desktop`，MIT）、**Rho**（Rust + Tauri，MIT）、**wisp-science**（Rust + Tauri，AGPL）、**pi**（MIT，同时是运行依赖）四个项目的源码与设计文档
+- **依据**：项目规格与外部设计调研；保留的参考包括 **Hermes**（`apps/desktop`，MIT）、**Rho**（Rust + Tauri，MIT）、**pi**（MIT，同时是运行依赖）。完整早期调研见 Git 历史
 - **写法**：每个开发步骤给出 **技术栈 / 成果 / 效果 / 技术栈来源 / 对标** 五项
 
 ---
@@ -16,7 +16,7 @@
 | 我原先说的 | 实际读到的 |
 |---|---|
 | 「Rho 是科学场景的呈现层参考」 | **Rho 与 DAWN 是同物种**。`rho-store` 10,835 行里，audit + evidence + compare 占 4,680 行（**43%**）——事实层不是附加功能，是科学工作台最重的那块 |
-| 「多 agent 编排与防幻觉没有外部老师」 | **wisp-science 有完整实现**：有界 DAG 派单、能力解析、Roundtable 交叉评审、worktree 隔离与 cherry-pick、嵌套深度上限。同域、AGPL、可读 |
+| 「多 agent 编排与防幻觉没有外部老师」 | **已有可对照的设计机制**：有界 DAG 派单、能力解析、交叉评审、worktree 隔离与 cherry-pick、嵌套深度上限；原始调研见 Git 历史 |
 
 第二条尤其重要：它把「唯一无参照区域」这个风险从**整个阶段 ④** 缩小到 **只剩不变式 4（记忆投影）与阶段 ⑤（量化验证）**。
 
@@ -61,10 +61,10 @@
 
 ### 1.4 保护机制三：诚实的命名纪律
 
-从 Rho 与 wisp-science 各学到一条，合并为本项目纪律：
+结合审计与重跑契约，本项目采用以下命名纪律：
 
 > **Rho**：审计结果的最好状态叫 `complete`，**刻意不叫 `reproducible` 也不叫 `passed`**。
-> **wisp-science**：在干净重跑满足完整契约之前，产物叫 **Publication Evidence / Traceability Capsule**，**不声称 full reproducibility**。
+> 在干净重跑满足完整契约之前，产物叫 **Publication Evidence / Traceability Capsule**，**不声称 full reproducibility**。
 
 **DAWN 采纳**：任何面向用户的状态词，只能声称我们真正验证过的东西。`provenance_complete` 说的是「链路齐全」，不是「结果正确」。这条纪律写进协议的字段命名，不只是写进文档。
 
@@ -78,7 +78,7 @@
 
 **两种关系，不可混淆**：
 
-> **Hermes / wisp-science / Rho：读设计，不复用代码。**
+> **Hermes / Rho 等参考项目：读设计，不复用代码。**
 > **pi：直接坐在上面。我们不学它，我们用它。**
 
 把 pi 说成「教会我们 agent 怎么写」，隐含的下一步是「学会了 → 自己写一个」——那正是本项目已经推翻过一次的路线。
@@ -87,8 +87,6 @@
 |---|---|---|---|---|
 | 桌面应用怎么写 | **Hermes** `apps/desktop` | MIT | 读设计 | 同栈（Electron+React+Vite）；`DESIGN.md` 337 行 + `AGENTS.md` 210 行**写明取舍理由**；19 个 e2e spec |
 | 科学工作台 × agent 怎么合成 | **Rho** | MIT | 读设计 | 同物种；`rho-protocol/workbench.rs` 493 行公开协议；audit/evidence/compare 三份设计文档共 2,213 行 |
-| 科学证据与发表级溯源 | **wisp-science** | AGPL | 读设计 | 同域；`publication-evidence.md` 的四级能力阶梯 |
-| 多 agent 编排与防幻觉 | **wisp-science** `agent-delegation.md` | AGPL | 读设计 | 562 行，有界 DAG、能力解析、Roundtable、worktree 隔离 |
 | 记忆投影（不变式 4） | AgentDeck（自有）+ Buzz | 自有 / Apache-2.0 | 设计萃取 | **唯一缺成熟外部对照的一格** |
 | AI agent 怎么跑 | **pi** | MIT | **运行依赖** | `pi-agent-core` = `packages/agent`，harness 提供 compaction/session/skills/system-prompt/tools |
 
@@ -97,9 +95,9 @@
 
 ---
 
-## 3. 从四个项目读到的、直接改写本规划的十条
+## 3. 直接影响本规划的十条设计约束
 
-这一节是本次重写的实质内容。每条都注明出处，且都在 §5 有对应步骤。
+这一节是本次重写的实质内容。每条在 §5 有对应步骤；原始调研来源可查 Git 历史。
 
 ### 3.1 缺失不等于相同（Rho）
 
@@ -153,28 +151,28 @@ Rho 把上界写进设计文档而不是代码注释：200 包差异行、100 �
 
 → **步骤 S21**
 
-### 3.7 评审门不得被无法解析的输出满足（wisp-science）
+### 3.7 评审门不得被无法解析的输出满足
 
-这条最锋利。wisp 允许子 agent 的输出格式降级（包在 markdown 里也照样提取，实在不行就带 `delivery: {degraded, reason}` 交付原文），**但明确开了一个例外**：
+普通子任务可以降级交付：从 Markdown 中提取结果，或用 `delivery: {degraded, reason}` 标记原文。**评审裁决必须例外处理**：
 
-> *"Reviewer verdicts are exempt: a reviewer result that is not a JSON object with a summary ... **still fails, because review gates must not be satisfiable by unparseable output.**"*
+> 评审结果必须是符合 schema 的结构化对象；缺少摘要或无法解析的输出不得满足评审门。
 
 **宽容用在生产，严格用在验证。** 这正是不变式 1 的实现级推论，而我们的设计文档里没有。
 
 → **步骤 S29**
 
-### 3.8 能力由宿主解析，模型不能给孩子发权限（wisp-science）
+### 3.8 能力由宿主解析，模型不能给孩子发权限
 
-> *"Wisp resolves every capability through host policy into an exact model, executor, tool set, project scope, workspace policy, budget, and timeout. **The model cannot grant raw tools or permissions to a child.**"*
+> capability 必须由宿主策略解析为明确的模型、执行器、工具集、项目范围、工作区策略、预算与超时。**模型不能自行向子任务授予原始工具或权限。**
 
 派单请求里写的是 `capability id`（如 `literature_search`），不是工具名。宿主把它解析成确切的模型、执行器、工具集、路径上限、预算、超时。审批快照**不可变**，重试复用同一快照，**不让 planner 重新生成一份**。
 
 → **步骤 S26 / S27**
 
-### 3.9 有界 DAG，不是群聊（wisp-science）
+### 3.9 有界 DAG，不是群聊
 
-> *"This is a bounded DAG, not a live multi-model group chat. Temporary children do not share hidden transcripts or freely message peers; **dependency results are their explicit coordination channel.**"*
-> *"Children receive only their instruction, bounded shared context, applicable project instructions, explicit inputs, and direct dependency results. **They do not receive the full parent transcript.**"*
+> 协作由有界任务 DAG 驱动；临时子任务通过显式依赖结果协作，不共享隐藏转录或自由互发消息。
+> 子任务只获得指令、有界共享上下文、项目约定、显式输入和直接依赖结果，**不接收父会话完整转录**。
 
 Roundtable 模板的三段式——**并行开场 → 交叉评审 → 主席综合**——就是我们说的「交叉核对」，且它明确不是自由通信。
 
@@ -440,7 +438,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：React；Project 级、跨 chat 的命名空间视图
 - **成果**：当前 workspace 的对象列表，带类型、维度、有界预览、`preview_truncated` 标记
 - **效果**：人能看见 agent 在这个会话里造出了什么
-- **来源**：Rho Environment 面板 + wisp-science
+- **设计依据**：Rho Environment 面板与有界变量检查；完整调研见 Git 历史
 - **对标**：Rho `ObjectSummary` 的字段集合：`reference` / `class` / `preview` / `preview_truncated` / `dimensions` / `state_revision`。**预览必须显式标记是否被截断**——这是 §3.5 那条纪律在最小粒度上的体现
 
 ---
@@ -485,8 +483,8 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：本地 / WSL / SSH（`ssh2`）/ GPU 探测；能力清单化
 - **成果**：`ExecutionContext` 一等实体，带 capabilities（解释器版本、包管理器、GPU、驱动）
 - **效果**：「在哪跑」成为可选择、可记录的事实，而不是隐含默认
-- **来源**：wisp-science 的 ExecutionContext + Run Manager 模型
-- **对标**：wisp 明确——**能力只在选定的 ExecutionContext 真正捕获了它时才参与 parity 判定**；未捕获的依赖不得被当成「相同」
+- **设计依据**：显式 ExecutionContext 与结构化 Run 管理
+- **对标**：**能力只在选定的 ExecutionContext 真正捕获了它时才参与 parity 判定**；未捕获的依赖不得被当成「相同」
 
 #### S16 · Run 生命周期与 append-only 存储 ⬜
 
@@ -520,8 +518,8 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：SHA-256 内容寻址 blob store
 - **成果**：`Artifact` + `ArtifactVersion`；产物从 git 事实算，不听 agent 声明
 - **效果**：**不变式 5 的物理载体**。"这次运行改了哪些文件"可被回答且可交叉核对
-- **来源**：wisp-science 的 content-addressed Artifact + ArtifactVersion 分离
-- **对标**：wisp 的一条极重要的绑定纪律——**引用一经保存即解析为确切的 `ArtifactVersion`，此后永不跟随 `Artifact.latest_version_id`**。否则历史证据会被后来的修改悄悄改写
+- **设计依据**：内容寻址的 Artifact 与不可变 ArtifactVersion 分离
+- **对标**：绑定纪律——**引用一经保存即解析为确切的 `ArtifactVersion`，此后永不跟随 `Artifact.latest_version_id`**。否则历史证据会被后来的修改悄悄改写
 
 #### S19 · 凭证 ⬜（基础 ✅）
 
@@ -537,7 +535,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **成果**：项目级 Skill 发现与注入；Skill 解析时快照其 scope / path / 声明版本 / 包来源 / SHA-256
 - **效果**：领域能力（生态/环境/生信）成为可插拔层
 - **来源**：pi 已提供 skills harness——**这一层我们不写**
-- **对标**：wisp 的失败纪律——**被禁用、被遮蔽或内容变了的 Skill 一律 fail closed 并要求重新生成草案**，不静默沿用旧快照。Rho 的边界——**项目 Skill 是不受信的 agent 上下文，不得改变确定性审计结论**
+- **对标**：失败纪律——**被禁用、被遮蔽或内容变了的 Skill 一律 fail closed 并要求重新生成草案**，不静默沿用旧快照。Rho 的边界——**项目 Skill 是不受信的 agent 上下文，不得改变确定性审计结论**
 
 ---
 
@@ -579,15 +577,15 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **成果**：任一产物可回答 `{ producing_run_id, environment_snapshot_id, source_path, provenance_complete, incomplete_reason }`
 - **效果**：**不变式 5 的用户可见面**。"这张图是哪次运行、在什么环境、从哪个源文件产出的"
 - **来源**：Rho `ProvenanceLink`
-- **对标**：wisp 的诚实纪律——历史文件若无可信的创建时校验和，捕获为 `late_capture` 版本并报 `historical_content_unverified`，**绝不改写成看起来像原始 Run 输出**。以及 §3.2：**没有证据的默认值是「未解决」，不是「支持」**
+- **对标**：历史捕获纪律——历史文件若无可信的创建时校验和，捕获为 `late_capture` 版本并报 `historical_content_unverified`，**绝不改写成看起来像原始 Run 输出**。以及 §3.2：**没有证据的默认值是「未解决」，不是「支持」**
 
 #### S24 · 证据胶囊（可选，可后置） ⬜
 
 - **技术栈**：确定性 ZIP（entry 名/顺序/时间戳/权限全部归一化）
 - **成果**：四级能力阶梯 `archived | traceable | re_executable | reproduced`；胶囊含 manifest、checksums、REPRODUCE.md、CITATION.cff、provenance/
 - **效果**：可随论文投出去的证据包
-- **来源**：wisp-science `publication-evidence.md`
-- **对标**：wisp 的两条——① **`reproduced` 是「有效显示能力」，不是对冻结 manifest 的修改**；只有当 manifest 点名的每个 Run 都有完成报告、每个捕获的环境字段都 parity、退出码为 0、所有必需比对通过时才显示，**一次失败的重跑就退回 `re_executable`**；② 在满足完整契约之前，**产品称之为「可追溯胶囊」，不声称 full reproducibility**
+- **设计依据**：证据胶囊、完整重跑契约与能力状态分离
+- **对标**：两条验收要求——① **`reproduced` 是「有效显示能力」，不是对冻结 manifest 的修改**；只有当 manifest 点名的每个 Run 都有完成报告、每个捕获的环境字段都 parity、退出码为 0、所有必需比对通过时才显示，**一次失败的重跑就退回 `re_executable`**；② 在满足完整契约之前，**产品称之为「可追溯胶囊」，不声称 full reproducibility**
 
 ---
 
@@ -629,16 +627,16 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：capability id → 宿主策略 → 确切授权快照
 - **成果**：任务写 `capability`（如 `code_run` / `literature_search`），宿主解析为确切的模型、执行器、工具集、项目作用域、工作区策略、预算、超时；快照带完整性哈希
 - **效果**：**堵死「模型给自己或孩子提权」这条路**
-- **来源**：wisp-science `agent-delegation.md`（§3.8）
-- **对标**：wisp 的四条——① *"The model cannot grant raw tools or permissions to a child."*；② 资源集合变化会**作废已批准的授权快照**，任务必须按新权限重审；③ 审批后快照不可变，**运行与重试复用同一快照，不让 planner 重新生成**；④ 不可用的资源**从 schema 里删掉**，不乐观地宣告存在
+- **设计依据**：宿主解析 capability 与不可变审批快照（§3.8）
+- **对标**：四条执行约束——① 模型不能向子任务授予原始工具或权限；② 资源集合变化会**作废已批准的授权快照**，任务必须按新权限重审；③ 审批后快照不可变，**运行与重试复用同一快照，不让 planner 重新生成**；④ 不可用的资源**从 schema 里删掉**，不乐观地宣告存在
 
 #### S27 · 有界 DAG 派单 ⬜
 
 - **技术栈**：任务图（拓扑分层）；并发与深度上限；持久化计划
 - **成果**：`dispatch(tasks[])` —— 每任务带 instruction / depends_on / capabilities / 可选输出 schema / 可选隔离请求 / 预算；无依赖者并行，有依赖者串行
 - **效果**：编排是**有界的图**，不是不受控的自由通信
-- **来源**：wisp-science 的 v2 dynamic plan
-- **对标**：wisp 的具体上界与语义，逐条采纳
+- **设计依据**：有界任务图、依赖结果与显式任务生命周期
+- **对标**：逐条验证任务图的具体上界与状态语义
   - 根级上限：**8 个任务 / 2 个并发子 / 最大嵌套深度 2**；深度二的孩子不得再派单
   - **孩子只收到自己的指令、有界共享上下文、显式输入、直接依赖的结果——不收到父的完整 transcript**
   - 一个分支失败**只阻塞其后代**，无关分支继续
@@ -650,8 +648,8 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：`simple-git`；临时 worktree + 冲突检查 + cherry-pick
 - **成果**：可写任务在独立 worktree 中并行；变更文件清单 + 补丁；合并决策串行化
 - **效果**：多个 agent 同时改代码而不互相踩踏
-- **来源**：wisp-science 的隔离工作区路径
-- **对标**：wisp 的失败语义，全部采纳
+- **设计依据**：每任务独立工作树，合并前检查仓库事实与失败状态
+- **对标**：工作树隔离必须覆盖任务失败、冲突与中断的收束语义
   - **失败的子进程永不合并**
   - 合并被拒/冲突 → **主检出保持不变，被拒补丁存为 Artifact**
   - 子声明的产物**在清理 worktree 之前**复制到持久存储；留不住就让任务失败且不合并
@@ -668,7 +666,7 @@ headless 下的权限/审批未验（与阶段 ④ 授权门同源，**需单独
 - **技术栈**：Roundtable 形态的三段图；结构化 verdict 契约
 - **成果**：并行开场 → 交叉评审 → 综合；验证者 fresh 启动，只见产物 + 验收标准 + Repo 事实层证据
 - **效果**：**核心命题的实现体**。冲突由不变式 5 的事实层裁决，不由票数裁决
-- **来源**：wisp-science 的 Roundtable 生成器（并行开场 / 交叉评审 / 主席综合）
+- **设计依据**：并行开场 / 交叉评审 / 主席综合的显式协作阶段
 - **对标**：三条，最后一条是本次阅读最重要的收获
   - **有界 DAG，不是群聊**：依赖结果是唯一协调通道，孩子之间不共享隐藏 transcript（§3.9）
   - **模型解释不得改变确定性事实**：severity / status / 证据链接 / 对比事实一律不可被 agent 输出修改；外发上下文先给用户看确切内容（§3.3）
@@ -759,7 +757,7 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 | R8 | 孤儿进程 / GPU 占用 | 停会话后 `nvidia-smi` 仍有残留 | 进程组终止；做成回归测试 | ①-A 起 |
 | R9 | 上下文成本失控 | 单次运行 token 数倍于预期 | 记忆投影 + 预算上限 + `Exhausted` 分支 | ④ |
 | R10 | pi 上游破坏性变更 | 升级后编译失败 | 锁定版本；`src/runtime/native.ts` 内做薄封装，**不让 pi 类型泄漏到上层** | ①-A 起 |
-| **R11** | **不变式 4 无外部参照** | — | **记忆投影是全项目唯一没有成熟开源对照的机制**（Hermes 单 agent、Rho 单 agent、wisp 的孩子不长驻、pi 是运行时不是编排层）。应对：**在契约冻结前完成 AgentDeck 90k 行编排内核的设计萃取**，产出可对照文档；Buzz 只覆盖 handoff 一点，不够 | **③ → ④ 之间** |
+| **R11** | **不变式 4 无外部参照** | — | **记忆投影是全项目唯一没有成熟开源对照的机制**（Hermes 单 agent、Rho 单 agent、临时子任务缺少长驻状态、pi 是运行时不是编排层）。应对：**在契约冻结前完成 AgentDeck 90k 行编排内核的设计萃取**，产出可对照文档；Buzz 只覆盖 handoff 一点，不够 | **③ → ④ 之间** |
 | **R12** | **界面再次「功能齐了但不可用」** | 作者打开后需要问我下一步点哪里 | 已建 `dev:mock`（✅）；补 Playwright 四条基线（S7）；**新增准入规则：新增协议操作必须在同一次改动里补 mock 分支**（学自 Rho） | ①-B′ 起 |
 
 **R11 的关键在归属栏**：萃取必须在冻结**之前**做完，否则冻结的是一份没人验算过的 schema。
@@ -824,7 +822,7 @@ ML/DL Skills · 数据科学 MCP · ACP/A2A surface · 跨平台打包（macOS /
 1. ~~**`streamdown` + `shiki` + `use-stick-to-bottom` 三个依赖可以进吗？**~~ **已进**（S6 落地时作者同意），未引入 `@assistant-ui/react`
 2. ~~**Playwright 进 devDependencies 可以吗？**~~ **已进**，56 条 e2e 现在是主要的验收手段
 2b. **①-B″ 新增的一个依赖**：`typebox` 提为直接依赖（此前只是 pi 的传递依赖）。理由与三件事见该阶段历史条目
-3. **S24 证据胶囊放 ③ 还是后置到 ⑥？** 它是 wisp 最亮的设计之一，但不在 MVP 那条路上
+3. **S24 证据胶囊放 ③ 还是后置到 ⑥？** 它覆盖发表级证据封装，但不在 MVP 的必经路径上
 4. **R11 的「设计萃取」要产出什么形态？** 我倾向一份 `specs/agentdeck-memory-projection.md`，只写机制与取舍，不搬代码
 
 ---

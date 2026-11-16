@@ -1,6 +1,6 @@
 # Installed Skills management and refresh
 
-The user approved implementation on a new branch after the local Wisp comparison.
+The user approved implementation on a new branch after reviewing the local skills-management design.
 
 ## User-visible behavior
 

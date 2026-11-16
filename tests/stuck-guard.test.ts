@@ -7,13 +7,8 @@
  *
  * ## 为什么直接做窗口式
  *
- * wisp-science 在这里留了一道疤，测试名字就叫
- * `interspersed_tool_call_loop_breaks_the_loop`，注释是：
- *
- * > *"the case the **old consecutive-only guard** let run to max_iter"*
- *
- * **连续式守卫会被 A/B/A/B 绕过去。** 他们踩过一次才改成窗口式，
- * 我们直接从窗口式起步——**别人的疤是可以不重复的**。
+ * **连续式守卫会被 A/B/A/B 绕过去**：相邻批次不同，整体仍然没有进展。
+ * 测试同时覆盖连续重复、交替重复和有进展的调用，验证滑动窗口的判定边界。
  */
 import { describe, expect, it } from "vitest"
 import { StuckGuard, STUCK_REPEAT_LIMIT, STUCK_WINDOW } from "../src/runtime/stuck-guard.js"

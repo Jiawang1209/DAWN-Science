@@ -17,44 +17,32 @@ import rpIcon from "../../packaging/icon.svg"
 
 export const 跳过键 = "dawn.global.setupSkipped"
 
-/** 打包安装按安装世代隔离；开发预览/浏览器继续使用原来的键。 */
-function 安装存储键(key: string): string {
-  const id = window.dawn?.onboardingInstallationId
-  return id ? `${key}.${id}` : key
-}
-
-export function 读跳过(): boolean {
-  try {
-    return localStorage.getItem(安装存储键(跳过键)) === "1"
-  } catch {
-    return false
-  }
-}
-export function 记跳过(v: boolean): void {
-  try {
-    if (v) localStorage.setItem(安装存储键(跳过键), "1")
-    else localStorage.removeItem(安装存储键(跳过键))
-  } catch {
-    /* 存不进去就算了：下次打开再见一次向导，不算错 */
-  }
-}
-
 const 引导完成键 = "dawn.global.onboardingDone"
 
-/** 只有完成或主动跳过新版四步引导，才算看过介绍。旧跳过标记由 App 按可用模型迁移。 */
-export function 读引导完成(): boolean {
+/** 仅保存非敏感标记；旧安装/版本记录迁移到当前用户配置的固定键。 */
+function 读长期标记(key: string): boolean {
   try {
-    return localStorage.getItem(安装存储键(引导完成键)) === "1"
-  } catch {
-    return false
-  }
+    const current = localStorage.getItem(key)
+    if (current !== null) return current === "1"
+    for (let i = 0; i < localStorage.length; i++) {
+      const oldKey = localStorage.key(i)
+      if (oldKey?.startsWith(`${key}.`) && localStorage.getItem(oldKey) === "1") {
+        // 即使迁移写入失败，也仍然尊重已读取的旧状态。
+        try { localStorage.setItem(key, "1") } catch { /* 下次重试迁移 */ }
+        return true
+      }
+    }
+  } catch { /* 存储不可用时仍可使用当前窗口 */ }
+  return false
 }
+
+export function 读跳过(): boolean { return 读长期标记(跳过键) }
+export function 记跳过(v: boolean): void {
+  try { localStorage.setItem(跳过键, v ? "1" : "0") } catch { /* 当前窗口仍可继续 */ }
+}
+export function 读引导完成(): boolean { return 读长期标记(引导完成键) }
 export function 记引导完成(): void {
-  try {
-    localStorage.setItem(安装存储键(引导完成键), "1")
-  } catch {
-    // 存储不可用时仍可完成当前流程。
-  }
+  try { localStorage.setItem(引导完成键, "1") } catch { /* 当前窗口仍可继续 */ }
 }
 
 const 密钥入口: Readonly<Record<string, string>> = {

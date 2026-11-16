@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 /** 计数用的假桥接。挂在 window 上，走 App 的默认 client 路径 */
-function installBridge(holdCredentials = false) {
+function installBridge(holdCredentials = false, configured: string[] = [], broken: string[] = []) {
   const invokes: string[] = []
   let releaseCredentials!: () => void
   const credentialsReady = new Promise<void>(resolve => { releaseCredentials = resolve })
@@ -53,7 +53,7 @@ function installBridge(holdCredentials = false) {
           : op === "listKnownProviders"
             ? { providers: [], models: {} }
           : op === "listCredentials"
-            ? { configured: [], encrypted: true }
+            ? { configured, broken, encrypted: true }
             : op === "getProviders"
               ? { agents: [], providers: [] }
               : []
@@ -78,33 +78,67 @@ const settle = async () => {
 }
 
 describe("App · 默认 client 路径（生产环境唯一走的那条）", () => {
-  it("保留旧数据的重新安装也从欢迎页同步开始，不等钥匙串", async () => {
-    localStorage.setItem("dawn.global.setupSkipped", "1")
-    localStorage.setItem("dawn.global.onboardingDone", "1")
+  it("已有完成记录时重新安装也直接进入首页，不等钥匙串", async () => {
+    const { showHome } = await import('../../src/ui/state/app-page.js')
+    showHome()
     const h = installBridge(true)
     Object.assign(window.dawn!, { onboardingInstallationId: "new-installation" })
     render(<App />)
-    expect(screen.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeTruthy()
-    expect(screen.getByRole("list", { name: "设置进度" }).children).toHaveLength(4)
-    h.releaseCredentials()
-    await settle()
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
+    expect(screen.getByRole("heading", { name: "DAWN Science" })).toBeTruthy()
+    h.releaseCredentials(); await settle()
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
   })
 
-  it("首次渲染即显示四步引导，钥匙串读取尚未完成时也可查看介绍", async () => {
-    localStorage.removeItem("dawn.global.setupSkipped")
-    localStorage.removeItem("dawn.global.onboardingDone")
+  it("未知凭证时不闪现引导，确实首次使用才打开", async () => {
+    localStorage.clear()
     const h = installBridge(true)
     render(<App />)
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
+    await settle()
+    expect(h.invokes).toContain("listCredentials")
+    h.releaseCredentials(); await settle()
     const wizard = screen.getByRole("dialog", { name: "首次设置" })
     expect(within(wizard).getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeTruthy()
     expect(within(wizard).getByRole("list", { name: "设置进度" }).children).toHaveLength(4)
-    await settle()
-    expect(h.invokes).toContain("listCredentials")
+  })
+
+  it.each([[["deepseek"], []], [[], ["deepseek"]]])("配置过的用户保留首页，即使凭证暂时解不开 (%j)", async (configured, broken) => {
+    localStorage.clear()
+    const h = installBridge(true, configured, broken)
+    render(<App />)
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
+    h.releaseCredentials(); await settle()
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
+    expect(localStorage.getItem("dawn.global.onboardingDone")).toBe("1")
+  })
+
+  it("仅有旧跳过标记、没有可用模型，也不强制重看引导", async () => {
+    localStorage.clear()
+    localStorage.setItem("dawn.global.setupSkipped", "1")
+    installBridge()
+    render(<App />); await settle()
+    expect(screen.queryByRole("dialog", { name: "首次设置" })).toBeNull()
+  })
+
+  it("手动导航不清除长期状态，异步凭证返回也不关闭引导", async () => {
+    const h = installBridge(true, ["deepseek"])
+    render(<App />)
+    fireEvent.click(screen.getByRole("button", { name: "导航栏" }))
+    const wizard = screen.getByRole("dialog", { name: "首次设置" })
     fireEvent.click(within(wizard).getByRole("button", { name: "下一页" }))
+    expect(localStorage.getItem("dawn.global.setupSkipped")).toBe("1")
+    h.releaseCredentials(); await settle()
     expect(within(wizard).getByRole("heading", { name: "让研究工作在这里衔接" })).toBeTruthy()
-    h.releaseCredentials()
-    await settle()
-    expect(within(wizard).getByRole("heading", { name: "让研究工作在这里衔接" })).toBeTruthy()
+  })
+
+  it("已配置用户手动打开引导时也读取可编辑的模型目录", async () => {
+    localStorage.clear()
+    const h = installBridge(false, ["deepseek"])
+    render(<App />); await settle()
+    const before = h.invokes.filter(op => op === "listKnownProviders").length
+    fireEvent.click(screen.getByRole("button", { name: "导航栏" })); await settle()
+    expect(h.invokes.filter(op => op === "listKnownProviders")).toHaveLength(before + 1)
   })
 
   it("完成引导后先显示首页，再进入工作台并能返回", async () => {

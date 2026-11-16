@@ -13,7 +13,10 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 jobs:
+  secrets:
+    uses: ./.github/workflows/secrets.yml
   package:
+    needs: secrets
     strategy:
       fail-fast: false
       matrix:
@@ -71,11 +74,11 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   release:
-    needs: package
+    needs: [package, secrets]
     # **有一个平台没打出来也要发**（2026-09-05）：`needs` 只保证 package 全部结束，
     # `always()` 让这一步在其中某个失败时照样跑。少一个平台的包，好过一个平台都没有——
     # 下面「数一数收到几个」会把缺谁写在 Release 说明里，不蒙人。
-    if: always() && startsWith(github.ref, 'refs/tags/v')
+    if: always() && needs.secrets.result == 'success' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-22.04
     permissions: { contents: write }
     steps:

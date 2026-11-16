@@ -12,13 +12,14 @@ async function legacySkip(page: Page) {
 test.describe("无模型的首次引导入口", () => {
   test.use({ dawnOptions: { showSetup: true, providersYaml: "agents: {}\n" } })
 
-  test("旧跳过标记不能掩盖新引导；新版主动跳过后不反复弹出，并可从首页重新进入", async ({ dawn }) => {
+  test("旧跳过标记保持有效，无模型也不反复弹出，并可从首页重新进入", async ({ dawn }) => {
     const { page } = dawn
     await legacySkip(page)
     const wizard = page.locator(".setup-wizard")
-    await expect(wizard.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible({ timeout: 4000 })
-    await expect(page.getByText("还没有可用的 agent", { exact: true })).toHaveCount(0)
-    await page.screenshot({ path: "artifacts/setup-entry-2026-10-31/legacy-reopened.png" })
+    await expect(wizard).toHaveCount(0)
+    await expect(page.getByRole("heading", { name: "DAWN Science", exact: true })).toBeVisible()
+    await page.locator('.app-home-status').getByRole("button", { name: "导航栏", exact: true }).click()
+    await expect(wizard.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible()
     await wizard.getByRole("button", { name: "下一页", exact: true }).click()
     await wizard.getByRole("button", { name: "下一页", exact: true }).click()
     await wizard.getByRole("button", { name: "稍后配置", exact: true }).click()

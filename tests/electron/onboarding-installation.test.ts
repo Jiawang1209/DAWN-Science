@@ -28,7 +28,7 @@ function fixture() {
 }
 
 describe("引导安装世代，不修改业务数据", () => {
-  it("旧版更新器接续安装世代后，新版本仍使用独立向导状态，普通重启保持稳定", () => {
+  it("旧版更新器接续安装世代后，新版本标识仍含版本信息，普通重启保持稳定", () => {
     const f = fixture(),old = f.open()
     const business = join(f.root,"profile","sessions.json")
     writeFileSync(business,"existing sessions and configuration")
@@ -40,7 +40,7 @@ describe("引导安装世代，不修改业务数据", () => {
     expect(JSON.parse(readFileSync(f.stateFile,"utf8")).id).toBe(old.id)
     expect(readFileSync(business,"utf8")).toBe("existing sessions and configuration")
   })
-  it("自动升级保留安装身份，但不同版本不继承已跳过的向导；失败未换版本不重置", () => {
+  it("自动升级保留安装身份，版本后缀改变；失败未换版本不重置", () => {
     const f=fixture(),first=createOnboardingInstallation({...f.options,appVersion:"0.0.44"})
     expect(createOnboardingInstallation({...f.options,appVersion:"0.0.44"}).id).toBe(first.id)
     f.replace();first.adoptAutomaticUpdate()

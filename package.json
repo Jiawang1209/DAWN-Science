@@ -12,6 +12,9 @@
   },
   "scripts": {
     "pretest": "npm run build:electron",
+    "security:setup": "node scripts/setup-secret-guard.mjs",
+    "security:check": "node scripts/secret-guard.mjs --all",
+    "security:test": "node --test scripts/secret-guard.test.mjs",
     "postinstall": "node scripts/fix-node-pty.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

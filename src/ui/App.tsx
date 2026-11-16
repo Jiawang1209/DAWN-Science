@@ -1080,34 +1080,31 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     }).catch(error => setInterpreterRead({ loaded: false, error: error instanceof Error ? error.message : String(error) }))
   }, [client])
   useEffect(() => { if (ready) refreshInterpreters() }, [ready, refreshInterpreters])
-  /**
-   * 首次未完成、未跳过引导时，首帧就展示介绍，不能等系统钥匙串返回。
-   * 已有跳过标记的补填/迁移仍待目录与凭证到手，避免打断已可用的旧用户。
-   * 2026-08-28 之前这里看的是 `providers.providers.length > 0`——那个列表在发布出去的默认配置下永远为空，
-   * 全新安装的机器上向导从来没亮过。
-   */
+  // 首次启动只判定一次；先等待凭证元数据，避免已有配置的用户闪现引导。
+  // 不把 API key 放进 UI 存储：这里仅使用服务商 id 和非敏感的完成标记。
   const [跳过向导, 设跳过向导] = useState(读跳过)
-  const [引导已完成, 设引导已完成] = useState(读引导完成)
-  const [向导起点, 设向导起点] = useState<"welcome" | "key">(() => 读引导完成() ? "key" : "welcome")
-  /**
-   * 向导一旦因「没凭证」亮起，就留到人按「开始使用」或「先跳过」——key 保存成功那一瞬不能把它抽走
-   * （e2e 抓的：第 ② 段解释器还没来得及选，屏幕就换了）。
-   */
-  const [向导中, 设向导中] = useState(() => !读引导完成() && !读跳过())
+  const [向导起点, 设向导起点] = useState<"welcome" | "key">("welcome")
+  const [向导中, 设向导中] = useState(false)
+  const 引导启动已判定 = useRef(false)
   useEffect(() => {
-    if (!没有钥匙) return
-    // Old skipped-only installs with no usable model must see the new guide.
-    // Keep working legacy agents and an explicit skip of the new guide intact.
-    if (跳过向导 && !引导已完成 && 对话agent顺序(providers.agents).length === 0) {
-      设向导起点("welcome")
-      记跳过(false)
-      设跳过向导(false)
-      设向导中(true)
-    } else if (!跳过向导) 设向导中(true)
-  }, [没有钥匙, 跳过向导, 引导已完成, providers.agents])
+    if (引导启动已判定.current) return
+    if (读引导完成() || 读跳过()) {
+      引导启动已判定.current = true
+      return
+    }
+    if (!凭证到手) return
+    引导启动已判定.current = true
+    if (creds.configured.length > 0 || (creds.broken?.length ?? 0) > 0) {
+      // 暂时解不开的已存凭证仍代表配置过，不强迫重走介绍。
+      记引导完成()
+      return
+    }
+    设向导中(true)
+  }, [凭证到手, creds.configured, creds.broken])
   const 打开首次引导 = useCallback(() => {
+    引导启动已判定.current = true
     设向导起点("welcome")
-    记跳过(false)
+    // 手动打开仅改变当前窗口，不清除长期完成/跳过记录。
     设跳过向导(false)
     设向导中(true)
   }, [])
@@ -2198,13 +2195,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     problem?: string
   }>({ providers: [] })
   useEffect(() => {
-    // 设置屏要它；首启向导（没凭证、没跳过时）也要它——服务商下拉从这儿来
-    if (!设置在场 && !(creds.configured.length === 0 && !跳过向导)) return
+    // 设置屏与手动/自动打开的引导都需要服务商目录，包括已经配置过的用户。
+    if (!设置在场 && !(向导中 && !跳过向导)) return
     client
       .get<typeof knownProviders>("listKnownProviders", {})
       .then(setKnownProviders)
       .catch(fail)
-  }, [设置在场, client, creds.configured.length, 跳过向导])
+  }, [设置在场, client, 向导中, 跳过向导])
 
   /**
    * 删会话。**账本不动**——那句话要在按下之前就在屏幕上，
@@ -6704,14 +6701,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               onProbe={探测解释器}
               onSkip={() => {
                 记引导完成()
-                设引导已完成(true)
                 记跳过(true)
                 设跳过向导(true)
                 设向导中(false)
               }}
               onStart={() => {
                 记引导完成()
-                设引导已完成(true)
                 记跳过(true)
                 设跳过向导(true)
                 设向导中(false)

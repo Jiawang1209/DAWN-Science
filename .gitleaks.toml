@@ -1,0 +1,28 @@
+title = "DAWN credential protection"
+[extend]
+useDefault = true
+
+# Keep default provider-specific detectors and also recognize DeepSeek/compatible sk- keys.
+[[rules]]
+id = "dawn-provider-key"
+description = "Provider API key must stay in the local credential store"
+regex = '''\bsk-(?:proj-|ant-)?[A-Za-z0-9_-]{24,}'''
+keywords = ["sk-"]
+
+[[rules]]
+id = "generic-api-key"
+  # Source-freeze audit records contain SHA-256 file digests, not credentials.
+  # Both the validation path AND a filename/quoted 64-hex digest entry must match.
+  [[rules.allowlists]]
+  description = "SHA-256 source inventory entries"
+  condition = "AND"
+  paths = ['''(?:^|/)docs/validation/''']
+  regexTarget = "match"
+  regexes = ['''^[^"\r\n]+\.[a-zA-Z0-9]+"\s*:\s*"[a-f0-9]{64}"$''']
+
+  [[rules.allowlists]]
+  description = "Existing ascending-byte AES test vector, not a service credential"
+  condition = "AND"
+  paths = ['''(?:^|/)tests/channels/weixin-ilink\.test\.ts$''']
+  regexTarget = "secret"
+  regexes = ['''^00112233445566778899aabbccddeeff$''']

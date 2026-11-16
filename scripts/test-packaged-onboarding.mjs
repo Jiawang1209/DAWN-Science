@@ -37,17 +37,13 @@ const launch = async () => {
       DAWN_SKIP_CREDENTIAL_GATE: "1" },
   })
   page = await app.firstWindow()
-  await page.locator(".app-shell").waitFor({ timeout: 30_000 })
+  await page.locator(".app-shell:visible").waitFor({ timeout: 30_000 })
   return page.evaluate(() => window.dawn.onboardingInstallationId)
 }
 const quit = async () => { if (app) { await app.close(); app = undefined } }
 const welcome = async () => {
   await expect(page.getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible()
   await expect(page.getByRole("list", { name: "设置进度" }).locator("li")).toHaveCount(4)
-}
-const skip = async () => {
-  await page.getByRole("button", { name: "先跳过", exact: true }).click()
-  await expect(page.locator(".setup-wizard")).toHaveCount(0)
 }
 const retained = async () => {
   const value = await page.evaluate(async () => {
@@ -64,9 +60,9 @@ const retained = async () => {
 try {
   execFileSync("/usr/bin/ditto", [sourceBundle, installed])
   const first = await launch()
-  expect(first).toMatch(/^[a-f\d-]{36}$/)
+  expect(first).toMatch(/^[a-f\d-]{36}(?:@.+)?$/)
   await welcome()
-  // 模拟重装保留的旧完成标记，不能绕过新安装的第 1 步。
+  // 模拟已配置用户保留的旧完成标记：保留用户数据时应直接进入首页。
   await page.evaluate(async () => {
     localStorage.setItem("dawn.global.setupSkipped", "1")
     localStorage.setItem("dawn.global.onboardingDone", "1")
@@ -77,19 +73,15 @@ try {
     if (task.error) throw new Error(`fixture task failed: ${JSON.stringify(task.error)}`)
   })
   await page.reload()
+  await expect(page.locator(".setup-wizard")).toHaveCount(0)
+  check("保留旧完成标记的安装直接进入首页")
+  await page.locator(".app-home-status").getByRole("button", { name: "导航栏", exact: true }).click()
   await welcome()
-  await page.screenshot({ path: join(artifacts, "fresh-install-step-one.png") })
-  check("保留旧完成标记，新安装仍显示四步第 1 步")
   await page.getByRole("button", { name: "下一页", exact: true }).click()
-  await expect(page.getByRole("heading", { name: "让研究工作在这里衔接" })).toBeVisible()
-  await quit()
-  expect(await launch()).toBe(first)
-  await welcome()
-  check("引导未完成时重启从第 1 步开始")
-  await skip()
   await quit()
   expect(await launch()).toBe(first)
   await expect(page.locator(".setup-wizard")).toHaveCount(0)
+  check("手动打开后退出，不清除此前完成状态")
   await retained()
   check("普通重启保留已跳过状态、凭证、会话、配置和用户存储")
   await quit()
@@ -98,13 +90,15 @@ try {
   execFileSync("/usr/bin/ditto", [sourceBundle, installed])
   const second = await launch()
   expect(second).not.toBe(first)
-  await welcome()
+  await expect(page.locator(".setup-wizard")).toHaveCount(0)
   await retained()
-  await page.screenshot({ path: join(artifacts, "same-version-reinstall-step-one.png") })
-  check("同路径同版本覆盖安装，保留数据但从四步第 1 步重新开始")
+  await page.screenshot({ path: join(artifacts, "same-version-reinstall-home.png") })
+  check("同路径同版本覆盖安装，保留数据和引导完成状态")
+  await page.locator(".app-home-status").getByRole("button", { name: "导航栏", exact: true }).click()
+  await welcome()
   for (let step = 0; step < 3; step++) await page.getByRole("button", { name: "下一页", exact: true }).click()
   await expect(page.getByRole("heading", { name: "连接你的计算环境" })).toBeVisible()
-  await page.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
+  await page.getByRole("button", { name: "开始使用 →", exact: true }).click()
   await expect(page.locator(".setup-wizard")).toHaveCount(0)
   check("四步可完整走完，沿用已有密钥，可稍后配置解释器")
   await quit()
@@ -116,7 +110,7 @@ try {
   const version = JSON.parse(readFileSync(join(installed, "Contents", "Resources", "app", "package.json"))).version
   const generation = createOnboardingInstallation({ stateFile: join(profile, "onboarding-installation.json"),
     identityPaths: [installed, exe, join(installed, "Contents", "Resources", "app", "package.json")], log: message => report.errors.push(message) })
-  expect(generation.id).toBe(second)
+  expect(generation.id).toBe(second.split("@")[0])
   const zip = join(testRoot, "update.zip")
   execFileSync("/usr/bin/ditto", ["-c", "-k", "--keepParent", sourceBundle, zip])
   await 换包({ 方式: "mac-zip", 包路径: zip, 期望版本: version, 当前版本: version, 应用路径: installed }, 本机换包依赖)
@@ -130,10 +124,10 @@ try {
   // 再验原目录直接覆盖，不先移走旧 .app，避免只覆盖“删除后重新复制”场景。
   execFileSync("/usr/bin/ditto", [sourceBundle, installed])
   expect(await launch()).not.toBe(second)
-  await welcome()
+  await expect(page.locator(".setup-wizard")).toHaveCount(0)
   await retained()
-  await page.screenshot({ path: join(artifacts, "inplace-overwrite-step-one.png") })
-  check("同一目录直接覆盖安装，也从四步第 1 步开始且保留用户数据")
+  await page.screenshot({ path: join(artifacts, "inplace-overwrite-home.png") })
+  check("同一目录直接覆盖安装，也保留引导状态和用户数据")
 } catch (error) {
   console.error(error.stack ?? String(error))
   report.errors.push(error.stack ?? String(error))

@@ -52,6 +52,8 @@ const 更新桩 = { 状态: { 阶段: "idle" as const, 当前: "0.0.2" }, 自动
 
 function backend(over: Partial<WorkbenchBackend> = {}): WorkbenchBackend {
   return {
+    createProject: async () => project,
+    updateProject: async () => project,
     readCodeDocument: async () => ({ path: '/w/code.py', text: '', version: '0'.repeat(64) }),
     saveCodeDocument: async () => ({ path: '/w/code.py', version: '0'.repeat(64), bytes: 0 }),
     browseDirectory: async () => ({ path: '/w', parentPath: '/', projectPath: '/w', entries: [], ignored: 0, omitted: 0 }),

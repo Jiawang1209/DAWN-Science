@@ -1,4 +1,5 @@
 import { fileBrowserOperations } from './file-browser.js'
+import { validProjectFolderName } from './project-name.js'
 import { localToolOperations } from './local-tools.js'
 import {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
 import {ToolRecordRequestSchema,ToolRecordResponseSchema} from './tool-record.js'
@@ -371,6 +372,26 @@ export const OPERATIONS = {
    */
   openProject: {
     request: z.object({ workspace: z.string().min(1) }).strict(),
+    response: ProjectSummarySchema,
+    mutating: true,
+  },
+
+  createProject: {
+    request: z.object({
+      parentDirectory: z.string().min(1),
+      name: z.string().trim().refine(validProjectFolderName, '项目名称必须是有效的单个文件夹名称'),
+      description: z.string().trim().max(4000).optional(),
+      scienceLayout: z.boolean().optional(),
+      agentContext: z.string().trim().max(32000).optional(),
+    }).strict(),
+    response: ProjectSummarySchema,
+    mutating: true,
+  },
+  updateProject: {
+    request: z.object({
+      projectId: z.string().min(1), name: z.string().trim().min(1).max(120).optional(),
+      description: z.string().trim().max(4000).optional(), favorite: z.boolean().optional(),
+    }).strict(),
     response: ProjectSummarySchema,
     mutating: true,
   },

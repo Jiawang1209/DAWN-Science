@@ -19,6 +19,8 @@ export interface ProjectRecord {
    * 只是界面把它放在上面那一列（「会话」），不混进项目列表。
    */
   temporary?: boolean
+  description?: string
+  favorite?: true
 }
 
 interface Row {
@@ -27,6 +29,8 @@ interface Row {
   workspace: string
   created_at: string
   temporary?: number
+  description?: string
+  favorite?: number
 }
 
 const toRecord = (r: Row): ProjectRecord => ({
@@ -36,6 +40,8 @@ const toRecord = (r: Row): ProjectRecord => ({
   createdAt: r.created_at,
   // **只在为真时给这个字段**：缺省就是「不是临时的」，与 false 同义但少一处噪声
   ...(r.temporary ? { temporary: true } : {}),
+  ...(r.description ? { description: r.description } : {}),
+  ...(r.favorite ? { favorite: true as const } : {}),
 })
 
 export class ProjectStore {
@@ -44,10 +50,15 @@ export class ProjectStore {
   insert(rec: ProjectRecord): void {
     this.db
       .prepare(
-        `INSERT INTO projects (id, name, workspace, created_at, temporary)
-         VALUES (@projectId, @name, @workspace, @createdAt, @temporary)`,
+        `INSERT INTO projects (id, name, workspace, created_at, temporary, description, favorite)
+         VALUES (@projectId, @name, @workspace, @createdAt, @temporary, @description, @favorite)`,
       )
-      .run({ ...rec, temporary: rec.temporary ? 1 : 0 })
+      .run({ ...rec, temporary: rec.temporary ? 1 : 0, description: rec.description ?? '', favorite: rec.favorite ? 1 : 0 })
+  }
+
+  update(projectId: string, patch: { name?: string | undefined; description?: string | undefined; favorite?: boolean | undefined }): boolean {
+    return this.db.prepare(`UPDATE projects SET name=COALESCE(@name,name), description=COALESCE(@description,description), favorite=COALESCE(@favorite,favorite) WHERE id=@projectId`)
+      .run({ projectId, name: patch.name ?? null, description: patch.description ?? null, favorite: patch.favorite === undefined ? null : patch.favorite ? 1 : 0 }).changes > 0
   }
 
   get(projectId: string): ProjectRecord | undefined {
@@ -91,6 +102,8 @@ export class ProjectStore {
       name: project.name,
       workspace: project.workspace,
       createdAt: project.createdAt,
+      ...(project.description ? { description: project.description } : {}),
+      ...(project.favorite ? { favorite: true as const } : {}),
       // **临时的要能被界面认出来**：它归上面那一列，不进项目列表
       ...(project.temporary ? { temporary: true as const } : {}),
       totalRunCount: one(`SELECT COUNT(*) AS n FROM runs WHERE project_id = ?`),

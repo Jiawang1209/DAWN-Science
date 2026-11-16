@@ -370,6 +370,10 @@ export function 关闭图标({ className }: 图标属性 = {}) {
 }
 
 /** 四角星：提示词增强那颗按钮（2026-08-21）。不用 ✨ 字符——emoji 跟不了 currentColor */
+export function 收藏图标({ className }: 图标属性 = {}) {
+  return <壳 {...(className ? { className } : {})}><path d="m8 1.1 2.1 4.3 4.8.7-3.5 3.4.8 4.8L8 12l-4.2 2.3.8-4.8L1.1 6.1l4.8-.7Z" /></壳>
+}
+
 export function 星图标({ className }: 图标属性 = {}) {
   return (
     <壳 {...(className ? { className } : {})}>

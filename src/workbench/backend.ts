@@ -2481,6 +2481,20 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
 
     listProjects: async () => projects.list(),
 
+    createProject: async input => {
+      if (opts.readOnly) throw fault("invalid_request", "当前宿主只读，不能新建项目")
+      try {
+        const rec = projects.create(input)
+        return projectStore.summary(rec.projectId)!
+      } catch (error) { throw fault原样('invalid_request', error instanceof Error ? error.message : String(error)) }
+    },
+    updateProject: async ({ projectId, ...patch }) => {
+      if (opts.readOnly) throw fault("invalid_request", "当前宿主只读，不能修改项目")
+      requireProject(projectId)
+      projectStore.update(projectId, patch)
+      return projectStore.summary(projectId)!
+    },
+
     /**
      * **把一个文件夹认成项目**（2026-08-19，作者要的）。
      *

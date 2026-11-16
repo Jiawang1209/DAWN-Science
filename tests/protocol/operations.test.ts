@@ -74,7 +74,7 @@ describe("操作注册表", () => {
         "runInKernel",
         "interruptKernel",
         "fakeSshControl",
-        "openProject",
+        "openProject", "createProject", "updateProject",
         "addAcpAgent",
         "removeAgent",
         "setAcpRemoteCapable",

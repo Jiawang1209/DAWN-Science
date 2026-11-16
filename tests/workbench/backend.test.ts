@@ -109,7 +109,7 @@ function newRepo(): string {
   return dir
 }
 
-function make(openPath?: (path: string) => Promise<string>, remote?: WorkbenchBackendOptions['remote']) {
+function make(openPath?: (path: string) => Promise<string>, remote?: WorkbenchBackendOptions['remote'], readOnly?: boolean) {
   const db = new Database(":memory:")
   migrate(db)
   const projectStore = new ProjectStore(db)
@@ -139,7 +139,7 @@ function make(openPath?: (path: string) => Promise<string>, remote?: WorkbenchBa
     queue: new SuggestionQueue(join(记忆根, "SUGGESTIONS.jsonl")),
     pending: new 待装技能(join(记忆根, "pending-skills"), () => mkdtempSync(join(tmpdir(), "dawn-skills-"))),
   }
-  const backend = createWorkbenchBackend({ ...(openPath ? { openPath } : {}), ...(remote ? { remote } : {}), projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder, kernels: fakeKernels as unknown as 对话内核 })
+  const backend = createWorkbenchBackend({ readOnly, ...(openPath ? { openPath } : {}), ...(remote ? { remote } : {}), projects, projectStore, runs: runStore, sessions, credentials: memoryCredentials(), registry, events, tasks: new TaskStore(db), scratchRoot: mkdtempSync(join(tmpdir(), "dawn-scratch-")), memory, settings: new SettingsStore(db), runRecorder, kernels: fakeKernels as unknown as 对话内核 })
   return { db, projectStore, runStore, sessionStore, sessions, projects, backend, events, memory, runtime, runRecorder, fakeKernels, server: new WorkbenchServer(backend) }
 }
 
@@ -149,6 +149,26 @@ describe("真实后端 · 经服务端端到端", () => {
   beforeEach(() => {
     ctx = make()
     repo = newRepo()
+  })
+
+  it('creates and updates a project through the validated protocol without creating a session', async () => {
+    const result = await ctx.server.handle('createProject', { parentDirectory: repo, name: 'New research', description: 'UI only', scienceLayout: true, agentContext: 'Use R.' })
+    expect(result).toMatchObject({ ok: true, data: { name: 'New research', description: 'UI only', totalSessionCount: 0 } })
+    if (!result.ok) throw new Error('creation failed')
+    const p = result.data as { projectId: string; workspace: string }
+    expect(readFileSync(join(p.workspace, 'AGENTS.md'), 'utf8')).toContain('Use R.')
+    expect(await ctx.server.handle('updateProject', { projectId: p.projectId, name: 'Renamed', favorite: true })).toMatchObject({ ok: true, data: { name: 'Renamed', favorite: true, workspace: p.workspace } })
+    expect(await ctx.server.handle('createProject', { parentDirectory: repo, name: 'New research' })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+    expect(await ctx.server.handle('createProject', { parentDirectory: repo, name: '../escape' })).toMatchObject({ ok: false })
+  })
+
+  it('rejects project filesystem and metadata writes on a readonly host', async () => {
+    const readonly = make(undefined, undefined, true)
+    const project = readonly.projects.open(repo)
+    expect(await readonly.server.handle('createProject', { parentDirectory: repo, name: 'readonly-child' })).toMatchObject({ ok: false })
+    expect(existsSync(join(repo, 'readonly-child'))).toBe(false)
+    expect(await readonly.server.handle('updateProject', { projectId: project.projectId, name: 'Changed' })).toMatchObject({ ok: false })
+    expect(readonly.projectStore.get(project.projectId)?.name).toBe(project.name)
   })
 
   it('persists each local tool independently, rejects invalid replacements and clears only the requested selection', async () => {

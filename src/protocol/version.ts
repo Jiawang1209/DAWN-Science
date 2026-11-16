@@ -613,7 +613,8 @@
 /** 8.54: explicit user file browsing beyond the workspace, with canonical directory identity. */
 /** 8.55: complete code document reads and optimistic, atomic human saves. */
 /** 8.56: optional local tool discovery, explicit executable selections and per-launch local command environments. */
-export const WORKBENCH_PROTOCOL_VERSION = "8.56"
+/** 8.57: explicit project creation, display metadata and persistent favorites. */
+export const WORKBENCH_PROTOCOL_VERSION = "8.57"
 
 const VERSION_RE = /^(\d+)\.(\d+)$/
 

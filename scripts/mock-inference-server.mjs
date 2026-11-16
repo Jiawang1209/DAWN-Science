@@ -602,7 +602,11 @@ export function startMockInferenceServer(opts = {}) {
       const botSummary = /BOT_ACCEPT_(DATA|STATS|PLOT)/.test(系统原文) && body.messages?.at(-1)?.role === "tool" ? 文本(body.messages.at(-1).content) : undefined
       const directoryTransferReply = 最后一句 === "目录传输验收" ? "文件与目录批次传输由文件面板执行：使用上传文件夹或下载文件夹，展开批次查看逐文件进度、冲突和失败项。文件字节不进入模型上下文。" : undefined
       const mathReply = 最后一句.includes("数学公式排版验收") ? MATH_REPLY : undefined
-      const reply = 会话标题 ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? mathReply ?? scienceMockReply(body) ?? reviewMockReply(body) ?? literatureMockReply(body) ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
+      // Project operations stay on the real backend in dev:mock and e2e. Only inference
+      // is deterministic: verify the actual AGENTS resource reached the system prompt.
+      const projectContextReply = 最后一句 === '项目上下文验收'
+        ? `项目约定：${系统原文.includes('DAWN_PROJECT_CONTEXT_ACCEPT') ? '已读取' : '未读取'}；展示说明：${系统原文.includes('DAWN_DISPLAY_DESCRIPTION_PRIVATE') ? '错误泄漏' : '未发送'}` : undefined
+      const reply = 会话标题 ?? projectContextReply ?? directoryTransferReply ?? opts.scenario?.reply(body) ?? mathReply ?? scienceMockReply(body) ?? reviewMockReply(body) ?? literatureMockReply(body) ?? terminalAssistanceReply(body) ?? toolSelectionDemoReply(body) ?? analysisDeliveryMockReply(body) ?? deliveryDemoReply(body) ?? analysisRouteMockReply(body) ?? botCollaborationReply(body) ?? botSummary ?? (最后一句.includes("[bot-result:") ? `已收到 Bot 任务结果并汇总：${最后一句}` : 系统原文.includes("为用户建议下一句") ? "检查缺失值并说明处理方法" : 问答结果 && 最后一句.includes("结构化澄清") ? `收到澄清答案：${文本(问答结果.content)}` : 摘要
         ? 假摘要
         : 是key验证
         ? "ok"

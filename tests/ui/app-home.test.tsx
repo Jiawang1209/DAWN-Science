@@ -12,6 +12,20 @@ function fixture(projects: ProjectSummary[], rows: Record<string, SessionSummary
 }
 
 describe('App homepage', () => {
+  it('exposes project creation, metadata settings and persisted favorites', async () => {
+    const a = project('a'), b = { ...project('b'), favorite: true as const, description: 'Project description' }
+    const { props } = fixture([a, b], {})
+    const onCreateProject = vi.fn(), onEditProject = vi.fn(), onToggleFavorite = vi.fn().mockResolvedValue(undefined)
+    render(<AppHome {...props} onCreateProject={onCreateProject} onEditProject={onEditProject} onToggleFavorite={onToggleFavorite} />)
+    await screen.findByText('Project description')
+    expect(screen.getAllByRole('article')[0]?.textContent).toContain('Project b')
+    fireEvent.click(screen.getByRole('button', { name: '新建项目' }))
+    expect(onCreateProject).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole('button', { name: '项目设置：Project b' }))
+    expect(onEditProject).toHaveBeenCalledWith(b)
+    fireEvent.click(screen.getByRole('button', { name: '取消收藏项目：Project b' }))
+    await waitFor(() => expect(onToggleFavorite).toHaveBeenCalledWith(b))
+  })
   it('reports a project-list read failure instead of claiming there are no projects', async () => {
     const { props, get } = fixture([], {})
     get.mockRejectedValueOnce(new Error('listProjects unavailable'))

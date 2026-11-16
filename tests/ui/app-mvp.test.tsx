@@ -684,7 +684,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     fireEvent.click(screen.getByRole('button', { name: '首页' }))
     h.releaseOperation()
     await act(async () => { for (let count = 0; count < 50; count++) await Promise.resolve() })
-    expect(screen.getByRole('heading', { name: '继续你的研究' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'DAWN Science' })).toBeTruthy()
   })
 
   it("首页项目入口的首句使用该项目目录", async () => {
@@ -712,7 +712,7 @@ describe("慢的会话创建不该把人从当前视图上拽走", () => {
     h.releaseCreateSession()
     await waitFor(() => expect(h.calls.some(call => call.op === 'writeToSession')).toBe(true))
     await act(async () => { for (let n = 0; n < 20; n++) await Promise.resolve() })
-    expect(screen.getByRole('heading', { name: '继续你的研究' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'DAWN Science' })).toBeTruthy()
   })
   /**
    * **2026-08-09 由 e2e 在负载下抓到的真实缺陷。**

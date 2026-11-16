@@ -7,7 +7,7 @@ test.describe('App homepage', () => {
 
   test('launches at home, preserves chat drafts and returns from the four-step guide', async ({ dawn }, info) => {
     const { page } = dawn
-    await expect(page.getByRole('heading', { name: '继续你的研究', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()
     await page.locator('.app-home').getByRole('button', { name: '新建对话', exact: true }).click()
     const field = page.locator('.composer textarea')
     await field.fill('只测试首页入口')
@@ -28,7 +28,7 @@ test.describe('App homepage', () => {
     await page.getByRole('button', { name: '首页', exact: true }).click()
     await page.locator('.app-home-status').getByRole('button', { name: '导航栏', exact: true }).click()
     await wizard.getByRole('button', { name: '先跳过', exact: true }).click()
-    await expect(page.getByRole('heading', { name: '继续你的研究', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()
     await page.setViewportSize({ width: 700, height: 700 })
     expect(await page.locator('.app-home').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
     await page.evaluate(() => document.documentElement.classList.add('dawn-dark'))
@@ -95,7 +95,7 @@ test.describe('first-run home', () => {
     await wizard.getByRole('button', { name: '稍后配置', exact: true }).click()
     await wizard.getByRole('button', { name: /开始使用|跳过，进入首页/ }).click()
     await expect(wizard).toHaveCount(0)
-    await expect(page.getByRole('heading', { name: '继续你的研究', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()
     await page.locator('.app-home').getByRole('button', { name: '新建对话', exact: true }).click()
     await expect(page.locator('.composer textarea')).toBeVisible()
   })

@@ -26,6 +26,27 @@ describe("ProjectStore", () => {
     store = new ProjectStore(db)
   })
 
+  it('persists metadata changes and clears them independently without changing workspace or history', () => {
+    store.insert(p1)
+    store.update('p1', { name: 'Renamed', description: 'Display only', favorite: true })
+    const reopened = new ProjectStore(db)
+    expect(reopened.summary('p1')).toMatchObject({ name: 'Renamed', description: 'Display only', favorite: true, workspace: p1.workspace })
+    reopened.update('p1', { description: '', favorite: false })
+    expect(reopened.get('p1')).toMatchObject({ name: 'Renamed', workspace: p1.workspace })
+    expect(reopened.summary('p1')?.description).toBeUndefined()
+    expect(reopened.summary('p1')?.favorite).toBeUndefined()
+  })
+
+  it('migrates existing v18 projects with neutral metadata defaults and preserves all identity fields', () => {
+    store.insert(p1)
+    db.exec("ALTER TABLE projects DROP COLUMN favorite; ALTER TABLE projects DROP COLUMN description; UPDATE schema_meta SET value='18' WHERE key='version'")
+    migrate(db)
+    expect(store.get('p1')).toEqual(p1)
+    store.update('p1', { description: 'After migration', favorite: true })
+    migrate(db)
+    expect(store.get('p1')).toMatchObject({ ...p1, description: 'After migration', favorite: true })
+  })
+
   it("插入后可按 id 读回", () => {
     store.insert(p1)
     expect(store.get("p1")?.name).toBe("dawn")

@@ -1,6 +1,7 @@
 import { LocalToolsPanel } from './local-tools.js'
 import { AppHome, HomeButton } from './app-home.js'
 import { $appPage, showHome, showWorkbench, appPageRevision } from './state/app-page.js'
+import { ProjectDialog } from './project-dialog.js'
 import { setTempSessions, setProjects } from './state/catalog.js'
 import { 导航图标 } from './icons.js'
 import { LinkedScript, followEditorScript, openEditorFile } from "./linked-script.js"
@@ -1571,6 +1572,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
    * 一段还没说过话的对话本来就不该占据侧栏的一行。
    */
   const [homeWorkspaceIntent, setHomeWorkspaceIntent] = useState<{ path: string | undefined }>()
+  const [homeProjectDialog, setHomeProjectDialog] = useState<{ project?: ProjectSummary; revision: number }>()
   const 回到初始画面 = useCallback(() => {
     setHomeWorkspaceIntent({ path: undefined })
     setActiveSessionId(undefined)
@@ -5383,8 +5385,14 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })() : null
   return (<>
     {appPage === 'home' ? <div className="app-shell app-home-shell" inert={向导中 && !跳过向导}>
-      <header className="topbar"><span className="brand"><img className="brand-mark" src={rpIcon} alt="" />DAWN Science</span><span className="hint">{t("首页")}</span></header>
+      <header className="topbar"><span className="brand"><img className="brand-mark" src={rpIcon} alt="" />DAWN Science</span></header>
       <AppHome client={client} projects={projects} onProjectsLoaded={setProjects} ready={ready}
+        onCreateProject={() => setHomeProjectDialog({ revision: appPageRevision() })}
+        onEditProject={project => setHomeProjectDialog({ project, revision: appPageRevision() })}
+        onToggleFavorite={async project => {
+          const saved = await client.get<ProjectSummary>('updateProject', { projectId: project.projectId, favorite: !project.favorite })
+          setProjects($projects.get().map(row => row.projectId === saved.projectId ? saved : row))
+        }}
         onNewChat={() => enterHomeProject()}
         onOpenProject={enterHomeProject}
         onChooseProject={async () => {
@@ -5525,6 +5533,13 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       /> : null}
 
       {/* 不可逆操作的确认。**自己写的**——Electron 里 confirm() 直接抛错 */}
+      {homeProjectDialog ? <ProjectDialog client={client} project={homeProjectDialog.project} defaultParent={默认工作区?.path} onClose={() => setHomeProjectDialog(undefined)} onSaved={saved => {
+        const previous = $projects.get()
+        setProjects(previous.some(row => row.projectId === saved.projectId) ? previous.map(row => row.projectId === saved.projectId ? saved : row) : [saved, ...previous])
+        const shouldEnter = !homeProjectDialog.project && appPageRevision() === homeProjectDialog.revision
+        setHomeProjectDialog(undefined)
+        if (shouldEnter) enterHomeProject(saved)
+      }} /> : null}
       <ConfirmDialog request={confirming} onCancel={() => setConfirming(undefined)} />
       <NoticeDialog notice={key没过} onClose={() => 设key没过(undefined)} />
 

@@ -12,6 +12,8 @@ function backend(): WorkbenchBackend {
     totalRunCount: 0, totalSessionCount: 0, unresolvedProblemCount: 0,
   }
   return {
+    createProject: async () => project,
+    updateProject: async () => project,
     getRunOverview:async({sessionId})=>({ownerSessionId:sessionId,source:"disk",runs:[]}),
     getToolRecord:async()=>({state:'unavailable'}),
     setRunBudget:async()=>{throw new Error('Budget unavailable in this fixture')},

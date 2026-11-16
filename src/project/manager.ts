@@ -12,6 +12,7 @@ import type { ProjectRecord, ProjectStore } from "../store/projects.js"
 import type { RunStore } from "../store/runs.js"
 import type { SessionStore, SessionRecord } from "../store/sessions.js"
 import type { ProjectSummary, RunSummary, SessionSummary } from "../protocol/index.js"
+import { initializeProject, type CreateProjectInput } from './create.js'
 
 export interface ProjectManagerOptions {
   projects: ProjectStore
@@ -33,6 +34,22 @@ export class ProjectManager {
     this.sessionStore = opts.sessions
     this.runStore = opts.runs
     this.registry = opts.registry
+  }
+
+  create(input: CreateProjectInput): ProjectRecord {
+    const initialized = initializeProject(input)
+    try {
+      const rec: ProjectRecord = {
+        projectId: randomUUID(), name: input.name, workspace: initialized.workspace,
+        createdAt: new Date().toISOString(), ...(input.description?.trim() ? { description: input.description.trim() } : {}),
+      }
+      this.projectStore.insert(rec)
+      return rec
+    } catch (error) {
+      try { initialized.rollback() }
+      catch (cleanupError) { throw new Error(`${String(error)}；${String(cleanupError)}`) }
+      throw error
+    }
   }
 
   /**

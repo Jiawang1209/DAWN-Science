@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 18
+export const SCHEMA_VERSION = 19
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -796,6 +796,9 @@ function 迁移步骤(db: Database.Database): void {
     CREATE TABLE IF NOT EXISTS artifact_retention_requests (project_id TEXT NOT NULL REFERENCES projects(id), request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('pending','ready','failed','interrupted')), result_id TEXT, request_payload TEXT NOT NULL CHECK(json_valid(request_payload)), temp_key TEXT, PRIMARY KEY(project_id,request_id));
     CREATE TABLE IF NOT EXISTS artifact_retained (id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id), payload TEXT NOT NULL CHECK(json_valid(payload)));
   `)
+
+  if (!hasColumn(db, 'projects', 'description')) db.exec("ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''")
+  if (!hasColumn(db, 'projects', 'favorite')) db.exec('ALTER TABLE projects ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0 CHECK(favorite IN (0,1))')
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

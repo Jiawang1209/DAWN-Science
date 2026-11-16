@@ -208,6 +208,8 @@ export const ProjectSummarySchema = z
      * **缺省 = 不是临时的**。老服务端不发这个字段，读成「正式项目」正好对。
      */
     temporary: z.literal(true).optional(),
+    description: z.string().max(4000).optional(),
+    favorite: z.literal(true).optional(),
   })
   .strict()
 export type ProjectSummary = z.infer<typeof ProjectSummarySchema>

@@ -146,3 +146,5 @@ export type {AgentUsageTotals} from './agent-usage-totals.js'
 
 export {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
 export type {TaskArtifact,TaskArtifactCheck} from './task-artifacts.js'
+
+export { validProjectFolderName } from './project-name.js'

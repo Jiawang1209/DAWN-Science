@@ -8,6 +8,8 @@
  * not directly on Tauri commands, Ark, Jupyter messages, or aisdk internals"*
  */
 export { WORKBENCH_PROTOCOL_VERSION, isCompatible } from "./version.js"
+export { LOCAL_TOOLS, LocalToolIdSchema, LocalToolPathsSchema, LocalToolCandidateSchema, LocalToolResultSchema, LocalToolStateSchema } from './local-tools.js'
+export type { LocalToolId, LocalToolPaths, LocalToolCandidate, LocalToolResult, LocalToolState } from './local-tools.js'
 export { 能上服务器 } from "./remote-capable.js"
 export { FaultI18nSchema, i18n消息, 渲染i18n, 取错误i18n } from "./fault-i18n.js"
 export type { FaultI18n } from "./fault-i18n.js"

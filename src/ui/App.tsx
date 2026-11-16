@@ -1,3 +1,4 @@
+import { LocalToolsPanel } from './local-tools.js'
 import { LinkedScript, followEditorScript, openEditorFile } from "./linked-script.js"
 import {createAutoArrangementRequester,stopAutoArrangement} from './auto-arrangement-request.js'
 import { CodeEditingContext } from './code-editing-context.js'
@@ -380,21 +381,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     window.addEventListener("resize", on)
     return () => window.removeEventListener("resize", on)
   }, [])
-  /**
-   * **换语言 = 整棵树重挂**（2026-08-13）。
-   *
-   * `t()` 是普通函数调用，不是 hook——它读的是 `$lang.get()`，
-   * 组件不会因为它变了而重渲染。给外壳一个 `key={lang}` 是最省事、
-   * 也最诚实的做法：**换语言那一刻整屏重画一次**。
-   *
-   * 代价说清楚：组件里的局部 state（展开了哪个菜单、光标在哪）会丢。
-   * 换语言是罕见动作，而**让每个组件各自 `useStore($lang)`** 的代价是
-   * 十几个文件里都要多一行、且漏一处就是「那一块没跟着换」——
-   * 那种漏法在界面上表现为半中半英，比丢一次菜单状态难查得多。
-   *
-   * 草稿不会丢：它住在 `$drafts` 这个 store 里，不在组件里。
-   * 首次设置期间保持外壳身份稳定：向导自身订阅语言，切换时保留步骤、Key 草稿与检测结果。
-   */
+  /** 语言变更重渲染界面，保留工作台局部草稿；有独立 memo 边界的翻译组件自行订阅语言。 */
   const lang = useStore($lang)
   /** 搜索浮层的短期状态留在 App；关闭清空查询与模式，不影响侧栏分区。 */
   const 搜索按钮 = useRef<HTMLButtonElement>(null)
@@ -1119,7 +1106,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     记跳过(false)
     设跳过向导(false)
     设向导中(true)
-    setView("conversation")
   }, [])
   const 探测解释器 = useCallback(() => client.get<探测结果>("probeInterpreters", {}), [client])
   const 存解释器 = useCallback(async (language: "python" | "R", path: string) => {
@@ -5109,7 +5095,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
     onRefresh={refreshKernels}
     onSetInterpreter={saveInterpreter}
     onProbe={探测解释器}
+    autoProbe
   />
+  <LocalToolsPanel client={client} />
 
         </>
       ),
@@ -5359,8 +5347,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       />
     )
   })() : null
-  return (
-    <div className="app-shell" key={向导中 && !跳过向导 ? "setup" : lang} data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
+  return (<>
+    <div className="app-shell" data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
       <div className="topbar">
         <div className="topbar-navigation">
         {/**
@@ -5951,53 +5939,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
               />
               </CodeEditingContext.Provider>
             </>
-          ) : 向导中 && !跳过向导 ? (
-            <SetupWizard
-              key={向导起点}
-              initialStep={向导起点}
-              providers={knownProviders.providers}
-              configured={creds.configured}
-              modelCatalog={knownProviders.models}
-              endpointDefaults={knownProviders.endpointDefaults}
-              connections={knownProviders.connections}
-              needsBaseUrl={knownProviders.needsBaseUrl}
-              onTest={(req) => client.get<测试回话>("testProviderKey", req)}
-              onSaveConnection={async (providerId, conn) => {
-                await client.get("setProviderConnection", { providerId, ...conn })
-                await Promise.all([
-                  client.get<typeof knownProviders>("listKnownProviders", {}).then(setKnownProviders),
-                  loadProviders(client),
-                ])
-              }}
-              problem={knownProviders.problem}
-              plaintext={creds.encrypted === false}
-              broken={creds.broken}
-              unusable={providers.unusable}
-              interpreters={interpreters}
-              onSaveKey={(id, secret) =>
-                client
-                  .get("setCredential", { providerId: id, secret })
-                  // 与设置里那条同一个理由：填了 key 那个 provider 才有 agent，要重取
-                  .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
-                  .then(() => undefined)
-              }
-              onSetInterpreter={存解释器}
-              onProbe={探测解释器}
-              onSkip={() => {
-                记引导完成()
-                设引导已完成(true)
-                记跳过(true)
-                设跳过向导(true)
-                设向导中(false)
-              }}
-              onStart={() => {
-                记引导完成()
-                设引导已完成(true)
-                记跳过(true)
-                设跳过向导(true)
-                设向导中(false)
-              }}
-            />
           ) : (
             <EmptyConversation
               agents={agentIds}
@@ -6643,6 +6584,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           subagents: 子agent名册快照?.projectId === 子agent项目id ? 子agent名册快照?.agents.length : undefined }}
         scopeLabel={projectId ? projects.find(p => p.projectId === projectId)?.name ?? t("当前项目") : t("全局")}
         version={更新回执?.状态.当前}
+        onOpenGuide={打开首次引导}
         onOpenSettings={id => 开设置栏(id)}
         alerts={<>
           {!ready ? <span role="status">{t("未连接")}</span> : null}
@@ -6651,5 +6593,54 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         </>}
       />
     </div>
-  )
+    {向导中 && !跳过向导 ? (
+<SetupWizard
+              key={向导起点}
+              initialStep={向导起点}
+              providers={knownProviders.providers}
+              configured={creds.configured}
+              modelCatalog={knownProviders.models}
+              endpointDefaults={knownProviders.endpointDefaults}
+              connections={knownProviders.connections}
+              needsBaseUrl={knownProviders.needsBaseUrl}
+              onTest={(req) => client.get<测试回话>("testProviderKey", req)}
+              onSaveConnection={async (providerId, conn) => {
+                await client.get("setProviderConnection", { providerId, ...conn })
+                await Promise.all([
+                  client.get<typeof knownProviders>("listKnownProviders", {}).then(setKnownProviders),
+                  loadProviders(client),
+                ])
+              }}
+              problem={knownProviders.problem}
+              plaintext={creds.encrypted === false}
+              broken={creds.broken}
+              unusable={providers.unusable}
+              interpreters={interpreters}
+              onSaveKey={(id, secret) =>
+                client
+                  .get("setCredential", { providerId: id, secret })
+                  // 与设置里那条同一个理由：填了 key 那个 provider 才有 agent，要重取
+                  .then(() => Promise.all([loadCredentials(client), loadProviders(client)]))
+                  .then(() => undefined)
+              }
+              onSetInterpreter={存解释器}
+              toolClient={client}
+              onProbe={探测解释器}
+              onSkip={() => {
+                记引导完成()
+                设引导已完成(true)
+                记跳过(true)
+                设跳过向导(true)
+                设向导中(false)
+              }}
+              onStart={() => {
+                记引导完成()
+                设引导已完成(true)
+                记跳过(true)
+                设跳过向导(true)
+                设向导中(false)
+              }}
+            />
+    ) : null}
+  </>)
 }

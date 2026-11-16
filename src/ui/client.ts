@@ -47,6 +47,8 @@ declare global {
       invoke(operation: string, request: unknown, requestId?: string): Promise<RawResponse>
       onEvent?: EventSource
       onTrayNewTask?: (cb: () => void) => () => void
+      /** 原生文件选择器。取消时返回空数组。 */
+      pickFiles?: (kind: "any" | "image" | "data", defaultPath?: string) => Promise<string[]>
       /** 原生目录选择器。取消时 null */
       pickDirectory?: (defaultPath?: string) => Promise<string | null>
       /** 取色器的一帧（2026-08-24）：当前窗口截图 */

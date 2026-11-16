@@ -19,6 +19,8 @@ import { materializeSessionDir } from "./session-dir.js"
 import type { TerminalControl } from "../terminal/control.js"
 
 export interface PtyRuntimeOptions {
+  /** App-scoped optional tool choices; captured only when a new local terminal starts. */
+  localToolEnvironment?: (env: NodeJS.ProcessEnv) => NodeJS.ProcessEnv
   onExit?: (sessionId: string) => void
   environment?: (spec: SessionSpec) => Promise<Record<string, string>>
   terminalControl?: TerminalControl
@@ -60,12 +62,13 @@ export class PtyRuntime implements AgentRuntime {
     }
 
     const environment = await this.opts.environment?.(spec)
+    const inherited = { ...process.env, ...extraEnv, ...environment }
     const proc = pty.spawn(this.opts.command, [...(this.opts.args ?? []), ...extraArgs], {
       name: "xterm-256color",
       cols: this.opts.cols ?? 100,
       rows: this.opts.rows ?? 30,
       cwd: spec.workspace,
-      env: ptyEnvironment({ ...process.env, ...extraEnv, ...environment }) as Record<string, string>,
+      env: ptyEnvironment(this.opts.localToolEnvironment?.(inherited) ?? inherited) as Record<string, string>,
     })
 
     let finishExit!: () => void

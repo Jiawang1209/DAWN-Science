@@ -1,3 +1,5 @@
+import { LocalEnvironmentOverview } from './local-environment-overview.js'
+import type { WorkbenchClient } from './client.js'
 /**
  * 主区域四步向导：认识产品、了解功能、配置模型、可选计算环境。
  * 密钥验证沿用现有回调与 hard/soft 判据；草稿和探测结果在回退时保留。
@@ -7,7 +9,6 @@ import { useEffect, useRef, useState } from "react"
 import { useStore } from "@nanostores/react"
 import type { FaultI18n, InterpreterCandidate } from "../protocol/index.js"
 import { Button } from "./primitives.js"
-import { InterpreterPicker } from "./interpreter-picker.js"
 import { t, tf, setLang, $lang } from "./i18n/index.js"
 import { 对话图标, 笔记本文件图标, 文件夹图标, 服务器图标 } from "./icons.js"
 import { 测试连通, type 测试, type 测试请求 } from "./Settings.js"
@@ -81,6 +82,7 @@ export function SetupWizard({
   onSaveKey,
   onSetInterpreter,
   onProbe,
+  toolClient,
   onSkip,
   onStart,
   problem,
@@ -113,6 +115,7 @@ export function SetupWizard({
   interpreters: { python?: string | undefined; r?: string | undefined }
   onSaveKey: (providerId: string, secret: string) => Promise<void>
   onSetInterpreter: (language: "python" | "R", path: string) => void | Promise<void>
+  toolClient?: WorkbenchClient | undefined
   onProbe: () => Promise<探测结果>
   onSkip: () => void
   onStart: () => void
@@ -189,6 +192,8 @@ export function SetupWizard({
   const [keyError, setKeyError] = useState<string | undefined>(undefined)
   const [probed, setProbed] = useState<探测结果 | undefined>(undefined)
   const [probing, setProbing] = useState(false)
+  const initialProbe = useRef(false)
+  useEffect(() => { if (step === 3 && !initialProbe.current) { initialProbe.current = true; void 探() } }, [step])
   const [probeError, setProbeError] = useState<string | undefined>(undefined)
   const [interpreterErrors, setInterpreterErrors] = useState<Partial<Record<"python" | "R", string>>>({})
   const [interpreterSaving, setInterpreterSaving] = useState({ python: false, R: false })
@@ -199,13 +204,16 @@ export function SetupWizard({
     setInterpreterSaving(current => ({ ...current, [language]: true }))
     try {
       await onSetInterpreter(language, path)
+      return true
     } catch (error) {
       if (revision === interpreterRevision.current[language]) setInterpreterErrors(current => ({ ...current, [language]: error instanceof Error ? error.message : String(error) }))
+      return false
     } finally {
       if (revision === interpreterRevision.current[language]) setInterpreterSaving(current => ({ ...current, [language]: false }))
     }
   }
-  const busy = saving || interpreterSaving.python || interpreterSaving.R
+  const [environmentSaving, setEnvironmentSaving] = useState(false)
+  const busy = saving || environmentSaving || interpreterSaving.python || interpreterSaving.R
 
   /** 「开始使用」的门槛是**至少一家能用**：全都建不出 agent 时放人进去，等于把他锁在一个空屏里 */
   const 用不了的 = (unusable ?? []).filter((u) => configured.includes(u.providerId))
@@ -385,19 +393,7 @@ export function SetupWizard({
 
         </> : null}
         {step === 3 ? <>
-        <p className="sw-description">{t("如果你准备运行 R 或 Python，可以连接本机已有的解释器；只使用 AI 对话时无需配置。")}</p>
-      <section className="sw-section">
-        <h2>
-          {t("解释器")} <span className="sw-opt">{t("（可选）")}</span>
-        </h2>
-        <InterpreterPicker language="python" candidates={probed?.python} probing={probing} error={probeError} current={interpreters.python} onPick={(p) => void 存解释器("python", p)} onProbe={() => void 探()} />
-        {interpreterErrors.python ? <p className="field-error" role="alert">{tf("{0} 解释器未配置成功：{1}", "Python", interpreterErrors.python)}</p> : null}
-        <InterpreterPicker language="R" candidates={probed?.r} probing={probing} current={interpreters.r} onPick={(p) => void 存解释器("R", p)} onProbe={() => void 探()} />
-        {interpreterErrors.R ? <p className="field-error" role="alert">{tf("{0} 解释器未配置成功：{1}", "R", interpreterErrors.R)}</p> : null}
-        {interpreterSaving.python || interpreterSaving.R ? <p className="hint" role="status">{t("正在保存解释器…")}</p> : null}
-      </section>
-
-        <p className="hint">{t("未配置不影响进入工作台，需要时可在「设置 → 内核」中补充。")}</p>
+        <LocalEnvironmentOverview client={toolClient} interpreters={interpreters} candidates={probed} probing={probing} probeError={probeError} onProbe={探} onSetInterpreter={存解释器} interpreterErrors={interpreterErrors} onSavingChange={setEnvironmentSaving} />
         {!有key ? <p className="caveat">{t("尚未配置可用的 API Key，进入后可在设置中补充。")}</p> : null}
         </> : null}
       </div>

@@ -155,7 +155,9 @@ export function KernelsPanel({
   onRefresh,
   onSetInterpreter,
   onProbe,
+  autoProbe = false,
 }: {
+  autoProbe?: boolean
   kernels: readonly KernelRow[]
   problems: readonly { dir: string; reason: string }[]
   shadowed: readonly { name: string; dir: string }[]
@@ -169,36 +171,35 @@ export function KernelsPanel({
   const [探到, 设探到] = useState<{ python: readonly InterpreterCandidate[]; r: readonly InterpreterCandidate[] } | undefined>(undefined)
   const [探测中, 设探测中] = useState(false)
   const [探测错, 设探测错] = useState<string | undefined>(undefined)
+  const probeGeneration = useRef(0)
+  const probeCallback = useRef(onProbe); probeCallback.current = onProbe
+  useEffect(() => {
+    if (autoProbe && probeCallback.current) 探()
+    return () => { ++probeGeneration.current }
+  }, [autoProbe])
   const 探 = () => {
-    if (!onProbe) return
+    const run = probeCallback.current
+    if (!run) return
+    const turn = ++probeGeneration.current
     设探测中(true)
     设探测错(undefined)
-    onProbe()
-      .then(设探到)
-      .catch((e: unknown) => 设探测错(e instanceof Error ? e.message : String(e)))
-      .finally(() => 设探测中(false))
+    run()
+      .then(found => { if (turn === probeGeneration.current) 设探到(found) })
+      .catch((e: unknown) => { if (turn === probeGeneration.current) 设探测错(e instanceof Error ? e.message : String(e)) })
+      .finally(() => { if (turn === probeGeneration.current) 设探测中(false) })
   }
   return (
     <Section
       desc={
-        /**
-         * **两个路径就是机制**（作者 2026-08-10）：
-         * *「直接提供一个 R 解释器和 Python 解释器的路径即可。
-         * 只有配置了，我们才能调用。」*
-         *
-         * 所以这句话不是提示，是**准入条件**——不能让人以为它是可选的。
-         * （**JSX 纯文本不渲染 markdown**：写 `**` 只会显示成星号，
-         * 今天栽过两次，所以强调一律走 CSS。）
-         */
+        /* AI 对话与 Agent 不要求本地解释器；执行 R/Python 时才需要对应路径。 */
         <>
-          {t("内核型 agent 使用以下解释器。")}
-          <em className="set-emph">{t("没有配置就不能用。")}</em>
+          {t("解释器可稍后配置，不影响 AI 对话和 Agent。运行 R/Python 代码时，再连接对应解释器。")}
         </>
       }
     >
       {探测错 ? <p className="field-error" role="alert">{tf("检测失败：{0}", 探测错)}</p> : null}
-      <InterpreterPicker layout="setting" language="python" candidates={探到?.python} probing={探测中} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={onProbe ? 探 : undefined} />
       <InterpreterPicker layout="setting" language="R" candidates={探到?.r} probing={探测中} current={interpreters.r} onPick={(p) => onSetInterpreter("R", p)} onProbe={onProbe ? 探 : undefined} />
+      <InterpreterPicker layout="setting" language="python" candidates={探到?.python} probing={探测中} current={interpreters.python} onPick={(p) => onSetInterpreter("python", p)} onProbe={onProbe ? 探 : undefined} />
 
       {/* 参考：本机注册过的 kernelspec。**它只是帮你填上面那两个框**，不是机制 */}
       {kernels.length > 0 ? (

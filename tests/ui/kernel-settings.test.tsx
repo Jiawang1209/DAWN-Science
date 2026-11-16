@@ -38,3 +38,17 @@ describe("内核设置统一路径入口", () => {
     expect((screen.getByRole("textbox", { name: "Python 解释器" }) as HTMLInputElement).value).toBe("/kept/python")
   })
 })
+
+it("R 在 Python 前面，自动检测不会改变已配置解释器", async () => {
+  const save = vi.fn()
+  const probe = vi.fn(async () => ({ python: [], r: [] }))
+  render(<KernelsPanel {...base} interpreters={{ r: '/kept/R', python: '/kept/python' }} onSetInterpreter={save} onProbe={probe} autoProbe />)
+  expect(screen.getAllByRole('group').map(el => el.getAttribute('aria-label'))).toEqual(['R 解释器', 'Python 解释器'])
+  await vi.waitFor(() => expect(probe).toHaveBeenCalledTimes(1))
+  expect(save).not.toHaveBeenCalled()
+})
+
+it("解释器全未配置时明确说明可继续对话，按需运行时再配置", () => {
+  render(<KernelsPanel {...base} onSetInterpreter={vi.fn()} />)
+  expect(screen.getByText("解释器可稍后配置，不影响 AI 对话和 Agent。运行 R/Python 代码时，再连接对应解释器。")).toBeTruthy()
+})

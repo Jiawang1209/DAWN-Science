@@ -10,7 +10,8 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react"
 import type { TranscriptItem } from "../protocol/index.js"
 import { Button } from "./primitives.js"
-import { t, tf } from "./i18n/index.js"
+import { useStore } from "@nanostores/react"
+import { t, tf, $lang } from "./i18n/index.js"
 import { 是回显 } from "./state/transcript-slot.js"
 
 const 摘要上限 = 48
@@ -54,6 +55,7 @@ function TurnNavigatorImpl({
    */
   确保可见?: ((id: string) => void) | undefined
 }) {
+  useStore($lang)
   const 轮 = useMemo(
     () => items.filter((x): x is Extract<TranscriptItem, { type: "turn" }> => x.type === "turn" && x.who === "user" && !是回显(x.id)).map((x) => ({ id: x.id, 摘要: x.text.replace(/\s+/g, " ").trim().slice(0, 摘要上限) })),
     [items],

@@ -37,7 +37,7 @@ const 没内核 = resolve(import.meta.dirname, "fixtures", "py-without-kernel")
 test.describe("首启向导", () => {
   test.use({ dawnOptions: { showSetup: true, env: { PATH: `${有内核}:${没内核}:${process.env.PATH ?? ""}` } } })
 
-  test("没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用", async ({ dawn }) => {
+  test("没凭证 → 首屏是向导；检测列出两枚假 python 且状态对；选中即写进设置；填 key 后开始使用", async ({ dawn }, info) => {
     const { page } = dawn
     const 向导 = page.locator(".setup-wizard")
     await expect(向导).toBeVisible()
@@ -51,7 +51,22 @@ test.describe("首启向导", () => {
     await 下一页.click()
 
     // 解释器检测（可选那段）
-    await 向导.getByRole("button", { name: "检测本机解释器" }).first().click()
+    // 进入环境步骤后自动检测，候选出现即证明检测完成。
+    await expect(向导.getByRole("table", { name: "本地环境路径" }).locator("tbody tr")).toHaveCount(9)
+    expect(await 向导.locator(".sw-page").evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollLeft === 0)).toBe(true)
+    const pythonPath = 向导.getByRole("button", { name: "更换 Python 路径", exact: true })
+    await pythonPath.click()
+    const environmentPicker = 向导.getByRole("dialog", { name: "选择 Python 环境", exact: true })
+    await expect(environmentPicker).toBeVisible()
+    await expect.poll(() => environmentPicker.evaluate(el => el.matches(":popover-open") && el.contains(document.activeElement))).toBe(true)
+    expect(await 向导.locator(".sw-page").evaluate(el => el.scrollWidth <= el.clientWidth && el.scrollLeft === 0)).toBe(true)
+    expect(await environmentPicker.evaluate(el => { const box=el.getBoundingClientRect(); return box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight })).toBe(true)
+    await page.screenshot({ path: info.outputPath("environment-popover.png") })
+    await page.keyboard.press("Escape")
+    await expect(environmentPicker).toHaveCount(0)
+    await expect(pythonPath).toBeFocused()
+    await expect(向导).toBeVisible()
+    await pythonPath.click()
     const 有 = 向导.locator(".ip-python .ip-item", { hasText: 有内核 })
     const 没 = 向导.locator(".ip-python .ip-item", { hasText: 没内核 })
     await expect(有).toBeVisible({ timeout: 30_000 })
@@ -62,13 +77,15 @@ test.describe("首启向导", () => {
     // 只列不装
     await expect(向导.getByRole("button", { name: /帮我跑|安装/ })).toHaveCount(0)
 
-    await 有.getByRole("radio").check()
+    // 选中即保存并收起浮层；click 避免 check 在控件卸载后继续检查勾选态。
+    await 有.getByRole("radio").click()
     await expect.poll(async () =>
       page.evaluate(async () => {
         const w = window as unknown as { dawn: { invoke: (op: string, req: unknown) => Promise<{ data?: { python?: string } }> } }
         return (await w.dawn.invoke("getInterpreters", {})).data?.python
       }),
     ).toBe(`${有内核}/python3`)
+    await expect(pythonPath).toBeFocused()
 
     await 向导.getByRole("button", { name: "开始使用 →" }).click()
     await expect(page.locator(".setup-wizard")).toHaveCount(0)
@@ -99,12 +116,14 @@ test.describe("首启向导", () => {
     await 到模型页(page)
     const wizard = page.locator(".setup-wizard")
     await wizard.getByRole("button", { name: "稍后配置", exact: true }).click()
-    await wizard.locator(".ip-python").getByRole("button", { name: "手动填写路径", exact: true }).click()
-    await wizard.getByLabel("Python 解释器路径", { exact: true }).fill("/dawn-test-missing/python")
+    await wizard.getByRole("button", { name: "更换 Python 路径", exact: true }).click()
+    await wizard.getByRole("button", { name: "粘贴路径…", exact: true }).click()
+    await wizard.getByLabel("可执行文件的完整路径", { exact: true }).fill("/dawn-test-missing/python")
     await wizard.getByRole("button", { name: "用这个", exact: true }).click()
     await expect(wizard.getByRole("alert")).toContainText("Python")
     await expect(wizard.getByRole("alert")).toContainText("/dawn-test-missing/python")
     await expect(wizard.getByRole("button", { name: "跳过，进入工作台", exact: true })).toBeEnabled()
+    await wizard.getByRole("button", { name: "关闭路径选择", exact: true }).click()
     await wizard.getByRole("button", { name: "跳过，进入工作台", exact: true }).click()
     await expect(wizard).toHaveCount(0)
   })

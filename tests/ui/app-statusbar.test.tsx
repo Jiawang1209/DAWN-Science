@@ -11,6 +11,14 @@ const props = (): AppStatusBarProps => ({
 })
 
 describe('App 底部状态栏', () => {
+  it('导航栏紧邻版本号之前，沿用现有入口回调', () => {
+    const onOpenGuide=vi.fn()
+    render(<AppStatusBar {...props()} {...{onOpenGuide}} />)
+    const guide=screen.getByRole('button',{name:'导航栏'})
+    expect(guide.nextElementSibling).toBe(screen.getByRole('button',{name:'版本 v0.0.38'}))
+    fireEvent.click(guide)
+    expect(onOpenGuide).toHaveBeenCalledOnce()
+  })
   it('左侧模型、R、Python，右侧真实 0、数量、版本；未知不冒充 0', () => {
     const p = props(); p.counts.mcp = undefined
     render(<AppStatusBar {...p} />)

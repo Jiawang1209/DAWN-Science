@@ -3710,6 +3710,7 @@ function ComposerSessionUsage({ items }: { items: readonly TranscriptItem[] }) {
 }
 
 function SessionUsageImpl({ items }: { items: readonly TranscriptItem[] }) {
+  useStore($lang)
   /**
    * **整段会话的账**（codex-polish ③，2026-08-22，学自 dsh-codex-ui 底部那条）：
    * 轮数、工具调用次数与耗时、token 三项、缓存命中率。此前只有 token 三项。
@@ -6104,6 +6105,7 @@ function TranscriptRowImpl({
    */
   onOpenWeb?: ((url: string) => void) | undefined
 }) {
+  useStore($lang)
   if (item.type === "notice") {
     if (item.failed) return <FailedNotice text={item.text} {...(item.rawError ? { rawError: item.rawError } : {})} />
     return <p className="caveat">{item.text}</p>
@@ -7029,6 +7031,7 @@ function ToolGroupRowImpl({
   /** 全文搜索跳到组里的这一条（2026-09-27）：组展开、那一行也展开 */
   命中?: string | undefined
 }) {
+  useStore($lang)
   const [open, setOpen] = useState(false)
   useEffect(() => {
     if (命中) setOpen(true)

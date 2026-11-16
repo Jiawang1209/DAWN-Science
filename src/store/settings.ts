@@ -13,9 +13,11 @@
  * 猜一个的后果不是跑不起来，是**跑在了另一个环境里而不自知**。
  */
 import type Database from "better-sqlite3"
+import { LOCAL_TOOLS, type LocalToolId, type LocalToolPaths } from '../protocol/local-tools.js'
 
 /** 认得的设置键。**闭集**——写进一个拼错的键等于静默丢配置 */
 export type SettingKey =
+  | `localTool.${LocalToolId}`
   | "model.newTaskProvider"
   /**
    * 远程助理 · 微信（2026-08-21）。**token 不在这儿**——它进钥匙串（`weixin:botToken`）。
@@ -154,5 +156,15 @@ export class SettingsStore {
     const python = this.get("interpreter.python")
     const r = this.get("interpreter.r")
     return { ...(python ? { python } : {}), ...(r ? { r } : {}) }
+  }
+
+  /** Optional tools belong to this installation, independently of interpreter selections. */
+  localTools(): LocalToolPaths {
+    const paths: LocalToolPaths = {}
+    for (const { id } of LOCAL_TOOLS) {
+      const path = this.get(`localTool.${id}`)
+      if (path) paths[id] = path
+    }
+    return paths
   }
 }

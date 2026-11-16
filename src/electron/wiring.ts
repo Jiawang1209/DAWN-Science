@@ -54,6 +54,7 @@ import { KernelRuntime } from "../runtime/kernel.js"
 import { 对话内核, type 内核状态变化 } from "../kernel/挂载.js"
 import { familyOf } from "../runtime/family.js"
 import { createWorkbenchBackend, type CredentialsPort } from "../workbench/backend.js"
+import { LocalToolExecution } from '../env/local-tool-execution.js'
 import { SettingsStore } from "../store/settings.js"
 import { createPiCredentialStore } from "../workbench/credential-store.js"
 import { SessionTranscripts } from "../workbench/events.js"
@@ -407,6 +408,8 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   })
   // 应用级设置：两个解释器路径住在这里（②-A 后续）
   const settingsStore = new SettingsStore(db)
+  const localToolExecution = new LocalToolExecution(() => settingsStore.localTools())
+  const localToolEnvironment = (env: NodeJS.ProcessEnv) => localToolExecution.environment(env)
 
   /**
    * 装机 id（远程内核，2026-09-03）：远端 connection.json 的文件名里带它，
@@ -731,6 +734,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
   const terminalControl = new TerminalControl()
   const remoteTerminals = new RemoteTerminalRuntime({ terminalControl, environment: async spec => { if (!cliHost) throw new Error("本次运行没有装配桌面 DAWN CLI，不能启动远端呈现"); return cliHost.environment(spec.sessionId) }, onExit: id => cliHost?.forgetTerminal(id) })
   const nativeRuntime = new NativeRuntime({
+    localToolEnvironment,
     artifactCapture,
     terminals: terminalControl,
     credentials: piCredentials,
@@ -881,7 +885,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     registry,
     runtimes: {
       native: nativeRuntime,
-      pty: new PtyRuntime({ command: "sh", terminalControl, environment: cliEnvironment, onExit: id => cliHost?.forgetTerminal(id) }),
+      pty: new PtyRuntime({ command: "sh", terminalControl, environment: cliEnvironment, localToolEnvironment, onExit: id => cliHost?.forgetTerminal(id) }),
       /**
        * Jupyter 内核（②-A · K4）。
        *
@@ -982,6 +986,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
     ptyRuntimeFor: (_id: string, def: PtyAgentDef) => {
       const family = familyOf(def.command)
       return new PtyRuntime({
+        localToolEnvironment,
         terminalControl,
         environment: cliEnvironment,
         onExit: id => cliHost?.forgetTerminal(id),
@@ -1965,6 +1970,7 @@ export function createWorkbench(opts: CreateWorkbenchOptions): Workbench {
       // 网关也要关(审查 debug H10):否则 server 不关、unix socket 文件留在 runtimeDir 里越积越多
       网关?.关掉()
       void Promise.allSettled([...收摊done, 会话done, 内核done, mcpdone]).then(() => {
+        localToolExecution.dispose()
         try {
           db.close()
         } catch {

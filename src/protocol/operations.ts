@@ -1,4 +1,5 @@
 import { fileBrowserOperations } from './file-browser.js'
+import { localToolOperations } from './local-tools.js'
 import {TaskArtifactSchema,TaskArtifactCheckSchema} from './task-artifacts.js'
 import {ToolRecordRequestSchema,ToolRecordResponseSchema} from './tool-record.js'
 import {RunOverviewSchema} from './run-overview.js'
@@ -273,6 +274,7 @@ export const InterpreterCandidateSchema = z
 export type InterpreterCandidate = z.infer<typeof InterpreterCandidateSchema>
 
 export const OPERATIONS = {
+  ...localToolOperations,
   ...artifactHistoryOperations,
   listBots: {
     request: z.object({ includeArchived: z.boolean().optional() }).strict(),

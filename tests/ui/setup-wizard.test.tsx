@@ -45,7 +45,7 @@ describe("SetupWizard", () => {
     expect(screen.getByLabelText("API key")).toBeTruthy()
     fireEvent.click(screen.getByRole("button", { name: "下一页" }))
     expect(screen.getByRole("heading", { name: "连接你的计算环境" })).toBeTruthy()
-    expect(onProbe).not.toHaveBeenCalled()
+    expect(onProbe).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole("button", { name: "跳过，进入工作台" }))
     expect(onStart).toHaveBeenCalledTimes(1)
   })
@@ -70,10 +70,10 @@ describe("SetupWizard", () => {
     expect((screen.getByLabelText("API key") as HTMLInputElement).value).toBe("draft-secret")
     expect((screen.getByLabelText("服务商") as HTMLSelectElement).value).toBe("kimi")
     fireEvent.click(screen.getByRole("button", { name: "稍后配置" }))
-    await act(async () => fireEvent.click(screen.getAllByRole("button", { name: "检测本机解释器" })[0]!))
+    await screen.findAllByRole("button", { name: "重新检测" })
     fireEvent.click(screen.getByRole("button", { name: "上一步" }))
     fireEvent.click(screen.getByRole("button", { name: "稍后配置" }))
-    expect(screen.getAllByRole("button", { name: "重新检测" })).toHaveLength(2)
+    expect(screen.getAllByRole("button", { name: "重新检测" })).toHaveLength(1)
     expect(onProbe).toHaveBeenCalledTimes(1)
   })
 
@@ -206,8 +206,9 @@ describe("SetupWizard", () => {
     const onSetInterpreter = vi.fn(() => new Promise<void>((_, reject) => { rejectSave = reject }))
     render(<SetupWizard initialStep="key" {...基本} configured={["deepseek"]} onSaveKey={async () => {}} onSetInterpreter={onSetInterpreter} />)
     fireEvent.click(screen.getByRole("button", { name: "下一页" }))
-    fireEvent.click(screen.getAllByRole("button", { name: "手动填写路径" })[0]!)
-    fireEvent.change(screen.getByLabelText("Python 解释器路径"), { target: { value: "/missing/python" } })
+    fireEvent.click(screen.getByRole("button", { name: "更换 Python 路径" }))
+    fireEvent.click(screen.getByRole("button", { name: "粘贴路径…" }))
+    fireEvent.change(screen.getByLabelText("可执行文件的完整路径"), { target: { value: "/missing/python" } })
     fireEvent.click(screen.getByRole("button", { name: "用这个" }))
     expect((screen.getByRole("button", { name: "跳过，进入工作台" }) as HTMLButtonElement).disabled).toBe(true)
     await act(async () => rejectSave(new Error("路径不存在")))
@@ -262,7 +263,7 @@ describe("SetupWizard", () => {
     expect(screen.getByText("凭证存储打不开")).toBeTruthy()
   })
 
-  it("解释器那段：点检测 → 两门都列出来；选一个 → onSetInterpreter", async () => {
+  it("解释器那段：自动检测 → 两门都列出来；选一个 → onSetInterpreter", async () => {
     const onProbe = vi.fn(async () => ({
       python: [{ path: "/a/python", source: "PATH" as const, version: "3.12.0", kernelPackage: "present" as const }],
       r: [{ path: "/usr/local/bin/R", source: "PATH" as const, version: "4.3.2", kernelPackage: "missing" as const }],
@@ -270,12 +271,11 @@ describe("SetupWizard", () => {
     const onSetInterpreter = vi.fn()
     render(<SetupWizard initialStep="key" {...基本} configured={[]} onSaveKey={async () => {}} onProbe={onProbe} onSetInterpreter={onSetInterpreter} />)
     fireEvent.click(screen.getByRole("button", { name: "稍后配置" }))
-    await act(async () => {
-      fireEvent.click(screen.getAllByRole("button", { name: "检测本机解释器" })[0]!)
-    })
+    await screen.findAllByRole("button", { name: "重新检测" })
     expect(onProbe).toHaveBeenCalledTimes(1)
     expect(screen.getByText("/a/python")).toBeTruthy()
     expect(screen.getByText("/usr/local/bin/R")).toBeTruthy()
+    fireEvent.click(screen.getByRole("button", { name: "更换 Python 路径" }))
     fireEvent.click(within(screen.getByRole("radiogroup", { name: "Python 解释器候选" })).getAllByRole("radio")[0]!)
     expect(onSetInterpreter).toHaveBeenCalledWith("python", "/a/python")
   })

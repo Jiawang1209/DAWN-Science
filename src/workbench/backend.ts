@@ -61,6 +61,8 @@ import { createHash, randomUUID } from "node:crypto"
 import { fingerprintOf, type EnvironmentSnapshot } from "../kernel/environment.js"
 import type { EnvironmentStore } from "../store/environments.js"
 import { 探测机器, 本地执行 } from "../env/probe.js"
+import { probeLocalTools, validateLocalToolPath, type LocalToolProbeOptions } from '../env/local-tools.js'
+import { isLocalToolShimPath } from '../env/local-tool-execution.js'
 import { 科研目录, 约定正文, pi会读的指令文件, 我们写的指令文件 } from "../policy/science-layout.js"
 import type { ShellEnvironment } from "../env/snapshot.js"
 import { AutoSessionTitles } from "../session/auto-title.js"
@@ -282,6 +284,8 @@ export interface WorkbenchBackendOptions {
   configPath?: string
   /** 应用级设置。两个解释器路径住在这里（②-A 后续） */
   settings?: SettingsStore
+  /** Deterministic probe dependencies for isolated test/dev assemblies. */
+  localToolProbe?: Omit<LocalToolProbeOptions, 'paths'>
   /**
    * 任务（T1）。**不给则那三个操作如实说「本次运行没有装配」**——
    * 不返回空名单假装「你还没建过任务」。
@@ -626,6 +630,13 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
   }
   const subscribing = new Map<string, Promise<import("../protocol/index.js").SessionSnapshot>>()
   const { skills, mcp, projects, projectStore, runs, sessions, credentials, registry, events, invalidateCredentials, runRecorder, models, cliHome, settings, openPath, environments, configPath, onProvidersChanged, scratchRoot, remote, tasks, onEnvironmentFrozen, 记一次上传, 记一次删除, 记一次回退, 记一次技能, 记一次会话, trashItem, schedules: 定时库, scheduleConfig: 定时设置, 设会话权限, 定时结束了, subagents: 子agent位置, isForeground, askOnce, probeKey, memory, keyCheckTimeoutMs = 8_000 } = opts
+  const localToolProbeOwner = new AbortController()
+  const activeLocalToolProbes = new Set<ReturnType<typeof probeLocalTools>>()
+  opts.注册退出等待?.(() => activeLocalToolProbes.size > 0)
+  opts.注册收摊?.(async () => {
+    localToolProbeOwner.abort()
+    await Promise.allSettled([...activeLocalToolProbes])
+  })
 
   let onlineSkillService = opts.skillDiscovery
   const onlineSkills = () => onlineSkillService ??= new SkillDiscoveryService()
@@ -5152,6 +5163,28 @@ export function createWorkbenchBackend(opts: WorkbenchBackendOptions): Workbench
     },
 
     getInterpreters: async () => settings?.interpreters() ?? {},
+
+    getLocalTools: async () => ({ paths: settings?.localTools() ?? {} }),
+    probeLocalTools: async () => {
+      if (localToolProbeOwner.signal.aborted) throw fault("invalid_request", "已取消")
+      const pending = probeLocalTools({ ...opts.localToolProbe, paths: settings?.localTools() ?? {}, signal: localToolProbeOwner.signal })
+      activeLocalToolProbes.add(pending)
+      try { return await pending }
+      catch (error) {
+        if (localToolProbeOwner.signal.aborted) throw fault("invalid_request", "已取消")
+        throw error
+      } finally { activeLocalToolProbes.delete(pending) }
+    },
+    setLocalTool: async ({ tool, path }) => {
+      if (!settings) throw fault("internal_error", "本次运行没有装配设置存储")
+      const selected = path.trim()
+      if (selected) {
+        try { if (isLocalToolShimPath(selected)) throw new Error('Select the original executable, not a DAWN alias'); await validateLocalToolPath(selected) }
+        catch (error) { throw fault("invalid_request", "本地工具路径无效：{0}", error instanceof Error ? error.message : String(error)) }
+      }
+      settings.set(`localTool.${tool}`, selected, new Date().toISOString())
+      return { paths: settings.localTools() }
+    },
 
     /**
      * 探测本机解释器（首启向导，7.29）。PATH 查找走**登录 shell**（`bash -lc which -a`）——

@@ -4,7 +4,7 @@ import { WORKBENCH_PROTOCOL_VERSION } from '../../src/protocol/version.js'
 
 describe('user browser protocol', () => {
   it('registers the browser operations with one explicit owner', () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.55')
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.56')
     for (const op of ['browseDirectory', 'readBrowserFile', 'searchBrowserFiles'] as const) {
       const request = OPERATIONS[op].request
       const fields = { path: '/tmp/data.txt', ...(op === 'searchBrowserFiles' ? { query: 'data' } : {}) }
@@ -36,7 +36,7 @@ describe('user browser protocol', () => {
 
 describe('code document protocol', () => {
   it('requires one explicit owner, full text and expected version; blocks saves in readonly mode', () => {
-    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.55')
+    expect(WORKBENCH_PROTOCOL_VERSION).toBe('8.56')
     for (const owner of [{ projectId: 'p' }, { sessionId: 's' }, { connectionId: 'c' }]) {
       expect(OPERATIONS.readCodeDocument.request.safeParse({ ...owner, path: '/tmp/x.py' }).success).toBe(true)
       expect(OPERATIONS.saveCodeDocument.request.safeParse({ ...owner, path: 'x.py', text: '', expectedVersion: null }).success).toBe(true)

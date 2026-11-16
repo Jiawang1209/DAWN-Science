@@ -23,6 +23,7 @@ export interface AppStatusBarProps {
   counts: Record<Extension, number | undefined>
   scopeLabel: string
   version?: string | undefined
+  onOpenGuide?: (() => void) | undefined
   onOpenSettings: (id: string) => void
   alerts?: ReactNode
 }
@@ -61,7 +62,7 @@ function StatusDetails({ label, anchor, onClose, children }: {
   </div>, document.body)
 }
 
-export function AppStatusBar({ model, environment, counts, scopeLabel, version, onOpenSettings, alerts }: AppStatusBarProps) {
+export function AppStatusBar({ model, environment, counts, scopeLabel, version, onOpenSettings, onOpenGuide, alerts }: AppStatusBarProps) {
   const [detail, setDetail] = useState<'model' | 'R' | 'python'>()
   const [extensionsOpen, setExtensionsOpen] = useState(false)
   const modelButton = useRef<HTMLButtonElement>(null)
@@ -141,6 +142,7 @@ export function AppStatusBar({ model, environment, counts, scopeLabel, version, 
           aria-haspopup="menu" aria-expanded={extensionsOpen} onClick={() => { setDetail(undefined); setExtensionsOpen(!extensionsOpen) }}>
           <插件图标 /><span>{t("扩展")}</span>
         </Button>
+        {onOpenGuide ? <Button variant="ghost" size="status" onClick={() => { setDetail(undefined); setExtensionsOpen(false); onOpenGuide() }}>{t("导航栏")}</Button> : null}
         <Button variant="ghost" size="status" className="app-status-version" aria-label={tf("版本 {0}", version ? `v${version.replace(/^v/, '')}` : '—')}
           onClick={() => openSettings('about')}>{version ? `v${version.replace(/^v/, '')}` : '—'}</Button>
       </div>

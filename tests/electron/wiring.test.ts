@@ -5,7 +5,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { execFileSync } from "node:child_process"
-import { mkdtempSync, writeFileSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs"
+import { mkdtempSync, writeFileSync, chmodSync, rmSync, existsSync, readFileSync, readdirSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import Database from "better-sqlite3"
@@ -22,6 +22,7 @@ import { SettingsStore } from "../../src/store/settings.js"
 import { 造门 } from "../../src/policy/permissions.js"
 import { 假口令 } from "../../src/remote/fake-ssh.js"
 import { RemoteTerminalRuntime } from "../../src/runtime/remote-terminal.js"
+import { LocalToolExecution } from '../../src/env/local-tool-execution.js'
 
 const cleanups: (() => void)[] = []
 afterEach(() => {
@@ -76,6 +77,53 @@ function newDbPath(): string {
 }
 
 describe("createWorkbench", () => {
+  it('drains an active optional tool probe on shutdown and closes probe admission', async () => {
+    const directory = newRepo(), executable = join(directory, 'slow chosen uv'), pidFile = join(directory, 'child.pid'), marker = join(directory, 'late-shutdown-effect')
+    writeFileSync(executable, `#!/bin/sh\n/bin/sh -c '/bin/sleep 2; /usr/bin/touch "${marker}"' </dev/null >/dev/null 2>&1 &\necho $! > "${pidFile}"\nwait\n`, { mode: 0o755 })
+    const wb = createWorkbench({ configPath: configFile(), dbPath: newDbPath(), credentials: memoryCredentials() })
+    const environments = vi.spyOn(LocalToolExecution.prototype, 'environment')
+    let probing: ReturnType<typeof wb.server.handle> | undefined, childPid: number | undefined
+    const alive = (pid: number) => { try { process.kill(pid, 0); return true } catch { return false } }
+    try {
+      expect(wb.needsGracefulShutdown()).toBe(false)
+      expect(await wb.server.handle('setLocalTool', { tool: 'uv', path: executable })).toMatchObject({ ok: true })
+      let settled = false
+      probing = wb.server.handle('probeLocalTools', {}).then(response => { settled = true; return response })
+      await vi.waitFor(() => expect(existsSync(pidFile)).toBe(true), { timeout: 5000 })
+      childPid = Number(readFileSync(pidFile, 'utf8').trim())
+      expect(wb.needsGracefulShutdown()).toBe(true)
+      await wb.closeAsync()
+      await vi.waitFor(() => expect(settled).toBe(true), { timeout: 500 })
+      expect(await probing).toMatchObject({ ok: false })
+      await vi.waitFor(() => expect(alive(childPid!)).toBe(false), { timeout: 1000 })
+      const aliases = environments.mock.results[0]?.value?.PATH?.split(':')[0]
+      expect(aliases).toContain('dawn-local-tool-shims-')
+      expect(existsSync(aliases!)).toBe(false)
+      const calls = environments.mock.calls.length
+      expect(await wb.server.handle('probeLocalTools', {})).toMatchObject({ ok: false })
+      expect(environments).toHaveBeenCalledTimes(calls)
+      await new Promise(resolve => setTimeout(resolve, 2500))
+      expect(existsSync(marker)).toBe(false)
+    } finally {
+      await wb.closeAsync(); await probing; environments.mockRestore()
+      if (childPid && alive(childPid)) try { process.kill(childPid, 'SIGKILL') } catch {}
+    }
+  })
+  it('uses persisted optional tool settings for actual local AI commands after restart', async () => {
+    const dbPath = newDbPath(), configPath = configFile(), directory = newRepo()
+    const executable = join(directory, 'chosen uv with spaces')
+    writeFileSync(executable, '#!/bin/sh\necho WIRED_SELECTED_EXECUTABLE\n'); chmodSync(executable, 0o755)
+    let wb = createWorkbench({ configPath, dbPath, credentials: memoryCredentials() })
+    try {
+      expect(await wb.server.handle('setLocalTool', { tool: 'uv', path: executable })).toMatchObject({ ok: true })
+      await wb.closeAsync()
+      wb = createWorkbench({ configPath, dbPath, credentials: memoryCredentials() })
+      expect(await wb.server.handle('getLocalTools', {})).toMatchObject({ ok: true, data: { paths: { uv: executable } } })
+      const tools = (wb.nativeRuntime as unknown as { gatedTools(cwd: string, sessionId: string): { name: string; execute(...args: unknown[]): Promise<{ content: { text: string }[] }> }[] }).gatedTools(directory, 'local-tool-wiring')
+      const result = await tools.find(tool => tool.name === 'bash')!.execute('wired-test', { command: 'uv --version' })
+      expect(result.content.map(part => part.text).join('\n')).toContain('WIRED_SELECTED_EXECUTABLE')
+    } finally { await wb.closeAsync() }
+  })
   it('等待主任务收尾时关闭新会话准入，不能在批量停止快照之后再启动父会话',async()=>{
     const wb=createWorkbench({configPath:configFile(),dbPath:newDbPath(),credentials:memoryCredentials({deepseek:'offline-fixture'})})
     const first=await wb.server.handle('createTask',{agentId:'ds-chat',workspace:newRepo()})

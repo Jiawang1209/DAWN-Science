@@ -211,6 +211,8 @@ export type ToolGate = (
 ) => import("../policy/permissions.js").门的决定
 
 export interface NativeRuntimeOptions {
+  /** Current app-scoped executable choices, applied per local bash/child launch. */
+  localToolEnvironment?: (env: NodeJS.ProcessEnv) => NodeJS.ProcessEnv
   /** Trusted host-owned planning contracts; never sourced from model JSON or other sessions. */
   planningContracts?: (sessionId:string)=>Record<string,import('../protocol/task-contract.js').TaskContract>
   artifactCapture?: import('../artifacts/capture.js').ArtifactCapture
@@ -1410,6 +1412,7 @@ export class NativeRuntime implements AgentRuntime {
       execute: async (toolCallId: string, ...args: unknown[]) => {
         const scoped = createBashToolDefinition(cwd, {
           exposeSessionEnvironment: false,
+          spawnHook: context => ({ ...context, env: this.opts.localToolEnvironment?.(context.env) ?? context.env }),
           operations: {
             exec: async (command, directory, options) => {
               const result = await localShell.exec(command, directory, {
@@ -1784,7 +1787,7 @@ export class NativeRuntime implements AgentRuntime {
         command: process.execPath,
         args: [entry],
         supportsSteering:true as const,
-        env: { [RUN_AS_NODE]: "1" },
+        env: { ...this.opts.localToolEnvironment?.(process.env), [RUN_AS_NODE]: "1" },
       }),
       context: {
         recordReceipt:receipt=>receipt.versions&&this.opts.artifactCapture?{...receipt,versions:this.opts.artifactCapture.recordTaskVersions(spec.sessionId,receipt.versions)}:receipt,
@@ -1867,7 +1870,7 @@ export class NativeRuntime implements AgentRuntime {
       sessionDir: spec.sessionDir,
       定义,
       跑: {
-        childOf: () => ({ command: process.execPath, args: [entry], env: { [RUN_AS_NODE]: "1" } }),
+        childOf: () => ({ command: process.execPath, args: [entry], env: { ...this.opts.localToolEnvironment?.(process.env), [RUN_AS_NODE]: "1" } }),
         context: {
           get provider() { return currentRoute().provider },
           get model() { return currentRoute().model },

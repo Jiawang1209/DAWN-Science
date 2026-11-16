@@ -151,6 +151,38 @@ describe("真实后端 · 经服务端端到端", () => {
     repo = newRepo()
   })
 
+  it('persists each local tool independently, rejects invalid replacements and clears only the requested selection', async () => {
+    expect(await ctx.server.handle('getLocalTools', {})).toMatchObject({ ok: true, data: { paths: {} } })
+    expect(await ctx.server.handle('setLocalTool', { tool: 'node', path: process.execPath })).toMatchObject({ ok: true, data: { paths: { node: process.execPath } } })
+    expect(await ctx.server.handle('setLocalTool', { tool: 'git', path: process.execPath })).toMatchObject({ ok: true, data: { paths: { node: process.execPath, git: process.execPath } } })
+    for (const path of ['node', join(repo, 'missing'), repo]) {
+      expect(await ctx.server.handle('setLocalTool', { tool: 'node', path })).toMatchObject({ ok: false, error: { code: 'invalid_request' } })
+      expect((await ctx.backend.getLocalTools({}))).toEqual({ paths: { node: process.execPath, git: process.execPath } })
+    }
+    expect(new SettingsStore(ctx.db).localTools()).toEqual({ node: process.execPath, git: process.execPath })
+    expect(await ctx.server.handle('setLocalTool', { tool: 'node', path: '' })).toMatchObject({ ok: true, data: { paths: { git: process.execPath } } })
+    expect(new SettingsStore(ctx.db).interpreters()).toEqual({})
+    expect(await ctx.server.handle('setLocalTool', { tool: 'python', path: process.execPath })).toMatchObject({ ok: false })
+  })
+
+  it('does not claim a local tool save succeeded when persistence fails', async () => {
+    await ctx.backend.setLocalTool({ tool: 'node', path: process.execPath })
+    ctx.db.exec("CREATE TRIGGER fail_local_tools BEFORE INSERT ON settings WHEN NEW.key LIKE 'localTool.%' BEGIN SELECT RAISE(ABORT, 'test save failed'); END")
+    expect(await ctx.server.handle('setLocalTool', { tool: 'git', path: process.execPath })).toMatchObject({ ok: false })
+    expect(await ctx.backend.getLocalTools({})).toEqual({ paths: { node: process.execPath } })
+  })
+
+  it('rejects private executable aliases before saving to prevent recursive invocation', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'dawn-local-tool-shims-'))
+    try {
+      const alias = join(directory, 'uv'); symlinkSync(process.execPath, alias)
+      // A real alias file itself lives inside the private alias directory.
+      writeFileSync(join(directory, 'alias'), '#!/bin/sh\nexit 0\n', { mode: 0o755 })
+      expect(await ctx.server.handle('setLocalTool', { tool: 'uv', path: join(directory, 'alias') })).toMatchObject({ ok: false })
+      expect(await ctx.backend.getLocalTools({})).toEqual({ paths: {} })
+    } finally { rmSync(directory, { recursive: true, force: true }) }
+  })
+
   it('reads effective session permissions without starting or mutating another session', async () => {
     const task = await ctx.backend.createTask({ agentId: 'ds-chat', workspace: repo }) as { sessionId: string }
     let current = 'inherit'

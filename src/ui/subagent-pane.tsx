@@ -10,7 +10,7 @@ import { StickToBottom } from "use-stick-to-bottom"
 import type { TranscriptItem } from "../protocol/index.js"
 import { 拆子转录id } from "../protocol/index.js"
 import { Button } from "./primitives.js"
-import { t, tf } from "./i18n/index.js"
+import { t, tf, $lang } from "./i18n/index.js"
 import { AgentMarkdown } from "./markdown.js"
 import { TranscriptRow, ToolRow, CopyButton, ThinkingBlock } from "./views.js"
 import { resourceLabels, subagentAnswerIds, subagentToolSummary } from "./subagent-presentation.js"
@@ -225,6 +225,7 @@ const SubagentList = memo(function SubagentList(p: {
   groups: readonly 组[]
   onPick: (toolCallId: string, index: number) => void
 }) {
+  useStore($lang)
   return (
     <div ref={p.ref} className="subagent-pane subagent-list">
       {[...p.groups].reverse().map((g) => (

@@ -1,6 +1,6 @@
 # 舒展双栏首页与新建项目验证
 
-分支：`codex/home-project-create`；基线：`b6e18e8f`。实现保留在独立 worktree，没有修改 main、推送或触碰用户实际配置和凭证。
+分支：`codex/home-project-create`；基线：`b6e18e8f`。下文记录独立 worktree 中的实现阶段验证。后续合并复查发现并修复了重新打开目录别名产生重复项目的问题；已合并本地 main，完整结果见 [合并验证记录](2026-11-16-home-project-create-merge-review.md)。未推送远端或触碰用户实际配置和凭证。
 
 ## 已验证行为
 

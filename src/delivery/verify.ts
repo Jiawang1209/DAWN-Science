@@ -20,11 +20,8 @@ import {
   type DeliveryVerify,
 } from "../protocol/delivery.js";
 import { readComparisonTable } from "./comparison-table.js";
-import {
-  deliveryPath,
-  writeDeliveryFile,
-  type DeliveryOptions,
-} from "./service.js";
+import { deliveryPath, writeDeliveryFile } from "./files.js";
+import type { DeliveryOptions } from "./service.js";
 type Check = NonNullable<DeliveryRecord["verification"]["checks"]>[number];
 const MAX_BYTES = 8 * 1024 * 1024,
   MAX_LOG = 1024 * 1024;

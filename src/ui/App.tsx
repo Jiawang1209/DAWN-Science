@@ -1,6 +1,6 @@
 import { LocalToolsPanel } from './local-tools.js'
 import { AppHome, HomeButton } from './app-home.js'
-import { $appPage, showHome, showWorkbench, appPageRevision } from './state/app-page.js'
+import { $appPage, showHome, showWorkbench, appPageRevision, invalidateAppNavigation } from './state/app-page.js'
 import { ProjectDialog } from './project-dialog.js'
 import { setTempSessions, setProjects } from './state/catalog.js'
 import { 导航图标 } from './icons.js'
@@ -1099,9 +1099,11 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       记引导完成()
       return
     }
+    invalidateAppNavigation()
     设向导中(true)
   }, [凭证到手, creds.configured, creds.broken])
   const 打开首次引导 = useCallback(() => {
+    invalidateAppNavigation()
     引导启动已判定.current = true
     设向导起点("welcome")
     // 手动打开仅改变当前窗口，不清除长期完成/跳过记录。
@@ -5393,13 +5395,17 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         onNewChat={() => enterHomeProject()}
         onOpenProject={enterHomeProject}
         onChooseProject={async () => {
+          const pageRevision = appPageRevision()
           const selected = await chooseWorkspaceDirectory(undefined, true)
-          if (selected) enterHomeProject($projects.get().find(project => project.projectId === selected.projectId))
+          if (selected && appPageRevision() === pageRevision) enterHomeProject($projects.get().find(project => project.projectId === selected.projectId))
         }}
         onOpenSession={async selected => {
+          const pageRevision = appPageRevision()
           // Install summaries before selecting: another project's session is not in the active cache yet.
           const temporary = projects.find(project => project.projectId === selected.projectId)?.temporary
           const latest = await client.get<SessionSummary[]>(temporary ? 'listTemporarySessions' : 'listSessions', temporary ? {} : { projectId: selected.projectId })
+          // A newer page or guide intent owns navigation and the active selection.
+          if (appPageRevision() !== pageRevision) return
           if (!latest.some(row => row.sessionId === selected.sessionId && !row.archivedAt)) throw new Error(t("这段会话已不在最近列表中，请刷新后重试。"))
           if (temporary) setTempSessions(latest)
           else { setSessions(latest); setActiveProjectId(selected.projectId) }

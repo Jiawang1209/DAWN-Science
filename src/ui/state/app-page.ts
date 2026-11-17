@@ -9,6 +9,8 @@ function initialPage(): 'home' | 'workbench' {
 export const $appPage = atom<'home' | 'workbench'>(initialPage())
 let revision = 0
 export const appPageRevision = () => revision
+/** A guide can supersede pending navigation without changing the underlying page. */
+export function invalidateAppNavigation(): void { revision++ }
 function show(page: 'home' | 'workbench') {
   if ($appPage.get() !== page) revision++
   $appPage.set(page)

@@ -1,0 +1,9 @@
+{
+  "modules": 652,
+  "staticRuntimeEdges": 1823,
+  "dynamicImports": 28,
+  "cycles": [],
+  "unresolved": [],
+  "nodeInUI": [],
+  "cross": []
+}

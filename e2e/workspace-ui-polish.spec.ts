@@ -52,7 +52,7 @@ test("固定工作区搜索保留原弹层、Escape焦点和草稿，侧栏收�
   await page.locator(".side-search-field").press("Escape")
   await expect(search).toBeFocused()
   await expect(page.getByPlaceholder(/输入问题/)).toHaveValue("保留输入内容")
-  expect(await page.locator(".sidebar").evaluate(e => e.getBoundingClientRect().width)).toBe(260)
+  expect(await page.locator(".sidebar").evaluate(e => e.getBoundingClientRect().width)).toBe(300)
   await page.screenshot({ path: info.outputPath("workspace-light.png") })
   await page.getByRole("button", { name: "收起侧边栏", exact: true }).click()
   await expect(page.getByRole("button", { name: "展开侧边栏", exact: true })).toBeVisible()

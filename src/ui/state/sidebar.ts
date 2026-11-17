@@ -18,7 +18,7 @@
  * ```
  *
  * **上下界它没写在样式里**（在 JS 里），所以那两个数是我们自己定的：
- * 260 是「完整品牌与折叠、快捷键按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
+ * 300 是「返回、完整品牌与折叠、快捷键按钮同排且保留内距」的下限，420 是「正文栏还有 420 可用」的上限。
  * 这两个数只有这一个家。
  *
  * ## 为什么是 `global` 而不是 `window`
@@ -37,10 +37,10 @@ import { setValue } from "./identity.js"
 export const SIDEBAR_WIDTH_KEY = "dawn.global.sidebar-width"
 export const SIDEBAR_COLLAPSED_KEY = "dawn.global.sidebar-collapsed"
 
-/** 2026-10-25：搜索移至工作区标题；顶栏只保留折叠与快捷键，默认260px。 */
-export const SIDEBAR_DEFAULT = 260
+/** 2026-11-17：返回首页、完整品牌与两颗导航按钮同排，默认300px。 */
+export const SIDEBAR_DEFAULT = 300
 /** 再窄会挤到品牌与操作按钮；旧存储宽度也经过此下限清洗。 */
-export const SIDEBAR_MIN = 260
+export const SIDEBAR_MIN = 300
 /** 再宽，正文栏就低于 `.body` 里那个 `minmax(420px, 1fr)` 的承诺 */
 export const SIDEBAR_MAX = 420
 

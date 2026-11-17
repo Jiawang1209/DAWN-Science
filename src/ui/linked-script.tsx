@@ -31,7 +31,7 @@ export function LinkedScript({ store, scopeKey, onOpen, onEnd, placement = 'edit
   const label = doc?.path ?? link.label
   return <div className={`linked-script linked-script--${placement}`} aria-label={t("会话关联脚本")} aria-description={t("发送时附上最新草稿 · 修改先审阅")}>
     {placement === 'editor' ? <span>{t("正在修改")}</span> : null}
-    <Button className="linked-script-file" variant="ghost" size="inline" aria-label={tf("打开关联脚本：{0}", label)} onClick={() => {
+    <Button className="linked-script-file" variant="ghost" size="inline" aria-label={tf("打开关联脚本：{0}", label)} data-tooltip={tf("打开关联脚本：{0}", label)} onClick={() => {
       try { store.openLinkedScript(scopeKey); setError(undefined); onOpen() }
       catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)) }
     }}>{label.split(/[\\/]/).pop() || t("未保存脚本")}</Button>

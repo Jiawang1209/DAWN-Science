@@ -17,6 +17,12 @@
  */
 export const EN: Readonly<Record<string, string>> = {
   "首页": "Home",
+  "返回首页": "Back to home",
+  "切换会话：{0}": "Switch conversation: {0}",
+  "关闭页签（保留会话）": "Close tab (keep conversation)",
+  "在此处新建会话": "New conversation here",
+  "打开右侧面板": "Open right panel",
+  "收起右侧面板": "Hide right panel",
   "项目列表读取失败，请重试。": "The project list could not be loaded. Please retry.",
   "这段会话已不在最近列表中，请刷新后重试。": "This session is no longer available. Refresh the list and retry.",
   "打开项目": "Open project",

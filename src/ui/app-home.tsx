@@ -127,5 +127,5 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
 }
 
 export function HomeButton({ onClick }: { onClick: () => void }) {
-  return <Button variant="ghost" size="sm" onClick={onClick}><返回图标 />{t("首页")}</Button>
+  return <Button variant="ghost" size="icon" className="home-button" aria-label={t("首页")} data-tooltip={t("返回首页")} onClick={onClick}><返回图标 /></Button>
 }

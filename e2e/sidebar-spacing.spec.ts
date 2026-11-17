@@ -2,7 +2,7 @@ import { test, expect, 开一段临时会话, 在项目里开会话 } from "./fi
 
 test.use({ dawnOptions: { fakeSsh: true } })
 
-test("260px紧凑导航、分组字体与计数列、服务器多选顺序", async ({ dawn }, info) => {
+test("300px紧凑导航、分组字体与计数列、服务器多选顺序", async ({ dawn }, info) => {
   const { page } = dawn
   await 开一段临时会话(page, "归档排版样本")
   await page.locator(".loose-list .sess-item .row-more").first().click()
@@ -50,7 +50,7 @@ test("260px紧凑导航、分组字体与计数列、服务器多选顺序", asy
     })
     await info.attach(`geometry-${width}`, { body: JSON.stringify(geometry, null, 2), contentType: "application/json" })
     expect(geometry.buttonGaps).toEqual([4])
-    expect(geometry.brandGap).toBe(8)
+    expect(geometry.brandGap).toBe(4)
     expect(geometry.fits).toBe(true)
     expect(geometry.nameHeight).toBeLessThan(32)
     expect(geometry.fonts.every(f => f === "14px" && f === geometry.footerFont)).toBe(true)
@@ -63,8 +63,8 @@ test("260px紧凑导航、分组字体与计数列、服务器多选顺序", asy
     expect(geometry.serverOrder).toBe(true)
     expect(geometry.overflow).toBe(false)
   }
-  await check(260)
-  await page.screenshot({ path: info.outputPath("sidebar-260-light.png"), animations: "disabled" })
+  await check(300)
+  await page.screenshot({ path: info.outputPath("sidebar-300-light.png"), animations: "disabled" })
   await expect(page.locator(".side-actions .side-action").first().locator("svg path")).toHaveCount(2)
   // 多选入口仍然可以切换选择模式，添加仍独立。
   await page.locator(".server-bulk").click()
@@ -79,23 +79,23 @@ test("260px紧凑导航、分组字体与计数列、服务器多选顺序", asy
   await sash.focus()
   for (let i = 0; i < 10; i++) await sash.press("ArrowLeft")
   await page.setViewportSize({ width: 900, height: 800 })
-  await check(260)
+  await check(300)
   await page.evaluate(() => localStorage.setItem("dawn.global.theme", "dark"))
   await page.reload()
-  await check(260)
-  await page.screenshot({ path: info.outputPath("sidebar-260-dark-900.png"), animations: "disabled" })
+  await check(300)
+  await page.screenshot({ path: info.outputPath("sidebar-300-dark-900.png"), animations: "disabled" })
   await page.addInitScript(() => localStorage.setItem("dawn.global.lang", "en"))
   await page.reload()
   await expect(page.locator('.side-section[data-section="projects"] .side-section-title')).toHaveText("Projects")
-  await check(260)
+  await check(300)
   const buttons = page.locator(".side-section .side-bulk, .side-section .server-bulk")
   await expect(buttons).toHaveCount(3)
   for (const button of await buttons.all()) expect(await button.evaluate(e => e.scrollWidth <= e.clientWidth)).toBe(true)
-  await page.screenshot({ path: info.outputPath("sidebar-260-english.png"), animations: "disabled" })
+  await page.screenshot({ path: info.outputPath("sidebar-300-english.png"), animations: "disabled" })
 })
 
 
-test("顶栏18px品牌保留28px按钮和32px标志", async ({ dawn }) => {
+test("顶栏18px品牌保留32px按钮和标志", async ({ dawn }) => {
   const { page } = dawn
   const geometry = await page.evaluate(() => {
     const rect = (s: string) => document.querySelector(s)!.getBoundingClientRect()
@@ -108,11 +108,11 @@ test("顶栏18px品牌保留28px按钮和32px标志", async ({ dawn }) => {
       endPadding: rect('.sidebar').right - rect('.shortcut-toggle').right,
     }
   })
-  expect(geometry.buttons).toEqual(Array.from({ length: 2 }, () => ({ width: 28, height: 32 })))
+  expect(geometry.buttons).toEqual(Array.from({ length: 2 }, () => ({ width: 32, height: 32 })))
   expect(geometry.brand).toBe('DAWN Science')
   expect(geometry.font).toBe('18px')
   expect(geometry.logo).toBe(32)
-  expect(geometry.sidebar).toBe(260)
-  expect(geometry.endPadding).toBeGreaterThanOrEqual(4)
-  expect(geometry.endPadding).toBeLessThanOrEqual(6)
+  expect(geometry.sidebar).toBe(300)
+  expect(geometry.endPadding).toBeGreaterThanOrEqual(12)
+  expect(geometry.endPadding).toBeLessThanOrEqual(14)
 })

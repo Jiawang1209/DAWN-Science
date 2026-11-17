@@ -137,6 +137,7 @@ export function SessionTabs({
               variant="ghost"
               size="inline"
               role="tab"
+              data-tooltip={tf("切换会话：{0}", x.title)}
               aria-selected={选中}
               {...(canOpenMenu(x) ? { "aria-haspopup": "menu" as const } : {})}
               className="session-tab"
@@ -151,8 +152,8 @@ export function SessionTabs({
               onClick={() => onPick(x.sessionId)}
             >
               <span className="session-tab-dot" aria-hidden="true" />
-              {/* 全名给悬浮看——顶格里只留截断后的那截。title 摆在这个 span（不是按钮）上，设计契约禁按钮用原生 title */}
-              <span className={`session-tab-title${topbar && 选中 ? " conv-title" : ""}`} data-authored="1" title={x.title}>{x.title}</span>
+              {/* 顶栏由统一浮层显示全名；其他位置保留原有标题提示。 */}
+              <span className={`session-tab-title${topbar && 选中 ? " conv-title" : ""}`} data-authored="1" title={topbar ? undefined : x.title}>{x.title}</span>
               {x.inDock ? <span className="session-tab-dock">{t("坞")}</span> : null}
             </Button>}
             {/* 走 primitive，几何仍归 `.session-tab-close`（2026-09-08：那条扫描修好后露出来的） */}
@@ -162,6 +163,7 @@ export function SessionTabs({
                 size="inline"
                 className="session-tab-close"
                 aria-label={tf("关闭页签：{0}", x.title)}
+                data-tooltip={t("关闭页签（保留会话）")}
                 onClick={() => onClose(x.sessionId)}
               >
                 <关闭图标 />
@@ -171,7 +173,7 @@ export function SessionTabs({
         )
       })}
       {onNew ? (
-        <Button variant="ghost" size="icon" className="session-tab-new" aria-label={t("在这里再开一段")} onClick={onNew}>
+        <Button variant="ghost" size="icon" className="session-tab-new" data-tooltip={t("在此处新建会话")} aria-label={t("在这里再开一段")} onClick={onNew}>
           <加号描边图标 />
         </Button>
       ) : null}

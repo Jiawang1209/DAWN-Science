@@ -8802,7 +8802,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 /* 预览收起后使用原目录节点占满空间，不保留分栏边界。 */
 .files-preview-closed .file-tree-box { border: 0; }
 .preview-close-button { flex: 0 0 auto; }
-.preview-close-tooltip {
+.preview-close-tooltip, .topbar-tooltip {
   position: fixed;
   z-index: var(--z-tooltip);
   pointer-events: none;
@@ -8925,23 +8925,45 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dawn-accent); 
 .bot-artifact-preview-body .bot-error {overflow-wrap:anywhere; margin:0 0 var(--dawn-space-2);}
 .bot-artifact-preview-body .table-wrap {max-width:100%; overflow:auto;}
 
-/* 主会话标题与侧栏折叠按钮共用顶部一行（2026-10-14）。 */
+/* 返回、品牌与两颗图标同排；展开时分界线直接取侧栏宽度。 */
 .topbar-navigation {
   display: flex;
   align-items: center;
   gap: var(--dawn-space-1);
   flex: 0 0 auto;
   width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-4));
+  height: 100%;
+  box-sizing: border-box;
+  padding-right: var(--dawn-space-3);
+  border-right: var(--dawn-hairline) solid var(--dawn-stroke-4);
   min-width: 0;
 }
-.topbar-navigation > :is(.side-toggle, .shortcut-toggle) {
-  flex: 0 0 var(--dawn-nav-action-w);
-  min-width: var(--dawn-nav-action-w);
-  width: var(--dawn-nav-action-w);
+.topbar-navigation :is(.home-button, .side-toggle, .shortcut-toggle) {
+  flex: 0 0 var(--dawn-space-8);
+  min-width: var(--dawn-space-8);
+  width: var(--dawn-space-8);
   height: var(--dawn-space-8);
   padding: 0;
+  justify-content: center;
+  align-items: center;
+  color: var(--dawn-text-2);
 }
-.topbar-navigation .brand-stack { flex: 0 0 auto; max-width: none; margin-right: var(--dawn-space-1); }
+.topbar-navigation .brand-stack { flex: 1 1 auto; max-width: none; min-width: 0; gap: 0; margin-right: 0; }
+.app-shell[data-sidebar-collapsed="false"] .sidebar { border-right: var(--dawn-hairline) solid var(--dawn-stroke-4); }
+.app-shell[data-sidebar-collapsed="true"] .topbar-navigation { border-right-color: transparent; }
+@media (max-width: 768px) {
+  .app-shell .topbar-navigation { width: auto; padding-right: 0; border-right: 0; }
+  .app-shell .topbar-navigation .brand-stack { flex: 0 0 auto; }
+}
+.topbar-tooltip {
+  font-size: var(--dawn-fs-meta);
+  line-height: 1.4;
+  max-width: calc(100vw - var(--dawn-space-4));
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.topbar-navigation .brand { gap: var(--dawn-space-2); }
 .topbar .brand-name { flex: 0 0 auto; overflow: visible; text-overflow: clip; white-space: nowrap; }
 .conversation-toolbar {
   display: flex;

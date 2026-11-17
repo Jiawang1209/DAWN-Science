@@ -2145,3 +2145,12 @@ describe("设计契约 · 会话分析路线", () => {
     expect(read('views.tsx')).toContain('displayRouteMessage(item.text)')
   })
 })
+
+it("顶栏按钮复用可见浮层，不靠原生title，宽度与侧栏共用变量", () => {
+  const app=read("App.tsx"), styles=read("styles.css"), topbar=read("topbar.tsx")
+  expect(app).toContain("<Topbar active=")
+  for(const text of ['data-tooltip={t("新建任务")}', 'data-tooltip={t("快捷键速查")}'])expect(app).toContain(text)
+  expect(topbar).toContain('createPortal(')
+  expect(topbar).toContain('role="tooltip"')
+  expect(styles).toContain('width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-4))')
+})

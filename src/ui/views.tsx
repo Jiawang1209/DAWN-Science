@@ -1140,6 +1140,7 @@ export function DockSwitch({
         variant="ghost"
         size="sm"
         className="dock-switch-trigger"
+        data-tooltip={open ? t("收起右侧面板") : t("打开右侧面板")}
         aria-expanded={open}
         onClick={onToggle}
       >

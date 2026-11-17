@@ -1,3 +1,4 @@
+import { Topbar } from './topbar.js'
 import { LocalToolsPanel } from './local-tools.js'
 import { AppHome, HomeButton } from './app-home.js'
 import { $appPage, showHome, showWorkbench, appPageRevision, invalidateAppNavigation } from './state/app-page.js'
@@ -5419,44 +5420,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       </div></footer>
     </div> : null}
     <div className="app-shell" hidden={appPage === 'home'} inert={appPage === 'home' || (向导中 && !跳过向导)} data-sidebar-collapsed={sidebarCollapsed} style={{ "--dawn-sidebar-content-w": `${sidebarWidth}px` } as React.CSSProperties}>
-      <div className="topbar">
+      <Topbar active={appPage !== 'home' && !(向导中 && !跳过向导)}>
         <div className="topbar-navigation">
-        {/**
-          * **顺序：标志 → 折叠 → 搜索**（2026-08-13，作者定的）。
-          *
-          * *「左上角的 logo 和 折叠按钮，换一下位置，先是 logo，再是折叠按钮，
-          * 此外帮我增加一个搜索功能，放一个搜索按钮，搜索按钮放在折叠按钮旁边。」*
-          *
-          * 标志在最左是**这一屏叫什么**；后面两颗是**对左边那一栏做什么**。
-          * 实测 WorkBuddy 的侧栏顶栏里，「收起侧边栏」与「搜索」也是紧挨着的
-          * （32×32，间距 36），我们照这个关系排。
-          */}
+        {/* 返回与品牌紧邻；右侧两颗图标贴齐侧栏边界。 */}
         <div className="brand-stack">
-          <Button variant="text" size="inline" className="brand" aria-label="DAWN Science" onClick={回到初始画面}>
+          <HomeButton onClick={() => { 设快捷键开着(false); 设搜索开着(false); closePalette(); showHome() }} />
+          <Button variant="text" size="inline" className="brand" aria-label="DAWN Science" data-tooltip={t("新建任务")} onClick={回到初始画面}>
             <img className="brand-mark" src={rpIcon} alt="" aria-hidden="true" /><span className="brand-name">DAWN Science</span>
           </Button>
 
         </div>
-        {/* 品牌到首按钮8px，折叠与快捷键按钮之间4px；完整名称始终一行，折叠后也保留。 */}
+        {/* 完整名称始终一行，折叠后也保留。 */}
         <Button
           variant="ghost"
           size="icon"
           className="side-toggle"
           ref={侧栏按钮}
           aria-label={sidebarCollapsed ? t("展开侧边栏") : t("收起侧边栏")}
+          data-tooltip={sidebarCollapsed ? t("展开侧边栏") : t("收起侧边栏")}
           aria-expanded={!sidebarCollapsed}
           onClick={toggleSidebar}
         >
           <侧栏图标 />
         </Button>
         <Button ref={快捷键按钮} variant="ghost" size="icon" className="shortcut-toggle"
-          aria-label={t("快捷键速查")} aria-haspopup="dialog" aria-expanded={快捷键开着}
+          aria-label={t("快捷键速查")} data-tooltip={t("快捷键速查")} aria-haspopup="dialog" aria-expanded={快捷键开着}
           onClick={() => {
             设搜索开着(false); 设搜索词(""); 设搜索模式("名字"); closePalette(); 设快捷键开着(true)
           }}
         ><键盘图标 /></Button>
         </div>
-        <HomeButton onClick={() => { 设快捷键开着(false); 设搜索开着(false); closePalette(); showHome() }} />
         <div className="topbar-conversation" data-tabs={Boolean(会话页签)}>
           {会话页签 ? <div className="topbar-session-group"><文件夹描边图标 className="conv-title-icon" />{会话页签}</div> : null}
           <div className="topbar-conversation-slot" ref={setConversationHeaderTarget} />
@@ -5469,7 +5462,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           * 只能靠去侧栏点一个会话，而那是「切会话」，不是「关掉这一屏」。
           */}
         {view !== "conversation" && view !== "settings" ? (
-          <Button variant="ghost" size="sm" onClick={() => setView("conversation")}>
+          <Button variant="ghost" size="sm" data-tooltip={t("返回对话")} onClick={() => setView("conversation")}>
             {t("返回")}
           </Button>
         ) : null}
@@ -5485,7 +5478,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
            * 那位房客也回不来——右边那一列从此空着，而屏幕上没有任何东西说明为什么。
            * 「窄栏和整页都由 `关掉设置` 收场」是 `state/settings-column.ts` 立的规矩。
            */
-          <Button variant="ghost" size="sm" onClick={关掉设置}>
+          <Button variant="ghost" size="sm" data-tooltip={t("返回对话")} onClick={关掉设置}>
             {t("返回")}
           </Button>
         ) : null}
@@ -5506,7 +5499,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             setRightDockOpen(!rightDockOpen)
           }}
         />
-      </div>
+      </Topbar>
 
       {快捷键开着 ? <ShortcutPanel onClose={() => 设快捷键开着(false)} returnFocusRef={快捷键按钮} /> : null}
       {搜索开着 ? <SearchPanel

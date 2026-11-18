@@ -118,3 +118,30 @@ test.describe('new project from the approved homepage', () => {
     await expect(page.locator('.app-home').getByRole('button', { name: '新建项目', exact: true })).toBeFocused()
   })
 })
+
+test.describe('project dialog narrow English layout',()=>{
+  test.use({dawnOptions:{showHome:true}})
+  test('keeps research preview and actions inside a 320px dark window',async({dawn},info)=>{
+    const {page}=dawn
+    await page.addInitScript(()=>localStorage.setItem('dawn.global.lang','en'))
+    await page.reload()
+    await page.setViewportSize({width:320,height:760})
+    await page.evaluate(()=>document.documentElement.classList.add('dawn-dark'))
+    await page.locator('.app-home').getByRole('button',{name:'New project',exact:true}).click()
+    const dialog=page.getByRole('dialog',{name:'New project',exact:true})
+    await dialog.getByLabel('Project name',{exact:true}).fill('Plant genome analysis')
+    await dialog.getByLabel('Save location',{exact:true}).fill(dawn.dir)
+    await dialog.getByRole('button',{name:'Initialize research folders',exact:true}).click()
+    await expect(dialog.getByRole('region',{name:'Research folder preview'})).toBeVisible()
+    const geometry=await dialog.evaluate(el=>{
+      const edge=el.getBoundingClientRect()
+      return {overflow:el.scrollWidth>el.clientWidth,controls:[...el.querySelectorAll('input,textarea,button')].filter(e=>e.getBoundingClientRect().width>0).every(e=>{const r=e.getBoundingClientRect();return r.left>=edge.left&&r.right<=edge.right})}
+    })
+    expect(geometry).toEqual({overflow:false,controls:true})
+    await dialog.locator('.project-science-tree-row').last().scrollIntoViewIfNeeded()
+    await expect(dialog.getByRole('button',{name:'Create project',exact:true})).toBeInViewport()
+    await dialog.screenshot({path:info.outputPath('project-dialog-english-320-dark.png'),scale:'css'})
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+  })
+})

@@ -986,7 +986,8 @@ describe("设计契约 · 只用形状表达含义是不够的", () => {
     // 终端用例限定 .dock 并使用 exact: true，保留指定措辞而不绕过扫描。
     // Approved chat-first editor labels belong to the editor/code-block surfaces.
     // Their UI/Electron tests query within the surface and/or use exact accessible names.
-    const 放行 = new Set(["设置|去设置", "文件|上传文件", "跳过|先跳过", "下载|下载文件夹", "上传文件|上传文件夹", "返回|返回会话", "编辑|收起代码编辑区", "编辑|在旁边编辑", "编辑|编辑脚本", "保存|保存脚本"])
+    // 新建项目的确认、目录选择各有原生用途；同弹窗操作使用exact可及名称。
+    const 放行 = new Set(["取消|取消添加", "选择文件|选择文件夹", "设置|去设置", "文件|上传文件", "跳过|先跳过", "下载|下载文件夹", "上传文件|上传文件夹", "返回|返回会话", "编辑|收起代码编辑区", "编辑|在旁边编辑", "编辑|编辑脚本", "保存|保存脚本"])
     const 撞的: string[] = []
     for (const a of 名字) {
       for (const b of 名字) {
@@ -2153,4 +2154,13 @@ it("顶栏按钮复用可见浮层，不靠原生title，宽度与侧栏共用�
   expect(topbar).toContain('createPortal(')
   expect(topbar).toContain('role="tooltip"')
   expect(styles).toContain('width: calc(var(--dawn-sidebar-content-w) - var(--dawn-space-4))')
+})
+
+it("新建项目不收集自定义Agent Context，预览读取现有科研目录清单", () => {
+  const source=read('project-dialog.tsx')
+  expect(source).not.toContain('agentContext')
+  expect(source).not.toContain('project-context')
+  expect(source).toContain("import { 科研目录 } from '../policy/science-layout.js'")
+  expect(source).toContain('aria-pressed={scienceLayout}')
+  expect(source).toContain('aria-expanded={showScienceLayout}')
 })

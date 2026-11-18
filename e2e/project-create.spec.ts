@@ -1,30 +1,38 @@
-import { test, expect } from './fixtures.js'
-import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { test, expect, CANNED_REPLY } from './fixtures.js'
+import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
 import { join } from 'node:path'
+import { 科研目录 } from '../src/policy/science-layout.js'
 
 test.describe('new project from the approved homepage', () => {
   test.use({ dawnOptions: { showHome: true, pickDirectory: '/tmp' } })
 
-  test('creates a project, reads its context in the first conversation and persists metadata', async ({ dawn }, info) => {
+  test('previews and creates shared research folders, enters the project and persists metadata', async ({ dawn }, info) => {
     const { page } = dawn
     const name = `dawn-project-e2e-${Date.now()}`
     // Use the chooser then select this fixture's isolated parent, keeping created files disposable.
     await page.locator('.app-home').getByRole('button', { name: '新建项目', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '新建项目', exact: true })
     await dialog.getByLabel('项目名称', { exact: true }).fill(name)
-    await dialog.getByRole('button', { name: '浏览目录', exact: true }).click()
-    await expect(dialog.getByLabel('父目录', { exact: true })).toHaveValue('/tmp')
-    await dialog.getByLabel('父目录', { exact: true }).fill(dawn.dir)
+    await dialog.getByRole('button', { name: '选择文件夹', exact: true }).click()
+    await expect(dialog.getByLabel('保存位置', { exact: true })).toHaveValue('/tmp')
+    await dialog.getByLabel('保存位置', { exact: true }).fill(dawn.dir)
     await dialog.getByLabel('项目说明（可选）', { exact: true }).fill('DAWN_DISPLAY_DESCRIPTION_PRIVATE')
-    await dialog.locator('summary').click()
-    await dialog.getByRole('checkbox', { name: '建立标准科研目录', exact: true }).check()
-    await dialog.getByLabel('Agent 上下文（可选）', { exact: true }).fill('DAWN_PROJECT_CONTEXT_ACCEPT: use R and preserve raw data.')
-    await page.screenshot({ path: info.outputPath('new-project-light.png') })
+    await expect(dialog.getByLabel(/Agent/)).toHaveCount(0)
+    await page.screenshot({ path: info.outputPath('new-project-simple.png'), scale: 'css' })
+    await dialog.getByRole('button', { name: '初始化科研目录', exact: true }).click()
+    const preview=dialog.getByRole('region', {name:'科研目录预览'})
+    await expect(preview).toBeVisible()
+    expect((await preview.locator('[data-path]').evaluateAll(rows=>rows.map(row=>row.getAttribute('data-path')))).sort()).toEqual([...科研目录].sort())
+    expect(existsSync(join(dawn.dir,name))).toBe(false)
+    const lastFolder=dialog.locator('.project-science-tree-row').last()
+    const lastBox=(await lastFolder.boundingBox())!,footer=(await dialog.locator('.project-dialog-actions').boundingBox())!
+    expect(lastBox.y+lastBox.height).toBeLessThanOrEqual(footer.y)
+    await page.screenshot({ path: info.outputPath('new-project-light.png'), scale:'css' })
     await dialog.getByRole('button', { name: '创建项目', exact: true }).click()
     await expect(dialog).toHaveCount(0)
     const target = realpathSync(join(dawn.dir, name))
-    expect(existsSync(join(target, 'analysis/scripts'))).toBe(true)
-    expect(readFileSync(join(target, 'AGENTS.md'), 'utf8')).toContain('DAWN_PROJECT_CONTEXT_ACCEPT')
+    for (const directory of 科研目录) expect(existsSync(join(target,directory))).toBe(true)
+    expect(readFileSync(join(target, 'AGENTS.md'), 'utf8')).toContain('产物落位')
     expect(readFileSync(join(target, 'AGENTS.md'), 'utf8')).not.toContain('DAWN_DISPLAY_DESCRIPTION_PRIVATE')
     const reopened = await page.evaluate(async ({ workspace, target }) => {
       const before = (await window.dawn!.invoke('listProjects', {})).data as { projectId: string; workspace: string }[]
@@ -35,9 +43,9 @@ test.describe('new project from the approved homepage', () => {
     }, { workspace: join(dawn.dir, name), target })
     expect(reopened.actual).toBe(reopened.expected)
     expect(reopened.countChanged).toBe(false)
-    await page.locator('.composer textarea').fill('项目上下文验收')
+    await page.locator('.composer textarea').fill('项目科研目录验收')
     await page.getByRole('button', { name: '发送', exact: true }).click()
-    await expect(page.getByText('项目约定：已读取；展示说明：未发送', { exact: false }).last()).toBeVisible()
+    await expect(page.getByText(CANNED_REPLY, { exact: false }).last()).toBeVisible()
     const tasks = await page.evaluate(async () => (await window.dawn!.invoke('listTasks', {})).data) as { workspace?: string }[]
     expect(tasks.some(task => task.workspace === target)).toBe(true)
     await page.getByRole('button', { name: '首页', exact: true }).click()
@@ -56,6 +64,32 @@ test.describe('new project from the approved homepage', () => {
     await page.screenshot({ path: info.outputPath('homepage-project-dark.png') })
   })
 
+  test('removing research folders creates an empty project and cancelling writes nothing',async({dawn})=>{
+    const {page}=dawn
+    const name='plain-project-'+Date.now()
+    const open=page.locator('.app-home').getByRole('button',{name:'新建项目',exact:true})
+    await open.click()
+    let dialog=page.getByRole('dialog',{name:'新建项目',exact:true})
+    await dialog.getByLabel('项目名称',{exact:true}).fill(name)
+    await dialog.getByLabel('保存位置',{exact:true}).fill(dawn.dir)
+    await dialog.getByRole('button',{name:'初始化科研目录',exact:true}).press('Enter')
+    const selected=dialog.getByRole('button',{name:'已选择科研目录',exact:true})
+    await selected.press('Enter');await expect(selected).toHaveAttribute('aria-expanded','false')
+    await expect(selected).toHaveAttribute('aria-pressed','true')
+    await dialog.getByRole('button',{name:'取消',exact:true}).click()
+    expect(existsSync(join(dawn.dir,name))).toBe(false)
+    await open.click();dialog=page.getByRole('dialog',{name:'新建项目',exact:true})
+    await dialog.getByLabel('项目名称',{exact:true}).fill(name)
+    await dialog.getByLabel('保存位置',{exact:true}).fill(dawn.dir)
+    await dialog.getByRole('button',{name:'初始化科研目录',exact:true}).click()
+    await dialog.getByRole('button',{name:'取消添加',exact:true}).click()
+    await expect(dialog.getByRole('button',{name:'初始化科研目录',exact:true})).toBeFocused()
+    await dialog.getByRole('button',{name:'创建项目',exact:true}).click()
+    await expect(dialog).toHaveCount(0)
+    await expect(page.locator('.composer textarea')).toBeVisible()
+    expect(readdirSync(join(dawn.dir,name))).toEqual([])
+  })
+
   test('rejects a duplicate target without changing files and fits a narrow dialog', async ({ dawn }, info) => {
     const { page } = dawn
     const name = `new-project-${Date.now()}`
@@ -64,18 +98,19 @@ test.describe('new project from the approved homepage', () => {
     await page.locator('.app-home').getByRole('button', { name: '新建项目', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '新建项目', exact: true })
     await dialog.getByLabel('项目名称', { exact: true }).fill(name)
-    await dialog.getByLabel('父目录', { exact: true }).fill(dawn.dir)
+    await dialog.getByLabel('保存位置', { exact: true }).fill(dawn.dir)
     await dialog.getByRole('button', { name: '创建项目', exact: true }).click()
     await expect(dialog.getByRole('alert')).toContainText('已存在')
     expect(readFileSync(join(dawn.dir, name, 'AGENTS.md'), 'utf8')).toBe('keep these instructions\n')
     await page.setViewportSize({ width: 600, height: 700 })
-    await dialog.locator('summary').click()
-    await dialog.getByRole('checkbox', { name: '建立标准科研目录', exact: true }).check()
+    await dialog.getByRole('button', { name: '初始化科研目录', exact: true }).click()
     expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
-    const context = dialog.getByLabel('Agent 上下文（可选）', { exact: true })
-    await context.scrollIntoViewIfNeeded()
-    const contextBox = await context.boundingBox(), errorBox = await dialog.getByRole('alert').boundingBox()
-    expect(contextBox && errorBox && contextBox.y + contextBox.height <= errorBox.y).toBe(true)
+    const lastRow=dialog.locator('.project-science-tree-row').last()
+    await lastRow.scrollIntoViewIfNeeded()
+    const rowBox=await lastRow.boundingBox(),errorBox=await dialog.getByRole('alert').boundingBox()
+    expect(rowBox && errorBox && rowBox.y+rowBox.height<=errorBox.y).toBe(true)
+    await page.evaluate(()=>document.documentElement.classList.add('dawn-dark'))
+    await page.screenshot({path:info.outputPath('project-dialog-dark.png'),scale:'css'})
     await expect(dialog.getByRole('button', { name: '创建项目', exact: true })).toBeInViewport()
     await page.screenshot({ path: info.outputPath('project-dialog-narrow.png') })
     await page.keyboard.press('Escape')

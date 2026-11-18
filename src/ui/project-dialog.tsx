@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { ProjectSummary } from '../protocol/index.js'
 import { validProjectFolderName } from '../protocol/index.js'
 import type { WorkbenchClient } from './client.js'
 import { Button, Field } from './primitives.js'
-import { 关闭图标, 文件夹图标 } from './icons.js'
+import { 科研目录 } from '../policy/science-layout.js'
+import { 关闭图标, 文件夹图标, 文件夹描边图标, 新增文件夹图标, 勾图标, 下拉图标 } from './icons.js'
 import { t } from './i18n/index.js'
 
 export interface ProjectDialogProps {
@@ -22,7 +23,9 @@ export function ProjectDialog({ client, project, defaultParent, onSaved, onClose
   const [parent, setParent] = useState(defaultParent ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [scienceLayout, setScienceLayout] = useState(false)
-  const [agentContext, setAgentContext] = useState('')
+  const [showScienceLayout, setShowScienceLayout] = useState(false)
+  const sciencePreviewId = useId()
+  const scienceButton = useRef<HTMLButtonElement>(null)
   const [busy, setBusy] = useState(false), [picking, setPicking] = useState(false)
   const [problem, setProblem] = useState<string>()
   useEffect(() => {
@@ -44,12 +47,12 @@ export function ProjectDialog({ client, project, defaultParent, onSaved, onClose
     if (busyRef.current || picking) return
     const trimmed = name.trim()
     if (!trimmed || (!project && !validProjectFolderName(trimmed))) { setProblem(t("项目名称必须是有效的单个文件夹名称")); return }
-    if (!project && !/^(\/|[A-Za-z]:[\\/])/.test(parent.trim())) { setProblem(t("请选择父目录或粘贴绝对路径。")); return }
+    if (!project && !/^(\/|[A-Za-z]:[\\/])/.test(parent.trim())) { setProblem(t("请选择保存位置或粘贴绝对路径。")); return }
     busyRef.current = true; setBusy(true); setProblem(undefined)
     try {
       const saved = project
         ? await client.get<ProjectSummary>('updateProject', { projectId: project.projectId, name: trimmed, description: description.trim() })
-        : await client.get<ProjectSummary>('createProject', { name: trimmed, parentDirectory: parent.trim(), description: description.trim(), scienceLayout, agentContext: agentContext.trim() })
+        : await client.get<ProjectSummary>('createProject', { name: trimmed, parentDirectory: parent.trim(), description: description.trim(), scienceLayout })
       if (live.current) onSaved(saved)
     } catch (error) { if (live.current) setProblem(error instanceof Error ? error.message : String(error)) }
     finally { busyRef.current = false; if (live.current) setBusy(false) }
@@ -62,20 +65,45 @@ export function ProjectDialog({ client, project, defaultParent, onSaved, onClose
       <fieldset disabled={busy || picking}>
         <Field id="project-name" label={t("项目名称")}>
           <input id="project-name" className="control" value={name} maxLength={120} autoComplete="off" placeholder={t("例如：植物基因组分析")} onChange={event => setName(event.target.value)} /></Field>
-        {project ? <div className="field"><span className="field-label">{t("项目目录")}</span><p className="project-target">{project.workspace}</p><p className="field-hint">{t("修改名称只改变显示名称，不会重命名文件夹。")}</p></div> : <Field id="project-parent" label={t("父目录")} hint={t("在所选目录中新建同名项目文件夹。已有文件夹请使用“打开项目”。")}>
+        {project ? <div className="field"><span className="field-label">{t("项目目录")}</span><p className="project-target">{project.workspace}</p><p className="field-hint">{t("修改名称只改变显示名称，不会重命名文件夹。")}</p></div> : <Field id="project-parent" label={t("保存位置")}>
           <div className="project-folder-row">
-          <input id="project-parent" className="control" value={parent} placeholder={t("选择文件夹，或粘贴绝对路径")} onChange={event => setParent(event.target.value)} /><Button variant="outline" size="sm" onClick={() => void choose()}><文件夹图标 />{t("浏览目录")}</Button></div>
-          {target ? <p className="project-target" aria-live="polite">{target}</p> : null}
+          <input id="project-parent" className="control" value={parent} placeholder={t("选择文件夹，或粘贴绝对路径")} onChange={event => setParent(event.target.value)} /><Button variant="outline" size="sm" onClick={() => void choose()}><文件夹图标 />{t("选择文件夹")}</Button></div>
+          {target ? <p className="project-target" aria-live="polite">{t("将创建")} <span>{target}</span></p> : null}
         </Field>}
         <Field id="project-description" label={t("项目说明（可选）")} hint={t("方便自己识别项目，不会发送给 AI。") }>
           <textarea id="project-description" className="control" rows={2} maxLength={4000} value={description} placeholder={t("记录这个项目要做什么")} onChange={event => setDescription(event.target.value)} /></Field>
-        {!project ? <details className="project-options"><summary>{t("科研目录与 AI 约定")} <span className="hint">{t("可选")}</span></summary><div className="project-options-content">
-          <label className="project-layout-switch">
-          <input type="checkbox" className="project-layout-toggle" role="checkbox" checked={scienceLayout} onChange={event => setScienceLayout(event.target.checked)} /><span>{t("建立标准科研目录")}</span></label>
-          {scienceLayout ? <p className="project-layout-paths">data/raw/ · data/processed/<br />analysis/scripts/ · analysis/notebooks/<br />figures/ · results/ · literature/</p> : null}
-          <Field id="project-context" label={t("Agent 上下文（可选）")} hint={t("保存到项目的 AGENTS.md，新会话按运行时的项目指令机制读取。") }>
-          <textarea id="project-context" className="control" rows={3} maxLength={32000} value={agentContext} placeholder={t("例如：使用 R 分析，图形保存到 figures/，保留原始数据。")} onChange={event => setAgentContext(event.target.value)} /></Field>
-        </div></details> : <p className="field-hint">{t("AI 项目约定可在工作区的 AGENTS.md 中查看和修改。")}</p>}
+        {!project ? <div>
+          <Button ref={scienceButton} variant="outline" size="sm" className="project-science-trigger"
+            aria-pressed={scienceLayout} aria-expanded={showScienceLayout} aria-controls={sciencePreviewId}
+            onClick={() => {
+              if (!scienceLayout) { setScienceLayout(true); setShowScienceLayout(true) }
+              else setShowScienceLayout(value => !value)
+            }}>
+            {scienceLayout ? <勾图标 /> : <新增文件夹图标 />}
+            {scienceLayout ? t("已选择科研目录") : t("初始化科研目录")}
+            <下拉图标 className={showScienceLayout ? "project-science-chevron expanded" : "project-science-chevron"} />
+          </Button>
+          <section id={sciencePreviewId} className="project-science-preview" role="region" aria-label={t("科研目录预览")} hidden={!showScienceLayout}>
+            <div className="project-science-preview-head"><span>{t("创建项目时一并建立以下目录")}</span>
+              <Button variant="text" size="inline" onClick={() => { setScienceLayout(false); setShowScienceLayout(false); scienceButton.current?.focus() }}>{t("取消添加")}</Button>
+            </div>
+            <dl className="project-science-tree">{[
+              { folder: 'data', detail: t("原始数据与处理后数据") },
+              { folder: 'analysis', detail: t("R、Python 脚本与笔记本") },
+              { folder: 'figures', detail: t("图形与可视化结果") },
+              { folder: 'results', detail: t("结果表格、模型与报告") },
+              { folder: 'literature', detail: t("参考文献与阅读资料") },
+            ].map(({ folder, detail }) => {
+              const paths = 科研目录.filter(path => path === folder || path.startsWith(folder + '/'))
+              return <div className="project-science-tree-row" key={folder}>
+                <dt data-path={paths.some(path => path === folder) ? folder : undefined}><文件夹描边图标 />{folder}/</dt>
+                <dd>{paths.some(path => path.includes('/')) ? <div className="project-science-children">{paths.map((path, index) => <span key={path} data-path={path}>{index ? ' · ' : ''}{path.slice(folder.length + 1)}/</span>)}</div> : null}
+                  <div className="project-science-detail">{detail}</div></dd>
+              </div>
+            })}</dl>
+          </section>
+          {!showScienceLayout ? <p className="field-hint project-science-hint">{scienceLayout ? t("创建项目时将一并生成科研目录。") : t("按需添加，也可以进入工作台后再初始化。")}</p> : null}
+        </div> : null}
       </fieldset>
       </div>
       {problem ? <p className="field-error" role="alert">{problem}</p> : null}

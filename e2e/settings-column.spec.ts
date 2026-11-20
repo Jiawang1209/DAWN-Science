@@ -63,8 +63,9 @@ async function 等这一栏滑到位(
   app: import("@playwright/test").ElectronApplication,
   page: import("@playwright/test").Page,
 ): Promise<void> {
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setSize(1400, 900))
-  await page.waitForFunction(() => window.innerWidth >= 1380)
+  // At the responsive reference viewport the default panel is still exactly 480px.
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0]?.setContentSize(1440, 900))
+  await page.waitForFunction(() => window.innerWidth === 1440)
   await expect
     .poll(
       () =>

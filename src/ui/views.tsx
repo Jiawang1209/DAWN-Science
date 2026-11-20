@@ -1159,6 +1159,8 @@ export function DockSwitch({
 export function RightDock({
   tenant,
   width,
+  minWidth = RIGHT_DOCK_MIN,
+  maxWidth = RIGHT_DOCK_MAX,
   onWidth,
   onClose,
   onPick,
@@ -1166,6 +1168,8 @@ export function RightDock({
 }: {
   tenant: 坞房客
   width: number
+  minWidth?: number
+  maxWidth?: number
   onWidth: (px: number, 记住: boolean) => void
   onClose: () => void
   /** 点标签条上的某一格。**只换房客，不开合**——那件事归顶右角那颗 */
@@ -1209,8 +1213,8 @@ export function RightDock({
     <aside className="right-dock" aria-label={房客名(tenant)}>
       <SideSash
         width={width}
-        min={RIGHT_DOCK_MIN}
-        max={RIGHT_DOCK_MAX}
+        min={minWidth}
+        max={maxWidth}
         onResize={(px, phase) => onWidth(px, phase === "commit")}
         side="right"
         /* 贴坞的真实左缘，不按 `width` 算偏移——坞被窗口压窄时两者不相等（2026-08-21） */

@@ -73,6 +73,8 @@ export function SettingsColumn({
   onExpand,
   onClose,
   width,
+  minWidth = RIGHT_DOCK_MIN,
+  maxWidth = RIGHT_DOCK_MAX,
   onWidth,
 }: {
   sections: SettingsSection[]
@@ -89,8 +91,10 @@ export function SettingsColumn({
   onBack: () => void
   onExpand: () => void
   onClose: () => void
-  /** 这一列此刻的宽度，与 `RightDock` 同一条缝、同一套上下界（`RIGHT_DOCK_MIN/MAX`） */
+  /** 与 RightDock 共用实际宽度与响应式上下界；独立使用时回落到旧常量。 */
   width: number
+  minWidth?: number
+  maxWidth?: number
   /** 拖动中每帧一次「drag」，抬手/键盘一步是「commit」——与 `RightDock` 的 `onWidth` 同一份契约 */
   onWidth: (px: number, 记住: boolean) => void
 }) {
@@ -124,8 +128,8 @@ export function SettingsColumn({
     <aside className="settings-column" aria-label={t("设置")}>
       <SideSash
         width={width}
-        min={RIGHT_DOCK_MIN}
-        max={RIGHT_DOCK_MAX}
+        min={minWidth}
+        max={maxWidth}
         onResize={(px, phase) => onWidth(px, phase === "commit")}
         side="right"
         /* 贴自己的真实左缘，不按 `width` 算偏移——与 `RightDock` 那条缝同一个理由（2026-08-21） */

@@ -338,7 +338,8 @@ pre {
    * **坞关着时第三列是 0**，不是 `display: none`——与侧栏折叠同一条理由：
    * 后者没有中间态，一下就没了，人看不出「它去哪了」。
    *
-   * 三列的下限加起来是 `200 + 420 + 280 = 900`，那是窗口的最小可用宽度。
+   * 宽度由响应式布局统一计算；正文常规至少420px，窄窗口可缩到280px，
+   * 与面板共同承担缩窗约束，避免文件区被挤成一条细缝。
    */
   /**
    * **第三列写成 `minmax(0, …)`**（2026-08-19 修的一个既有缺陷）。
@@ -352,7 +353,7 @@ pre {
    * `minmax(0, …)` 让它**宁可被压窄，也不越界**。JS 那侧还有一道上界
    * （`坞的上界`），两道各管一头：这一道兜住任何算漏的情况。
    */
-  grid-template-columns: var(--dawn-sidebar-w) minmax(420px, 1fr) minmax(0, var(--dawn-dock-w));
+  grid-template-columns: var(--dawn-sidebar-w) minmax(var(--dawn-main-min-w), 1fr) minmax(0, var(--dawn-dock-w));
   min-height: 0;
   /**
    * **那条缝按 `.body` 定位**（2026-08-13）。它不能挂在 `.sidebar` 里面——

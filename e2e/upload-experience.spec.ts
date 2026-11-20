@@ -93,7 +93,8 @@ test("多文件确认可取消，统一任务保留每个文件与源文件，�
  await page.setViewportSize({width:1100,height:720})
  await page.locator(".files-view").evaluate(async()=>{await new Promise<void>(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>r())))})
  await expectTransferFooter(page)
- await page.setViewportSize(fullViewport)
+ // 1280px cannot fit two file columns while preserving sidebar/main/gutters.
+ await page.setViewportSize({...fullViewport,width:1440})
  await page.locator(".files-view").getByRole("button",{name:"加宽",exact:true}).click();await expect(page.locator(".files-view")).toHaveClass(/files-wide/)
  await expectTransferFooter(page,"wide")
  await page.locator(".file-preview").getByRole("button",{name:"展开阅读",exact:true}).click();await expect(page.locator(".file-tree-box")).toBeHidden();await expectTransferFooter(page,"reading")

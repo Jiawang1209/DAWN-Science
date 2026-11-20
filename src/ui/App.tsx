@@ -1,3 +1,4 @@
+import { resolveWorkbenchLayout, readWorkbenchProportions, saveWorkbenchProportions } from './workbench-layout.js'
 import { Topbar } from './topbar.js'
 import { LocalToolsPanel } from './local-tools.js'
 import { AppHome, HomeButton } from './app-home.js'
@@ -228,27 +229,20 @@ import {
   dropItem,
   $sidebarWidth,
   $sidebarCollapsed,
-  setSidebarWidth,
   setSidebarCollapsed,
   toggleSidebar,
-  SIDEBAR_MIN,
-  SIDEBAR_MAX,
   $rightDockOpen,
   $rightDockTenant,
   $rightDockWidth,
   setRightDockOpen,
   setRightDockTenant,
   请打开网址,
-  setRightDockWidth,
-  RIGHT_DOCK_DEFAULT,
   $跑着的会话,
   $未读,
   标记在跑,
   标记待批准,
   标未读,
-  RIGHT_DOCK_MAX,
   RIGHT_DOCK_两栏起点,
-  坞的上界,
   点开房客,
   $settingsColumnOpen,
   $设置在场,
@@ -366,21 +360,36 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const dockSessionId = useStore($dockSessionId)
   const rightDockOpen = useStore($rightDockOpen)
   const rightDockTenant = useStore($rightDockTenant)
-  const rightDockWidth = useStore($rightDockWidth)
+  const legacyDockWidth = useStore($rightDockWidth)
   const workspaceFolders = useStore($workspaceFolders)
-  const sidebarWidth = useStore($sidebarWidth)
+  const legacySidebarWidth = useStore($sidebarWidth)
   const sidebarCollapsed = useStore($sidebarCollapsed)
   const [conversationHeaderTarget, setConversationHeaderTarget] = useState<HTMLDivElement | null>(null)
-  /**
-   * 视口宽（审查 debug I8）：文件面板「两栏还是上下摞」的判据依赖 `坞的上界`,而它读 `window.innerWidth`。
-   * 没有这个监听,窗口拉窄后组件不重渲染——坞被上界夹到放不下两栏了,判据却还按存储的宽给两栏,挤成一团。
-   */
+  /** Recompute display widths on resize; only explicit dragging changes saved proportions. */
   const [视口宽, 设视口宽] = useState(() => (typeof window === "undefined" ? 0 : window.innerWidth))
   useEffect(() => {
     const on = () => 设视口宽(window.innerWidth)
     window.addEventListener("resize", on)
     return () => window.removeEventListener("resize", on)
   }, [])
+  const [workbenchProportions, setWorkbenchProportions] = useState(readWorkbenchProportions)
+  const workbenchLayout = resolveWorkbenchLayout({ viewportWidth: 视口宽, sidebarWidth: legacySidebarWidth,
+    dockWidth: legacyDockWidth, sidebarCollapsed, proportions: workbenchProportions })
+  const { sidebarWidth, dockWidth: rightDockWidth } = workbenchLayout
+  const rememberProportions = (next: typeof workbenchProportions, remember = true) => {
+    setWorkbenchProportions(next)
+    if (remember) saveWorkbenchProportions(next)
+  }
+  const resizeWorkbench = (column: 'sidebar' | 'dock', px: number, remember = true) => {
+    if (!Number.isFinite(px) || 视口宽 <= 0) return
+    const min = column === 'sidebar' ? workbenchLayout.sidebarMin : workbenchLayout.dockMin
+    const max = column === 'sidebar' ? workbenchLayout.sidebarMax : workbenchLayout.dockMax
+    const width = Math.min(max, Math.max(min, Math.round(px)))
+    if (width <= 0) return
+    const next = { ...workbenchProportions, [column]: width / 视口宽 }
+    rememberProportions(next, remember)
+  }
+  const resetWorkbenchDock = () => rememberProportions({ ...workbenchProportions, dock: workbenchLayout.dockDefaultRatio })
   /** 语言变更重渲染界面，保留工作台局部草稿；有独立 memo 边界的翻译组件自行订阅语言。 */
   const lang = useStore($lang)
   /** 搜索浮层的短期状态留在 App；关闭清空查询与模式，不影响侧栏分区。 */
@@ -3764,10 +3773,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   }, [client, projectId])
 
   /**
-   * 侧栏此刻真的占掉多少（收起来就是 0）。**坞的上界要拿它去算**——
-   * 拿 `SIDEBAR_MIN` 去算会多给几十像素，坞照样越界，只是越得少一点。
-   */
-  /**
    * **人刚刚亲手选的那个工作目录**（2026-08-19 作者要的：
    * *「应该立刻收纳入项目里面」*）。
    *
@@ -3798,8 +3803,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       return { path, projectId: project.projectId }
     } catch (error) { if (rethrow) throw error; fail(error); return null }
   }
-
-  const 侧栏此刻多宽 = sidebarCollapsed ? 0 : sidebarWidth
 
   const 文件面板身份 = 文件所在 ? `远端:${文件所在.connectionId}:${文件所在.cwd}` : `本机:${projectId ?? ""}:${当前工作区路径 ?? currentWorkspace ?? ""}`
 
@@ -3884,7 +3887,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   const showCodeEditor = () => {
     if ($rightDockTenant.get() !== 'code') editorReturnTenant.current = $rightDockTenant.get()
     坞上位(); setRightDockTenant('code'); setRightDockOpen(true)
-    if (rightDockWidth < RIGHT_DOCK_DEFAULT) setRightDockWidth(RIGHT_DOCK_DEFAULT, 侧栏此刻多宽)
+    if (rightDockWidth < workbenchLayout.dockDefault) resetWorkbenchDock()
   }
   const closeCodeEditor = () => { codeEditor.closeEditReview(); setRightDockOpen(false); setRightDockTenant(editorReturnTenant.current) }
   const codeEditing = editorScope ? {
@@ -3992,28 +3995,12 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         previewOpen={filePreviewOpen}
         onClosePreview={() => setFilePreviewOpen(false)}
         key={`${文件面板身份}#${铺开 ? "宽" : "窄"}`}
-        {...(铺开
-          ? {
-              铺开: true,
-              // 加宽的反向：回到默认宽（作者：*「有加宽选项，怎么能没有恢复选项呢」*）
-              onShrink: () => setRightDockWidth(RIGHT_DOCK_DEFAULT, 侧栏此刻多宽),
-            }
-          : {
-              /**
-               * 一颗一键加宽。**拖把手也能加宽，但那条路没人找得到**——
-               * 「看不见的能力等于不存在」这条本项目栽过两次。
-               *
-               * **已经顶到这个窗口能给的最宽时就不给这颗**：
-               * 一颗按下去什么都不变的按钮，比没有这颗更让人怀疑自己点错了。
-               * 上界跟着窗口走（见 `坞的上界`）——窗口不够宽时 720 是拿不到的。
-               */
-              ...(rightDockWidth < 坞的上界(undefined, 侧栏此刻多宽)
-                ? {
-                    onExpand: () =>
-                      setRightDockWidth(坞的上界(undefined, 侧栏此刻多宽)),
-                  }
-                : {}),
-            })}
+        铺开={铺开}
+        {...(rightDockWidth > workbenchLayout.dockDefault
+          ? { onShrink: resetWorkbenchDock }
+          : rightDockWidth < workbenchLayout.dockMax
+            ? { onExpand: () => resizeWorkbench('dock', workbenchLayout.dockMax) }
+            : {})}
         机器={文件所在?.label ?? t("本机")}
         初始根={browserProjectPath}
         navigation={browserNavigation}
@@ -5600,9 +5587,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
       {/**
         * **宽度由内联变量给，不由 CSS 里那个常数给**（2026-08-13）。
         *
-        * `--dawn-sidebar-w` 的默认值仍然住在 `tokens.css`（唯一的家），
-        * 这里只在人拖过之后**覆盖它**——覆盖是显式的、看得见的，
-        * 而在样式表里再写一个 264 就成了同一个数的第二个家。
+        * 实际宽度统一由 workbench-layout 根据窗口、比例偏好与可用空间计算，
+        * 顶栏、网格、拖动条和文件单双栏使用同一结果。
         *
         * 折叠 = 宽度 0 + `.side-collapsed`。**不用 `display: none`**：
         * 那样 0.25s 的收合动画没有中间态，一下就没了。
@@ -5612,6 +5598,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         style={
           {
             "--dawn-sidebar-w": sidebarCollapsed ? "0px" : `${sidebarWidth}px`,
+            "--dawn-main-min-w": `${workbenchLayout.mainMin}px`,
             /**
              * 坞那一列的宽度。**关着时是 0，不是 `display: none`**——
              * 与折叠同一条：后者没有中间态，一下就没了，人看不出「它去哪了」。
@@ -5853,9 +5840,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
         {!sidebarCollapsed ? (
           <SideSash
             width={sidebarWidth}
-            min={SIDEBAR_MIN}
-            max={SIDEBAR_MAX}
-            onResize={(px, phase) => setSidebarWidth(px, phase === "commit")}
+            min={workbenchLayout.sidebarMin}
+            max={workbenchLayout.sidebarMax}
+            onResize={(px, phase) => resizeWorkbench('sidebar', px, phase === "commit")}
           />
         ) : null}
 
@@ -6198,7 +6185,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
             sections={设置分区()}
             selected={设置分类}
             width={rightDockWidth}
-            onWidth={(px: number, 记住: boolean) => setRightDockWidth(px, 侧栏此刻多宽, 记住)}
+            minWidth={workbenchLayout.dockMin}
+            maxWidth={workbenchLayout.dockMax}
+            onWidth={(px: number, 记住: boolean) => resizeWorkbench('dock', px, 记住)}
             onSelect={选设置分类}
             onBack={() => 选设置分类(undefined)}
             onExpand={展开设置}
@@ -6208,7 +6197,9 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
           <RightDock
             tenant={rightDockTenant}
             width={rightDockWidth}
-            onWidth={(px: number, 记住: boolean) => setRightDockWidth(px, 侧栏此刻多宽, 记住)}
+            minWidth={workbenchLayout.dockMin}
+            maxWidth={workbenchLayout.dockMax}
+            onWidth={(px: number, 记住: boolean) => resizeWorkbench('dock', px, 记住)}
             onClose={() => setRightDockOpen(false)}
             /**
              * **点标签只换房客，不收起。**
@@ -6598,9 +6589,8 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
                 * 「拉得很窄却还是两栏」这种自相矛盾的状态，
                 * 而人选的那个数本来就是宽度。
                 */
-              // 两栏判据用**有效宽度**(夹到坞此刻能占到的上界),不是存储的原值(审查 debug I8):
-              // 窗口太窄时上界会把它压到 720 以下,那就该上下摞,而不是硬挤两栏
-              造文件面板(Math.min(rightDockWidth, 坞的上界(视口宽 || undefined, 侧栏此刻多宽)) >= RIGHT_DOCK_两栏起点)
+              // 按与网格相同的实际宽度判断单双栏，不按保存的比例猜。
+              造文件面板(rightDockWidth >= RIGHT_DOCK_两栏起点)
             )}
           </RightDock>
         ) : null}

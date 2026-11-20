@@ -2,6 +2,12 @@ import { readFileSync } from "node:fs"
 import { test, expect, 在项目里开会话, 进坞, 进设置 } from "./fixtures.js"
 
 async function checkComposer(area: import('@playwright/test').Locator) {
+  // Resizing now changes several grid tracks. Measure settled boxes rather than
+  // comparing controls from a later transition frame with an earlier card box.
+  await area.page().locator('.app-shell .body').evaluate(async el => {
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})))
+  })
   const card = area.locator('.composer-card')
   await expect(card.locator('.composer-footer .composer-controls .send-btn')).toBeVisible()
   await expect(card.locator('.composer-footer .composer-tools .perm-pill')).toBeVisible()

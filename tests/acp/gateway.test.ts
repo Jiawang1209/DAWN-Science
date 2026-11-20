@@ -10,10 +10,11 @@
  * 这与那台假 ACP agent 是同一条纪律：**假的只该是「另一端是谁」**。
  * 这里连「另一端」都是真的——真进程、真 stdio、真 socket。
  */
-import { afterEach, describe, expect, it } from "vitest"
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, statSync, existsSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, dirname } from "node:path"
+import { createConnection } from 'node:net'
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { 建调用, 工具清单 } from "../../src/acp/tools.js"
@@ -137,6 +138,29 @@ describe("认证", () => {
 })
 
 describe("跨平台", () => {
+  it.skipIf(process.platform === 'win32')("长目录使用短的私有 socket 路径，认证和关闭清理仍能完成", async () => {
+    const root = mkdtempSync(join(tmpdir(), 'dawn-long-gateway-'))
+    收摊.push(() => rmSync(root, { recursive: true, force: true }))
+    const runtimeDir = join(root, '长目录'.repeat(20))
+    mkdirSync(runtimeDir)
+    const gw = 开网关({ runtimeDir, 工具们: () => [], 调用: async () => ({ 文本: '' }) })
+    收摊.push(gw.关掉)
+    const socket = createConnection(gw.地址.path)
+    收摊.push(() => socket.destroy())
+    const authenticated = new Promise<string>((resolve, reject) => {
+      socket.once('error', reject)
+      socket.once('data', data => resolve(data.toString()))
+      socket.once('connect', () => socket.write(JSON.stringify({ token: gw.地址.token, sessionId: 'long-path' }) + '\n'))
+    })
+    expect(JSON.parse(await authenticated)).toEqual({ ok: true })
+    expect(Buffer.byteLength(gw.地址.path)).toBeLessThanOrEqual(103)
+    expect(statSync(dirname(gw.地址.path)).mode & 0o777).toBe(0o700)
+    expect(statSync(gw.地址.path).mode & 0o777).toBe(0o600)
+    socket.destroy(); gw.关掉()
+    await vi.waitFor(() => expect(existsSync(dirname(gw.地址.path))).toBe(false))
+    gw.关掉() // Cleanup is safe when the host closes more than once.
+  })
+
   /**
    * **Windows 没有 Unix domain socket**，那边是命名管道。
    * 与 `runtime/acp/launch.ts` 那三条同一类问题：

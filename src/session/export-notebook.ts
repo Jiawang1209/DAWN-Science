@@ -63,9 +63,22 @@ function ipynb输出(o: 输出, n: number): Record<string, unknown> {
     case "result":
     case "display": {
       if (o.tooLarge) return { output_type: "stream", name: "stderr", text: [太大句(o.bytes)] }
-      // 文字类 mime 按 nbformat 惯例切行；二进制（base64）整段一个字符串
-      const 文字 = o.mediaType.startsWith("text/") || o.mediaType === "application/json"
-      const data = { [o.mediaType]: 文字 ? 按行(o.truncated ? `${o.data}\n${截断句(o.truncated)}` : o.data) : o.data }
+      // nbformat stores application/json as a JSON value, never as text lines.
+      // A truncated or invalid legacy payload can only be exported honestly as text.
+      let mediaType = o.mediaType
+      let value: unknown = o.data
+      if (mediaType === "application/json") {
+        try {
+          if (o.truncated) throw new Error("truncated")
+          value = JSON.parse(o.data)
+        } catch {
+          mediaType = "text/plain"
+          value = 按行(`${o.data}\n${o.truncated ? 截断句(o.truncated) : "（JSON 输出无效，按文本保留）"}`)
+        }
+      } else if (mediaType.startsWith("text/")) {
+        value = 按行(o.truncated ? `${o.data}\n${截断句(o.truncated)}` : o.data)
+      }
+      const data = { [mediaType]: value }
       return o.kind === "result"
         ? { output_type: "execute_result", execution_count: n, data, metadata: {} }
         : { output_type: "display_data", data, metadata: {} }
@@ -133,6 +146,7 @@ function md输出(o: 输出, n: number): string[] {
     case "display": {
       if (o.tooLarge) return [太大句(o.bytes), ""]
       const 尾 = o.truncated ? [截断句(o.truncated), ""] : []
+      if (o.mediaType === "image/svg+xml") return [`![输出 ${n}](data:${o.mediaType};charset=utf-8,${encodeURIComponent(o.data)})`, "", ...尾]
       if (o.mediaType.startsWith("image/")) return [`![输出 ${n}](data:${o.mediaType};base64,${o.data})`, "", ...尾]
       if (o.mediaType === "text/markdown") return [o.data, "", ...尾]
       if (o.mediaType === "text/html") return [...围栏("html", o.data), ...尾]

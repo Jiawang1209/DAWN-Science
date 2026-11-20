@@ -7,7 +7,7 @@ import Database from "better-sqlite3"
 import { migrate } from "../../src/store/schema.js"
 import { ScheduleStore } from "../../src/store/schedules.js"
 import { Scheduler, type 执行器 } from "../../src/schedule/scheduler.js"
-import type { 定义 } from "../../src/schedule/domain.js"
+import { 造手动运行, type 定义 } from "../../src/schedule/domain.js"
 
 const dbs: Database.Database[] = []
 afterEach(() => {
@@ -44,6 +44,58 @@ function 造(now = "2026-08-22T00:00:00.000Z", opts: { 执行?: 执行器; 补�
 }
 
 describe("Scheduler", () => {
+  it("排队后修改定义，不改变已入队运行的 agent、目录、权限及定义版本；快照经 SQLite 保存", async () => {
+    const executed: 定义[] = []
+    const { store, s, 定义 } = 造(undefined, { 执行: async d => { executed.push(d); return { status: "succeeded" } } })
+    const original = 定义({ status: "paused" })
+    store.put(original)
+    const run = 造手动运行(original, "2026-08-22T00:00:00.000Z")
+    store.putRun(run)
+    store.put({ ...original, revision: 2, name: "另一任务", prompt: "新任务", agentId: "b", workspace: undefined, connectionId: "remote", permission: "allow-all" })
+    await s.pumpOnce()
+    await s.等跑完()
+    expect(executed).toEqual([original])
+    expect(store.getRun(run.id)).toMatchObject({ status: "succeeded", revision: 1, prompt: original.prompt })
+  })
+
+  it("旧运行没有定义快照且版本已变化时拒绝启动，不用今天的执行配置冒充旧版本", async () => {
+    const { store, s, 跑过, 定义 } = 造()
+    const original = 定义({ status: "paused" })
+    store.put({ ...original, revision: 2 })
+    store.putRun({ id: "legacy", scheduleId: original.id, revision: 1, occurrenceKey: "legacy", trigger: "manual", scheduledFor: "2026-08-22T00:00:00.000Z", status: "queued", prompt: "旧任务" })
+    await s.pumpOnce()
+    await s.等跑完()
+    expect(跑过).toEqual([])
+    expect(store.getRun("legacy")).toMatchObject({ status: "failed", error: { code: "definition_changed" } })
+  })
+
+  it("旧运行没有快照但定义版本相同仍能执行，保留原任务说明", async () => {
+    const executed: 定义[] = []
+    const { store, s, 定义 } = 造(undefined, { 执行: async d => { executed.push(d); return { status: "succeeded" } } })
+    const original = 定义({ status: "paused" })
+    store.put(original)
+    store.putRun({ id: "legacy", scheduleId: original.id, revision: 1, occurrenceKey: "legacy", trigger: "manual", scheduledFor: "2026-08-22T00:00:00.000Z", status: "queued", prompt: original.prompt })
+    await s.pumpOnce()
+    await s.等跑完()
+    expect(executed).toEqual([original])
+    expect(store.getRun("legacy")?.status).toBe("succeeded")
+  })
+
+  it("定义快照与调用方对象分离，入队后修改嵌套计划不能改写快照", async () => {
+    const executed: 定义[] = []
+    const { store, s, 定义 } = 造(undefined, { 执行: async d => { executed.push(d); return { status: "succeeded" } } })
+    const original = 定义({ status: "paused" })
+    store.put(original)
+    const expected = structuredClone(original)
+    const run = 造手动运行(original, "2026-08-22T00:00:00.000Z")
+    original.schedule.timeZone = "UTC"
+    original.workspace = "/different"
+    store.putRun(run)
+    await s.pumpOnce()
+    await s.等跑完()
+    expect(executed).toEqual([expected])
+  })
+
   it("超过50条跳过记录后仍记住最早未结束的运行", async () => {
     let release!: () => void
     let starts=0

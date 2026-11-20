@@ -12,6 +12,7 @@ interface 运行行 {
   id: string; schedule_id: string; revision: number; occurrence_key: string; trigger: "schedule" | "manual"; scheduled_for: string
   status: 运行状态; prompt: string; session_id: string | null; started_at: string | null; finished_at: string | null
   summary: string | null; error_code: string | null; error_message: string | null
+  definition_snapshot: string | null
 }
 
 const 定义自行 = (r: 定义行): 定义 => ({
@@ -22,6 +23,7 @@ const 定义自行 = (r: 定义行): 定义 => ({
 const 运行自行 = (r: 运行行): 运行 => ({
   id: r.id, scheduleId: r.schedule_id, revision: r.revision, occurrenceKey: r.occurrence_key, trigger: r.trigger, scheduledFor: r.scheduled_for,
   status: r.status, prompt: r.prompt,
+  ...(r.definition_snapshot ? { definitionSnapshot: JSON.parse(r.definition_snapshot) as 定义 } : {}),
   ...(r.session_id ? { sessionId: r.session_id } : {}), ...(r.started_at ? { startedAt: r.started_at } : {}), ...(r.finished_at ? { finishedAt: r.finished_at } : {}),
   ...(r.summary ? { summary: r.summary } : {}), ...(r.error_code ? { error: { code: r.error_code, message: r.error_message ?? "" } } : {}),
 })
@@ -65,10 +67,10 @@ export class ScheduleStore {
   putRun(r: 运行): void {
     this.db
       .prepare(
-        `INSERT OR REPLACE INTO schedule_runs (id, schedule_id, revision, occurrence_key, trigger, scheduled_for, status, prompt, session_id, started_at, finished_at, summary, error_code, error_message)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO schedule_runs (id, schedule_id, revision, occurrence_key, trigger, scheduled_for, status, prompt, session_id, started_at, finished_at, summary, error_code, error_message, definition_snapshot)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(r.id, r.scheduleId, r.revision, r.occurrenceKey, r.trigger, r.scheduledFor, r.status, r.prompt, r.sessionId ?? null, r.startedAt ?? null, r.finishedAt ?? null, r.summary ?? null, r.error?.code ?? null, r.error?.message ?? null)
+      .run(r.id, r.scheduleId, r.revision, r.occurrenceKey, r.trigger, r.scheduledFor, r.status, r.prompt, r.sessionId ?? null, r.startedAt ?? null, r.finishedAt ?? null, r.summary ?? null, r.error?.code ?? null, r.error?.message ?? null, r.definitionSnapshot ? JSON.stringify(r.definitionSnapshot) : null)
   }
   /** 还没到终态的（启动时要收拾） */
   unfinished(): 运行[] {

@@ -13,7 +13,7 @@
  */
 import type Database from "better-sqlite3"
 
-export const SCHEMA_VERSION = 19
+export const SCHEMA_VERSION = 20
 
 function currentVersion(db: Database.Database): number {
   const has = db
@@ -799,6 +799,12 @@ function 迁移步骤(db: Database.Database): void {
 
   if (!hasColumn(db, 'projects', 'description')) db.exec("ALTER TABLE projects ADD COLUMN description TEXT NOT NULL DEFAULT ''")
   if (!hasColumn(db, 'projects', 'favorite')) db.exec('ALTER TABLE projects ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0 CHECK(favorite IN (0,1))')
+
+  // v20: retain the configuration of each queued run. Existing rows deliberately
+  // stay NULL; today's definition cannot reconstruct their historical settings.
+  if (!hasColumn(db, 'schedule_runs', 'definition_snapshot')) {
+    db.exec('ALTER TABLE schedule_runs ADD COLUMN definition_snapshot TEXT CHECK(definition_snapshot IS NULL OR json_valid(definition_snapshot))')
+  }
 
   db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('version', ?)`).run(
     String(SCHEMA_VERSION),

@@ -30,7 +30,7 @@
  */
 import { createServer, type Server, type Socket } from "node:net"
 import { randomBytes } from "node:crypto"
-import { chmodSync, mkdirSync, rmSync } from "node:fs"
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, rmdirSync } from "node:fs"
 import { join } from "node:path"
 
 /** 一个可以给出去的工具。`schema` 是 MCP 的 inputSchema（JSON Schema） */
@@ -80,9 +80,23 @@ export function 网关地址(id: string, runtimeDir: string, platform: NodeJS.Pl
 export function 开网关(装配: 网关装配): 网关句柄 {
   const id = randomBytes(8).toString("hex")
   const token = randomBytes(24).toString("hex")
-  const 目录 = 装配.runtimeDir ?? join(process.env["TMPDIR"] ?? "/tmp", "dawn-gateway")
+  let 目录 = 装配.runtimeDir ?? join(process.env["TMPDIR"] ?? "/tmp", "dawn-gateway")
+  let 私有短目录: string | undefined
+  // sockaddr_un limits bytes, not characters (103 on macOS, 107 on Linux).
+  // Long TMPDIR values can fail or silently alias endpoints through truncation.
+  if (process.platform !== "win32" && Buffer.byteLength(网关地址(id, 目录)) > 103) {
+    私有短目录 = mkdtempSync('/tmp/dawn-gw-')
+    目录 = 私有短目录
+  }
   if (process.platform !== "win32") mkdirSync(目录, { recursive: true, mode: 0o700 })
   const path = 网关地址(id, 目录)
+  const 清短目录 = () => {
+    if (!私有短目录) return
+    // Only remove our exclusive directory while empty; never sweep shared /tmp.
+    try { rmdirSync(私有短目录) } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') console.error('[网关] 清理私有目录失败：', (error as Error).message)
+    }
+  }
 
   const server: Server = createServer((sock) => 接一条(sock, 装配))
   server.listen(path, () => {
@@ -95,12 +109,15 @@ export function 开网关(装配: 网关装配): 网关句柄 {
       }
     }
   })
-  server.on("error", (e) => console.error("[网关] 起不来：", e.message))
+  server.on("error", (e) => { console.error("[网关] 起不来：", e.message); 清短目录() })
+  let 关闭了 = false
 
   return {
     地址: { path, token },
     关掉: () => {
-      server.close()
+      if (关闭了) return
+      关闭了 = true
+      server.close(清短目录)
       if (process.platform !== "win32") rmSync(path, { force: true })
     },
   }

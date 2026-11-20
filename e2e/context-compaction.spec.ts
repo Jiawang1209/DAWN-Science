@@ -162,6 +162,12 @@ test.describe("窄附栏", () => {
     await 坞.getByRole("button", { name: "另开一段", exact: true }).click()
     await 坞.locator(".side-chat-head").waitFor({ timeout: 30_000 })
     await 说完(坞, "你好")
+    // The default dock is now 480px. Exercise the actual <440px layout through
+    // its resize control instead of assuming that the initial width is narrow.
+    const sash = page.getByRole('separator', { name: '调整面板宽度', exact: true })
+    await sash.focus()
+    for (let step = 0; step < 4; step++) await sash.press('ArrowRight')
+    await expect(sash).toHaveAttribute('aria-valuenow', '416')
     const 钮 = 仪表(坞)
     await expect(钮).toHaveAccessibleName(/^上下文 <1%$/)
     // DESIGN.md 2026-11-15: below 440px retain the ring and full accessible usage,

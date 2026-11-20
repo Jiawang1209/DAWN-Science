@@ -85,6 +85,11 @@ describe("富输出", () => {
     expect(e.data).toBe("第一行\n第二行")
   })
 
+  it.each([[1, 2], [{ value: 3 }, { value: 4 }], { values: [1, 2] }, "文字", 7, true, null].map(value => [value]))("JSON 输出保留原始结构：%j", value => {
+    const e = one("display_data", { data: { "application/json": value } }) as Extract<ConsoleEntry, { kind: "display" }>
+    expect(JSON.parse(e.data)).toEqual(value)
+  })
+
   it("**超大不渲染，并说清它有多大** —— 界面卡死比「没显示」难查得多", () => {
     const 巨图 = "A".repeat(RICH_MAX_BYTES + 1000)
     const e = one("display_data", { data: { "image/png": 巨图 } }) as Extract<

@@ -103,13 +103,16 @@ try {
   await page.evaluate(() => {
     try {
       localStorage.setItem("dawn.global.lang", "zh")
-      const suffix = window.dawn?.onboardingInstallationId ? `.${window.dawn.onboardingInstallationId}` : ""
-      localStorage.setItem(`dawn.global.setupSkipped${suffix}`, "1")
-      localStorage.setItem(`dawn.global.onboardingDone${suffix}`, "1")
+      localStorage.setItem('dawn.global.setupSkipped', '1')
+      localStorage.setItem('dawn.global.onboardingDone', '1')
     } catch {}
   })
   await page.reload()
-  await 查("窗口起来、数据库开了（better-sqlite3）", () => page.locator(".app-shell").waitFor({ timeout: 60_000 }))
+  await 查("窗口起来、数据库开了（better-sqlite3）", async () => {
+    await page.locator('.app-shell:not([hidden])').waitFor({ timeout: 60_000 })
+    const enter = page.locator('.app-home').getByRole('button', { name: '新建对话', exact: true })
+    if (await enter.count()) await enter.click()
+  })
   await 查("自带技能与子 agent 从磁盘读到了（/ 菜单有条目）", async () => {
     await page.evaluate(async () => { const p = await window.dawn.invoke("getProviders", {}); await window.dawn.invoke("createTask", { agentId: p.data.agents[0].agentId }) })
     await page.reload()

@@ -81,6 +81,9 @@ export function 建更新服务(o: 建更新服务选项): 更新服务 {
   const 推 = (状态: 更新状态) => o.推?.(信封(状态))
   /** 正在下的那一次的闸。**取消要真的中断连接**，不是只把界面改回去 */
   let 闸: AbortController | undefined
+  // A cancelled transfer may still be closing/removing its partial file. A retry
+  // must wait for that cleanup before writing the same release filename.
+  let 下载收尾: Promise<void> = Promise.resolve()
   /**
    * 正在换包。**第二次点必须挡住**：解一个 223 MB 的 zip 要十几秒，
    * 这期间按钮还在那儿。两次换包同时跑，第二次的「备份旧的」会把
@@ -107,24 +110,34 @@ export function 建更新服务(o: 建更新服务选项): 更新服务 {
       // 装不了的平台连下都不下：下下来也没有用，只是白占 200 MB
       if (!s.安装.能) throw new Error(s.安装.因为)
       const 资源 = s.安装.资源
-      闸 = new AbortController()
+      const 本次 = new AbortController()
+      闸 = 本次
       const 开 = o.管家.开始下载(资源.size)
       推(开)
-      安装器
-        .下载(资源, (p) => 推(o.管家.下载进度(p.已下, p.共)), 闸.signal)
-        .then((路径) => 推(o.管家.下好了(路径)))
-        .catch((e) => {
+      下载收尾 = 下载收尾.then(async () => {
+        if (闸 !== 本次) return
+        try {
+          const 路径 = await 安装器.下载(资源, (p) => {
+            if (闸 === 本次) 推(o.管家.下载进度(p.已下, p.共))
+          }, 本次.signal)
+          if (闸 === 本次) 推(o.管家.下好了(路径))
+        } catch (e) {
+          if (闸 !== 本次) return
           const 话 = e instanceof Error ? e.message : String(e)
-          if (!话.includes("取消")) o.记?.(`下载失败：${话}`)
-          // 人自己按的取消：退回「有新版」，不是报一个错
-          推(话.includes("取消") ? o.管家.取消了() : o.管家.出错(话, "下载"))
-        })
+          o.记?.(`下载失败：${话}`)
+          推(o.管家.出错(话, "下载"))
+        } finally {
+          if (闸 === 本次) 闸 = undefined
+        }
+      })
       return 信封(开)
     },
 
     取消: () => {
-      闸?.abort()
+      const 本次 = 闸
       闸 = undefined
+      本次?.abort()
+      if (本次) 推(o.管家.取消了())
       return 信封(o.管家.当前状态())
     },
 

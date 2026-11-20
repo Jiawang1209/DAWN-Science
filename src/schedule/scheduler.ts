@@ -147,12 +147,17 @@ export class Scheduler {
   }
 
   private async 执行一次(r: 运行, signal: AbortSignal): Promise<void> {
-    const d = this.deps.store.get(r.scheduleId)
+    const current = this.deps.store.get(r.scheduleId)
     const now = this.deps.now()
-    if (!d) {
+    if (!current) {
       this.deps.store.putRun({ ...r, status: "failed", finishedAt: now, error: { code: "definition_deleted", message: "这条定时任务在这次运行开始前被删了" } })
       return
     }
+    if (!r.definitionSnapshot && current.revision !== r.revision) {
+      this.deps.store.putRun({ ...r, status: "failed", finishedAt: now, error: { code: "definition_changed", message: "这次旧运行未保留执行配置，任务定义已变化；请核对配置后重新运行" } })
+      return
+    }
+    const d = r.definitionSnapshot ?? { ...current, prompt: r.prompt }
     const 跑着: 运行 = { ...r, status: "running", startedAt: now }
     this.deps.store.putRun(跑着)
     this.deps.onChange?.()

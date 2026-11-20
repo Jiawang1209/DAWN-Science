@@ -20,6 +20,13 @@ const 出 = (id: string, output: 输出["output"], language?: "python" | "R"): �
 
 const 头 = { title: "早报", agentId: "ds-chat", createdAt: "2026-08-27T01:00:00Z", workspace: "/w" }
 
+function richCell(mediaType: string, data: string, truncated?: { originalBytes: number; keptBytes: number }): Cell {
+  return {
+    n: 1, id: "rich", who: "agent", language: "python", languageKnown: true, code: "display(value)", status: "ok",
+    outputs: [出("rich-output", { kind: "display", mediaType, data, bytes: Buffer.byteLength(data), alsoAvailable: [], ...(truncated ? { truncated } : {}) })],
+  }
+}
+
 function 一套(): Cell[] {
   return [
     {
@@ -49,6 +56,19 @@ function 一套(): Cell[] {
 }
 
 describe("cells成ipynb", () => {
+  it.each([{ values: [1, 2] }, [1, 2], "文字", 3, true, null].map(value => [value]))("JSON 输出保存为 JSON 值而不是文本行：%j", value => {
+    const nb = JSON.parse(cells成ipynb(头, [richCell("application/json", JSON.stringify(value))]))
+    expect(nb.cells[0].outputs[0].data["application/json"]).toEqual(value)
+  })
+
+  it.each([undefined, { originalBytes: 204800, keptBytes: 102400 }])("不完整的 JSON 按文本保留并说明，不能冒充有效结构：%j", truncated => {
+    const nb = JSON.parse(cells成ipynb(头, [richCell("application/json", '{"values": [1,', truncated)]))
+    const data = nb.cells[0].outputs[0].data
+    expect(data).not.toHaveProperty("application/json")
+    expect(data["text/plain"].join("")).toContain('{"values": [1,')
+    expect(data["text/plain"].join("")).toContain(truncated ? "已截断" : "JSON")
+  })
+
   it("nbformat 4.5；kernelspec 取多数语言；每格 execution_count = n、metadata.dawn 记谁跑的", () => {
     const nb = JSON.parse(cells成ipynb(头, 一套()))
     expect(nb.nbformat).toBe(4)
@@ -96,6 +116,14 @@ describe("cells成ipynb", () => {
 })
 
 describe("cells成markdown", () => {
+  it("SVG 输出使用 XML 文本的 data URI，导出的图可以解码还原", () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg"><text>中文 # %</text></svg>'
+    const md = cells成markdown(头, [richCell("image/svg+xml", svg)])
+    const uri = md.match(/!\[输出 1\]\(([^)]+)\)/)?.[1]
+    expect(uri).toBe(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`)
+    expect(decodeURIComponent(uri!.split(",")[1]!)).toBe(svg)
+  })
+
   it("每格一个标题、代码围栏按语言；PNG 内嵌 data URI；报错去 ANSI；中断说出来", () => {
     const md = cells成markdown(头, 一套())
     expect(md).toContain("# 早报")

@@ -189,8 +189,10 @@ function pickMime(
   for (const mime of MIME_PREFERENCE) {
     const v = bundle[mime]
     if (v === undefined) continue
-    // `text/plain` 与 `text/html` 有时是字符串数组（协议允许），拼起来
-    const s = Array.isArray(v) ? v.map(String).join("") : typeof v === "string" ? v : JSON.stringify(v)
+    // JSON arrays are values, not multiline text. Serialize scalars too so strings
+    // remain distinguishable from serialized JSON when exporting the transcript.
+    const s = mime === "application/json" ? JSON.stringify(v)
+      : Array.isArray(v) ? v.map(String).join("") : typeof v === "string" ? v : JSON.stringify(v)
     const bytes = Buffer.byteLength(s, "utf8")
 
     // **图片超了就不渲染**：渲染一张巨图会让界面卡死，而那比「没显示」难查得多

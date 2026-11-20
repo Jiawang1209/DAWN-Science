@@ -305,7 +305,7 @@ test.describe("由配置的解释器路径起内核", () => {
     await expect(box).toHaveValue("")
     await expect(box).toHaveAttribute("placeholder", "输入解释器的完整路径")
     await box.fill(PY_PATH)
-    await page.getByRole("button", { name: "保存" }).first().click()
+    await page.getByRole('group', { name: 'Python 解释器', exact: true }).getByRole("button", { name: "保存", exact: true }).click()
 
     // **回显是必须的**：看不见自己配了什么等于没配
     await expect(box).toHaveValue(PY_PATH)
@@ -382,7 +382,7 @@ test.describe("内核会话 · ACP 借我们的内核", () => {
     await 进设置(page, "内核")
     const box = page.getByRole("textbox", { name: "Python 解释器" })
     await box.fill(PY_PATH)
-    await page.getByRole("button", { name: "保存" }).first().click()
+    await page.getByRole('group', { name: 'Python 解释器', exact: true }).getByRole("button", { name: "保存", exact: true }).click()
     await expect(box).toHaveValue(PY_PATH)
 
     // **先离开设置**：composer 那颗 pill 只在对话那一屏上，

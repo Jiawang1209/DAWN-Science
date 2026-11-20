@@ -138,11 +138,15 @@ describe('local tool discovery and validation', () => {
   it('cancels running probes and prevents queued candidates from launching', async () => {
     const root = fixture(), controller = new AbortController()
     const paths = Object.fromEntries(LOCAL_TOOLS.map(({ id }) => [id, executable(root, `selected-${id}`, `echo started > "${join(root, `started-${id}`)}"\nexec /bin/sleep 10`)]))
-    const pending = probeLocalTools({ paths, env: { PATH: root }, home: root, platform: 'linux', signal: controller.signal })
-    await vi.waitFor(() => expect(['uv', 'pixi', 'conda', 'mamba'].every(id => existsSync(join(root, `started-${id}`)))).toBe(true), { timeout: 5000 })
-    controller.abort()
-    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
-    expect(['node', 'npm', 'git'].some(id => existsSync(join(root, `started-${id}`)))).toBe(false)
+    // Exercise cancellation, not the race between four shell startups and the
+    // normal version deadline. One running probe is enough to cancel the batch.
+    const pending = probeLocalTools({ paths, env: { PATH: root }, home: root, platform: 'linux', timeoutMs: 10000, signal: controller.signal })
+    try {
+      await vi.waitFor(() => expect(existsSync(join(root, 'started-uv'))).toBe(true), { timeout: 5000 })
+      controller.abort()
+      await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+      expect(['node', 'npm', 'git'].some(id => existsSync(join(root, `started-${id}`)))).toBe(false)
+    } finally { controller.abort(); await pending.catch(() => {}) }
   })
   it('includes typical locations and Windows wrappers without a recursive filesystem scan', () => {
     expect(commonToolPaths('uv', { platform: 'darwin', home: '/home/me', env: {} })).toContain('/opt/homebrew/bin/uv')

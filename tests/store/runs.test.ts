@@ -45,12 +45,12 @@ const baseRun = {
 }
 
 describe("migrate v2", () => {
-  it("版本号升到 17 —— v16 产物 files_created/tool_call_id；v17 Bot 身份、对话、派单及送达", () => {
+  it("版本号升到 20 —— 包含定时运行的执行配置快照", () => {
     const db = makeDb()
     const row = db.prepare(`SELECT value FROM schema_meta WHERE key='version'`).get() as { value: string }
     // 库里写的与常量一致：**迁移跑了没有，靠这一条**
     expect(row.value).toBe(String(SCHEMA_VERSION))
-    expect(SCHEMA_VERSION).toBe(19)
+    expect(SCHEMA_VERSION).toBe(20)
   })
 
   it("可重复执行（幂等）", () => {

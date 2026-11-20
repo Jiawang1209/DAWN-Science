@@ -66,7 +66,7 @@ test.describe("笔记本 · 真内核链路", () => {
     await 进设置(page, "内核")
     const 解释器框 = page.getByRole("textbox", { name: "Python 解释器" })
     await 解释器框.fill(PY)
-    await page.getByRole("button", { name: "保存" }).first().click()
+    await page.getByRole('group', { name: 'Python 解释器', exact: true }).getByRole("button", { name: "保存", exact: true }).click()
     await expect(解释器框).toHaveValue(PY)
 
     // ② native 对话里让假模型发 run_code

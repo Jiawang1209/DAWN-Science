@@ -448,8 +448,9 @@ for (const [宽, 高] of [[1280, 900], [1920, 1080]] as const) {
       await page.mouse.up()
       await expect(sash).toHaveAttribute("aria-valuenow", String(width))
     }
-    // The 1280px window caps its dock at 600px to reserve the main conversation.
-    for (const sideWidth of (宽 === 1920 ? [280, 360, 440, 600, 720] : [280, 360, 440, 600])) {
+    // At 1280px the current 300px sidebar leaves 560px for the dock while
+    // reserving the main conversation's 420px minimum.
+    for (const sideWidth of (宽 === 1920 ? [280, 360, 440, 600, 720] : [280, 360, 440, 560])) {
       await dragTo(sideWidth)
       await input.fill("只在侧边输入的长草稿".repeat(80))
       await expect.poll(量).toEqual(expectedGeometry)

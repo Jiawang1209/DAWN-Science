@@ -177,7 +177,7 @@ test.describe("停止 · 真内核", () => {
     await 进设置(page, "内核")
     const 解释器框 = page.getByRole("textbox", { name: "Python 解释器" })
     await 解释器框.fill(PY)
-    await page.getByRole("button", { name: "保存" }).first().click()
+    await page.getByRole('group', { name: 'Python 解释器', exact: true }).getByRole("button", { name: "保存", exact: true }).click()
     await expect(解释器框).toHaveValue(PY)
 
     await page.getByRole("button", { name: "新建任务" }).click()

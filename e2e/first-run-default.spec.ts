@@ -37,7 +37,7 @@ test.describe("全新安装", () => {
 
   test("**首屏不摆一个用不了的 agent**，直接进入四步引导", async ({ dawn }) => {
     const { page } = dawn
-    await expect(page.locator(".app-shell")).toBeVisible()
+    await expect(page.getByRole('dialog', { name: '首次设置', exact: true })).toBeVisible()
     // 选择器里不该出现 deepseek 相关的东西
     await expect(page.locator(".sidebar")).not.toContainText("ds-chat")
     await expect(page.locator(".setup-wizard").getByRole("heading", { name: "欢迎使用 DAWN Science" })).toBeVisible()

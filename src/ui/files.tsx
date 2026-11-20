@@ -1103,11 +1103,13 @@ export function FilesView({
       const tree = el.querySelector<HTMLElement>(".file-tree")
       const treeCss = tree ? getComputedStyle(tree) : undefined
       const treePx = (key: keyof CSSStyleDeclaration) => treeCss ? parseFloat(String(treeCss[key])) || 0 : 0
-      // The directory row budget includes the nav's margins, padding and borders.
+      const treeScrollbarHeight = tree ? Math.max(0, tree.offsetHeight - tree.clientHeight - treePx('borderTopWidth') - treePx('borderBottomWidth')) : 0
+      // The directory row budget includes margins, padding, borders and the
+      // horizontal scrollbar, which consumes content height in narrow panels.
       // Reserving only 32 outer pixels can leave its actual content viewport empty.
       const treeMinimumHeight = Math.ceil((tree?.querySelector(".tree-row")?.getBoundingClientRect().height || 24)
         + treePx("marginTop") + treePx("marginBottom") + treePx("paddingTop") + treePx("paddingBottom")
-        + treePx("borderTopWidth") + treePx("borderBottomWidth"))
+        + treePx("borderTopWidth") + treePx("borderBottomWidth") + treeScrollbarHeight)
       const bodyMinimum = treeMinimumHeight + 96
       // In a narrow/short dock the wrapped toolbar can consume almost all height.
       // Keep every action reachable by scrolling that toolbar, rather than hiding preview or transfer controls.

@@ -55,14 +55,15 @@ test('确认稿：品牌与折叠、快捷键按钮紧凑排列，收起后仍�
   const sash = page.getByRole('separator', { name: '调整侧栏宽度', exact: true })
   for (let i = 0; i < 4; i++) {
     await expect.poll(async () => {
-      const brand = (await page.locator('.topbar .brand').boundingBox())!
+      const brand = (await page.locator('.topbar-navigation .brand-stack').boundingBox())!
       const buttons = await Promise.all(['.side-toggle', '.shortcut-toggle'].map(selector => page.locator(selector).boundingBox()))
       const gaps = [buttons[0]!.x - brand.x - brand.width, ...buttons.slice(1).map((b, j) => b!.x - buttons[j]!.x - buttons[j]!.width)]
-      // 顶栏已有的紧凑规则：按钮间4px，品牌组另留4px（本轮未修改顶栏）。
-      return Math.max(...gaps.map((gap, index) => Math.abs(gap - (index === 0 ? 8 : 4))))
+      // The navigation group now contains a flexible brand stack. Measure its
+      // boundary rather than the text width; each sibling gap remains 4px.
+      return Math.max(...gaps.map(gap => Math.abs(gap - 4)))
     }, { timeout: 2_000 }).toBeLessThanOrEqual(1)
     await sash.focus()
-    await sash.press('ArrowLeft')
+    await sash.press('ArrowRight')
   }
   await toggle.click()
   await expect(toggle).toHaveAttribute('aria-label', '展开侧边栏')

@@ -39,6 +39,8 @@ export interface 运行 {
   scheduledFor: string
   status: 运行状态
   prompt: string
+  /** Immutable execution configuration captured at enqueue time; absent on legacy rows. */
+  definitionSnapshot?: 定义 | undefined
   sessionId?: string | undefined
   startedAt?: string | undefined
   finishedAt?: string | undefined
@@ -56,10 +58,10 @@ export function runIdFor(key: string): string {
 
 export function 造到期运行(d: 定义, scheduledFor: string): 运行 {
   const key = occurrenceKey(d.id, d.revision, scheduledFor)
-  return { id: runIdFor(key), scheduleId: d.id, revision: d.revision, occurrenceKey: key, trigger: "schedule", scheduledFor, status: "queued", prompt: d.prompt }
+  return { id: runIdFor(key), scheduleId: d.id, revision: d.revision, occurrenceKey: key, trigger: "schedule", scheduledFor, status: "queued", prompt: d.prompt, definitionSnapshot: structuredClone(d) }
 }
 
 export function 造手动运行(d: 定义, now: string, nonce = randomUUID()): 运行 {
   const key = `manual:${d.id}:${nonce}`
-  return { id: runIdFor(key), scheduleId: d.id, revision: d.revision, occurrenceKey: key, trigger: "manual", scheduledFor: now, status: "queued", prompt: d.prompt }
+  return { id: runIdFor(key), scheduleId: d.id, revision: d.revision, occurrenceKey: key, trigger: "manual", scheduledFor: now, status: "queued", prompt: d.prompt, definitionSnapshot: structuredClone(d) }
 }

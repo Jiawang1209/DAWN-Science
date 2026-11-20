@@ -121,7 +121,9 @@ it('times out stalled bounded SFTP reads, destroys the stream and releases a que
     }
     callback(error, sftp)
   })
-  const executor = new RemoteExecutor({ config: fixture, createClient: () => client, idleTimeoutMs: 5 })
+  // This deadline applies to the healthy queued read too. Five milliseconds can
+  // expire during an ordinary loopback round trip under a full-suite CPU load.
+  const executor = new RemoteExecutor({ config: fixture, createClient: () => client, idleTimeoutMs: 100 })
   try {
     await writeFile(join(fixture.workspace, 'queue.py'), 'old')
     await executor.connect()
@@ -129,7 +131,7 @@ it('times out stalled bounded SFTP reads, destroys the stream and releases a que
     const version = createHash('sha256').update('old').digest('hex')
     const first = saveRemoteCodeDocument('stalled', executor, path, 'first', version).catch(error => error)
     const second = saveRemoteCodeDocument('stalled', executor, path, 'second', version).catch(error => error)
-    const result = await Promise.race([first, new Promise(resolve => setTimeout(() => resolve('still pending'), 100))])
+    const result = await Promise.race([first, new Promise(resolve => setTimeout(() => resolve('still pending'), 1000))])
     expect(result).toBeInstanceOf(Error)
     expect((result as Error).message).toMatch(/进展|超时/)
     expect(stalled.destroyed).toBe(true)

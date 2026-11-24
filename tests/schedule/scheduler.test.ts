@@ -44,6 +44,37 @@ function 造(now = "2026-08-22T00:00:00.000Z", opts: { 执行?: 执行器; 补�
 }
 
 describe("Scheduler", () => {
+  it("排队运行不被500条较新的终态历史挡住", async () => {
+    const { store, s, 跑过, 定义 } = 造()
+    const definition = 定义({ status: "paused" })
+    store.put(definition)
+    const queued = 造手动运行(definition, "2026-08-21T00:00:00.000Z")
+    store.putRun(queued)
+    for (let index = 0; index < 500; index++) {
+      const history = 造手动运行({ ...definition, id: "history" }, "2026-08-22T00:00:00.000Z")
+      store.putRun({ ...history, status: "succeeded", finishedAt: history.scheduledFor })
+    }
+    await s.pumpOnce()
+    await s.等跑完()
+    expect(跑过).toEqual([queued.id])
+    expect(store.getRun(queued.id)?.status).toBe("succeeded")
+  })
+
+  it("超过500条排队运行仍先启动最早一条，并全部执行一次", async () => {
+    const { store, s, 跑过, 定义 } = 造()
+    const definition = 定义({ status: "paused" })
+    store.put(definition)
+    const queued = Array.from({ length: 501 }, (_, index) =>
+      造手动运行(definition, new Date(Date.parse("2026-08-21T00:00:00.000Z") + index * 1000).toISOString()))
+    for (const run of queued) store.putRun(run)
+    await s.pumpOnce()
+    // Each completion queues another pump; wait for the entire backlog to drain.
+    await vi.waitFor(() => expect(跑过).toHaveLength(queued.length), { timeout: 5000 })
+    await s.等跑完()
+    expect(跑过).toEqual(queued.map(run => run.id))
+    expect(store.unfinished()).toEqual([])
+  })
+
   it("排队后修改定义，不改变已入队运行的 agent、目录、权限及定义版本；快照经 SQLite 保存", async () => {
     const executed: 定义[] = []
     const { store, s, 定义 } = 造(undefined, { 执行: async d => { executed.push(d); return { status: "succeeded" } } })

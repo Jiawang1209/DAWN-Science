@@ -133,7 +133,11 @@ function out(arr: Record<string, unknown>[], cell: Record<string, unknown>): voi
 }
 
 function 围栏(lang: string, body: string): string[] {
-  return [`\`\`\`${lang}`, body.replace(/\n$/, ""), "```", ""]
+  // Literal Markdown in source/output must not close its enclosing code block.
+  let length = 3
+  for (const match of body.matchAll(/`+/g)) length = Math.max(length, match[0].length + 1)
+  const fence = "`".repeat(length)
+  return [`${fence}${lang}`, body.replace(/\n$/, ""), fence, ""]
 }
 
 function md输出(o: 输出, n: number): string[] {

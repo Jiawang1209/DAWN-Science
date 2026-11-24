@@ -6806,6 +6806,8 @@ pre {
 
 /* ── 定时那一屏（schedule，2026-08-22） ── */
 .schedule-page { min-width: 0; }
+/* Let the page scroll long history; never collapse and clip the task controls. */
+.schedule-page > * { flex-shrink: 0; }
 .schedule-form {
   display: grid;
   gap: var(--dawn-space-3);

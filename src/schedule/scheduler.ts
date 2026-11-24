@@ -117,8 +117,9 @@ export class Scheduler {
     const 容量 = Math.max(0, this.deps.最多并发 - this.活着.size)
     if (容量 === 0) return
     const 在跑的定义 = new Set([...this.活着.keys()].map((id) => this.deps.store.getRun(id)?.scheduleId))
+    // History limits are for display; older queued runs must remain eligible.
     const 排队 = this.deps.store
-      .runs(undefined, 500)
+      .unfinished()
       .filter((r) => r.status === "queued" && !this.活着.has(r.id))
       .sort((a, b) => Date.parse(a.scheduledFor) - Date.parse(b.scheduledFor))
     let 启了 = 0

@@ -11,6 +11,9 @@ const directories: string[] = []
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }) })
 export function fixture() { const root = mkdtempSync(join(tmpdir(), 'dawn-local-tools-')); directories.push(root); return root }
 export function executable(root: string, name: string, body = 'echo fake-1.2.3') { const path = join(root, name); writeFileSync(path, `#!/bin/sh\n${body}\n`); chmodSync(path, 0o755); return path }
+// Discovery/result assertions need headroom for macOS dyld starting fresh scripts.
+// Deadline, cancellation and process-cleanup scenarios set their own budgets below.
+const probeFixtures = (options: Parameters<typeof probeLocalTools>[0]) => probeLocalTools({ timeoutMs: 10000, ...options })
 
 describe('local tool protocol', () => {
   it('defines the seven optional tools and strict read/probe/save operations', () => {
@@ -28,7 +31,7 @@ describe('local tool discovery and validation', () => {
   it('keeps saved candidates first, deduplicates PATH/common and does not alter selected paths', async () => {
     const root = fixture(), saved = executable(root, 'chosen uv'), path = executable(root, 'uv')
     const paths = { uv: saved }
-    const result = await probeLocalTools({ paths, env: { PATH: root }, home: root, platform: 'linux' })
+    const result = await probeFixtures({ paths, env: { PATH: root }, home: root, platform: 'linux' })
     expect(result.paths).toEqual(paths)
     expect(result.tools.find(tool => tool.id === 'uv')?.candidates).toEqual([
       { path: saved, source: 'settings', version: 'fake-1.2.3' }, { path, source: 'PATH', version: 'fake-1.2.3' },
@@ -38,18 +41,24 @@ describe('local tool discovery and validation', () => {
   })
   it('retains missing saved paths with a problem and reports truly missing optional tools as empty', async () => {
     const root = fixture(), missing = join(root, 'missing')
-    const result = await probeLocalTools({ paths: { git: missing }, env: { PATH: root }, home: root, platform: 'linux' })
+    const result = await probeFixtures({ paths: { git: missing }, env: { PATH: root }, home: root, platform: 'linux' })
     expect(result.tools.find(tool => tool.id === 'git')?.candidates[0]).toMatchObject({ path: missing, source: 'settings', problem: expect.any(String) })
     expect(result.tools.find(tool => tool.id === 'uv')?.candidates).toEqual([])
   })
-  it('bounds version execution and reports failed tools without losing other results', async () => {
+  it('bounds version execution with the requested deadline', async () => {
     const root = fixture(), slow = executable(root, 'uv', 'exec /bin/sleep 10')
-    executable(root, 'git', 'echo broken >&2; exit 9')
-    executable(root, 'node', 'echo v22.1')
     const start = Date.now()
     const result = await probeLocalTools({ paths: { uv: slow }, env: { PATH: root }, home: root, platform: 'linux', timeoutMs: 2500 })
     expect(Date.now() - start).toBeLessThan(5000)
     expect(result.tools.find(tool => tool.id === 'uv')?.candidates[0]?.problem).toMatch(/timed out/i)
+  })
+  it('reports failed tools without losing other results', async () => {
+    const root = fixture()
+    executable(root, 'git', 'echo broken >&2; exit 9')
+    executable(root, 'node', 'echo v22.1')
+    // macOS may hold a newly created script in dyld startup for seconds. Test
+    // failure isolation separately from the short deadline asserted above.
+    const result = await probeLocalTools({ paths: {}, env: { PATH: root }, home: root, platform: 'linux', timeoutMs: 10000 })
     expect(result.tools.find(tool => tool.id === 'git')?.candidates[0]?.problem).toMatch(/broken|9/)
     expect(result.tools.find(tool => tool.id === 'node')?.candidates[0]?.version).toBe('v22.1')
   })
@@ -60,7 +69,7 @@ describe('local tool discovery and validation', () => {
   })
   it('does not execute shell metacharacters in executable paths', async () => {
     const root = fixture(), path = executable(root, "uv $(touch hacked); ' special")
-    const result = await probeLocalTools({ paths: { uv: path }, env: { PATH: root }, home: root, platform: 'linux' })
+    const result = await probeFixtures({ paths: { uv: path }, env: { PATH: root }, home: root, platform: 'linux' })
     expect(result.tools.find(tool => tool.id === 'uv')?.candidates[0]).toMatchObject({ version: 'fake-1.2.3' })
   })
   it('checks saved npm using the saved Node while candidate discovery keeps the raw PATH', async () => {
@@ -68,7 +77,7 @@ describe('local tool discovery and validation', () => {
     symlinkSync(process.execPath, node)
     writeFileSync(npm, '#!/usr/bin/env node\nconsole.log("npm-with-selected-node")\n', { mode: 0o755 })
     const env = { PATH: root }, paths = { node, npm }, before = { ...process.env }
-    const result = await probeLocalTools({ paths, env, home: root, platform: 'linux' })
+    const result = await probeFixtures({ paths, env, home: root, platform: 'linux' })
     expect(result.tools.find(tool => tool.id === 'npm')?.candidates[0]).toEqual({ path: npm, source: 'settings', version: 'npm-with-selected-node' })
     expect(result.tools.find(tool => tool.id === 'node')?.candidates.some(candidate => candidate.source === 'PATH')).toBe(false)
     expect(result.tools.flatMap(tool => tool.candidates).every(candidate => !candidate.path.includes('dawn-local-tool-shims-'))).toBe(true)
@@ -117,7 +126,7 @@ describe('local tool discovery and validation', () => {
     let childPid: number | undefined
     const alive = (pid: number) => { try { process.kill(pid, 0); return true } catch { return false } }
     try {
-      const result = await probeLocalTools({ paths: { uv: selected }, env: { PATH: root }, home: root, platform: 'linux' })
+      const result = await probeFixtures({ paths: { uv: selected }, env: { PATH: root }, home: root, platform: 'linux' })
       childPid = Number(readFileSync(pidFile, 'utf8').trim())
       expect(result.tools[0]?.candidates[0]?.version).toBe('version-success')
       await vi.waitFor(() => expect(alive(childPid!)).toBe(false), { timeout: 1000 })
@@ -129,7 +138,7 @@ describe('local tool discovery and validation', () => {
     const root = fixture(), selected = executable(root, 'broken uv', 'exit 9')
     const environments = vi.spyOn(LocalToolExecution.prototype, 'environment')
     try {
-      await probeLocalTools({ paths: { uv: selected }, env: { PATH: root }, home: root, platform: 'linux' })
+      await probeFixtures({ paths: { uv: selected }, env: { PATH: root }, home: root, platform: 'linux' })
       const directory = environments.mock.results[0]?.value?.PATH?.split(':')[0]
       expect(directory).toContain('dawn-local-tool-shims-')
       expect(existsSync(directory!)).toBe(false)

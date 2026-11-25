@@ -1,0 +1,207 @@
+[
+  {
+    "width": 900,
+    "scrollWidth": 900,
+    "regions": [
+      {
+        "selector": "main.main",
+        "rect": {
+          "x": 308,
+          "y": 60,
+          "width": 296,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".right-dock",
+        "rect": {
+          "x": 612,
+          "y": 60,
+          "width": 280,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".composer-card",
+        "rect": {
+          "x": 351,
+          "y": 457.703125,
+          "width": 210,
+          "height": 243.25
+        }
+      },
+      {
+        "selector": ".turns",
+        "rect": {
+          "x": 308,
+          "y": 94,
+          "width": 296,
+          "height": 355.703125
+        }
+      },
+      {
+        "selector": ".turns-inner",
+        "rect": {
+          "x": 351,
+          "y": 105,
+          "width": 210,
+          "height": 336.2265625
+        }
+      },
+      {
+        "selector": ".send-btn",
+        "rect": {
+          "x": 512,
+          "y": 659.953125,
+          "width": 36,
+          "height": 36
+        }
+      }
+    ],
+    "tabs": [
+      "文件",
+      "产物",
+      "笔记本"
+    ]
+  },
+  {
+    "width": 1440,
+    "scrollWidth": 1440,
+    "regions": [
+      {
+        "selector": "main.main",
+        "rect": {
+          "x": 308,
+          "y": 60,
+          "width": 636,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".right-dock",
+        "rect": {
+          "x": 952,
+          "y": 60,
+          "width": 480,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".composer-card",
+        "rect": {
+          "x": 351,
+          "y": 521.703125,
+          "width": 550,
+          "height": 199.25
+        }
+      },
+      {
+        "selector": ".turns",
+        "rect": {
+          "x": 308,
+          "y": 94,
+          "width": 636,
+          "height": 419.703125
+        }
+      },
+      {
+        "selector": ".turns-inner",
+        "rect": {
+          "x": 351,
+          "y": 118,
+          "width": 550,
+          "height": 217.2265625
+        }
+      },
+      {
+        "selector": ".send-btn",
+        "rect": {
+          "x": 852,
+          "y": 679.953125,
+          "width": 36,
+          "height": 36
+        }
+      }
+    ],
+    "tabs": [
+      "文件",
+      "产物",
+      "笔记本",
+      "路线",
+      "审阅",
+      "概览",
+      "Bot"
+    ]
+  },
+  {
+    "width": 1920,
+    "scrollWidth": 1920,
+    "regions": [
+      {
+        "selector": "main.main",
+        "rect": {
+          "x": 408,
+          "y": 60,
+          "width": 856,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".right-dock",
+        "rect": {
+          "x": 1272,
+          "y": 60,
+          "width": 640,
+          "height": 704.953125
+        }
+      },
+      {
+        "selector": ".composer-card",
+        "rect": {
+          "x": 451,
+          "y": 521.703125,
+          "width": 770,
+          "height": 199.25
+        }
+      },
+      {
+        "selector": ".turns",
+        "rect": {
+          "x": 408,
+          "y": 94,
+          "width": 856,
+          "height": 419.703125
+        }
+      },
+      {
+        "selector": ".turns-inner",
+        "rect": {
+          "x": 451,
+          "y": 118,
+          "width": 770,
+          "height": 217.2265625
+        }
+      },
+      {
+        "selector": ".send-btn",
+        "rect": {
+          "x": 1172,
+          "y": 679.953125,
+          "width": 36,
+          "height": 36
+        }
+      }
+    ],
+    "tabs": [
+      "文件",
+      "产物",
+      "笔记本",
+      "路线",
+      "审阅",
+      "概览",
+      "网页",
+      "子 agent",
+      "团队"
+    ]
+  }
+]

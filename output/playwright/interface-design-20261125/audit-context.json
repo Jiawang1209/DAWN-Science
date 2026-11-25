@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-25",
+  "branch": "codex/workbench-interface-design-20261125",
+  "base": "b6ae62a0",
+  "runtime": "fresh local build, macOS Electron, isolated configuration and workspace",
+  "fakeModel": true,
+  "coverage": [
+    "home",
+    "conversation",
+    "files and Markdown preview",
+    "all 11 dock panels (empty or mock state)",
+    "settings column and full appearance page",
+    "schedule empty page",
+    "900/1440/1920 CSS widths",
+    "dock ArrowRight"
+  ],
+  "limitations": [
+    "No production data or real model",
+    "No native Windows/Linux or physical monitor movement",
+    "No active long-running team, kernel, transfer, or dense real artifact list",
+    "No full regression or pixel-baseline comparison"
+  ],
+  "screenshots": [
+    "01-home.png",
+    "02-conversation.png",
+    "03-files-narrow.png",
+    "04-more-panels.png",
+    "05-side-chat.png",
+    "06-file-preview.png",
+    "07-settings-column.png",
+    "08-settings-full-dark.png",
+    "09-workbench-dark-1440.png",
+    "09-workbench-dark-1920.png",
+    "09-workbench-dark-900.png",
+    "10-schedules.png",
+    "layout-measurements.json",
+    "panel-Bot.png",
+    "panel-inventory.json",
+    "panel-产物.png",
+    "panel-团队.png",
+    "panel-子 agent.png",
+    "panel-审阅.png",
+    "panel-对话.png",
+    "panel-概览.png",
+    "panel-笔记本.png",
+    "panel-网页.png",
+    "panel-路线.png"
+  ]
+}

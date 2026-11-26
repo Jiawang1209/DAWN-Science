@@ -1,5 +1,6 @@
 import { test, expect, 在项目里开会话, CANNED_REPLY } from './fixtures.js'
 import type { Page } from '@playwright/test'
+import { WORKBENCH_PROPORTIONS_KEY } from '../src/ui/workbench-layout.js'
 
 async function geometry(page: Page) {
   return page.evaluate(() => {
@@ -53,6 +54,10 @@ test('居中紧凑返回、边界在拖宽和重启后对齐，折叠保留完�
   await sash.focus(); await sash.press('ArrowRight'); await check(316)
   await page.reload(); await check(316)
   await page.evaluate(() => localStorage.setItem('dawn.global.sidebar-width', '260'))
+  // Explicitly saved proportions take precedence over the legacy pixel key.
+  await page.reload(); await check(316)
+  // Without a proportion record, an old narrow preference still clamps to 300px.
+  await page.evaluate(key => localStorage.removeItem(key), WORKBENCH_PROPORTIONS_KEY)
   await page.reload(); await check(300)
   await page.setViewportSize({ width: 900, height: 800 })
   await page.evaluate(() => { document.documentElement.classList.remove('dawn-light'); document.documentElement.classList.add('dawn-dark') })

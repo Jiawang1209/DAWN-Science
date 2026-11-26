@@ -55,3 +55,7 @@
 129项针对性测试、typecheck、build:ui通过；首页8项+项目创建4项Electron功能检查通过，另1项隔离演示截图检查通过。已检查浅色、深色、390px窄屏截图，未更新视觉基线。既有eval/chunk-size警告仍在。
 
 演示截图home-refined-light.png、home-refined-dark.png、home-refined-narrow.png与复现夹具源home-refined-preview.spec.ts.txt保存在output/playwright/home-project-polish-20261126。演示远程目录仅在临时数据库中构造，截图不表示服务器目录真实存在；正式App配置和数据未改动。
+
+## 用户确认后的最终收尾
+
+用户确认新版设计后完成全量UI回归2383项、类型检查与完整构建。扩大Electron回归最终23项通过。初轮发现既有比例布局与旧侧栏像素测试契约不一致；仅修正测试，使其分别检查比例优先和旧记录兼容，保留所有布局断言。详情见docs/reviews/2026-11-26-home-project-polish-acceptance.md。保持当前分支交付，未合并main或替换正式App。

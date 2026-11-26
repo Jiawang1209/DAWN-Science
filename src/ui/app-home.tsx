@@ -95,9 +95,9 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
     <div className="app-home-hero">
       <div className="app-home-brand"><img src={rpIcon} alt="" /><div><h1>DAWN Science</h1><p>{t("让想法，在研究中生长。")}</p></div></div>
       <div className="app-home-actions">
-        <Button variant="ghost" size="sm" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
+        <Button variant="outline" size="sm" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
         <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => void act(onChooseProject)}><文件夹图标 />{t("打开项目")}</Button>
-        {onCreateProject ? <Button variant="primary" size="sm" disabled={!ready || busy} onClick={onCreateProject}><加号图标 />{t("新建项目")}</Button> : null}
+        {onCreateProject ? <Button variant="outline" size="sm" disabled={!ready || busy} onClick={onCreateProject}><加号图标 />{t("新建项目")}</Button> : null}
       </div>
     </div>
     {actionProblem ? <p className="caveat" role="alert">{actionProblem}</p> : null}

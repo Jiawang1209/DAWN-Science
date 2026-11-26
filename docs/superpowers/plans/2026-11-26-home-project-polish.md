@@ -23,3 +23,7 @@
 验收结果：4个Vitest文件126项通过；typecheck与完整build通过；首页Electron七项通过。截图已查看浅色、深色及390px窄屏；主题截图禁用过渡动画以捕获稳定帧。远程为内置fake SSH，未验证真实服务器连接；未运行全量测试及全套视觉基线。已有eval/chunk-size构建警告仍存在。
 
 截图：output/playwright/home-project-polish-20261126/home-remote-light.png 与 home-remote-dark.png。
+
+## 同日反馈：统一按钮
+
+新建对话、打开项目、新建项目全部使用 outline 描边按钮，保留一致尺寸与同排布局。收藏位置保持首页项目区顶部“已收藏 · 优先显示”，不移动项目目录，没有独立收藏页面。build:ui通过；Electron收藏/刷新持久化、入口布局与390px窄屏用例1项通过，截图已查看。

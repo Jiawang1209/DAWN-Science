@@ -28,7 +28,7 @@ test.describe('App homepage', () => {
     await page.screenshot({ animations: 'disabled', path: info.outputPath('home-mobile-light.png') })
   })
 
-  test('scrolls many projects independently and keeps narrow windows usable', async ({ dawn }, info) => {
+  test('scrolls project and conversation lists independently and keeps narrow windows usable', async ({ dawn }, info) => {
     const { page } = dawn
     await expect(page.locator('.app-home-project-card').first()).toBeVisible()
     await page.evaluate(async parentDirectory => {
@@ -42,9 +42,12 @@ test.describe('App homepage', () => {
         }
       }
       const providers = (await window.dawn!.invoke('getProviders', {})).data as { agents: { agentId: string }[] }
-      const task = await window.dawn!.invoke('createTask', { agentId: providers.agents[0]!.agentId, workspace: original.find(row => !row.temporary)!.workspace })
-      if (!task.ok) throw new Error(JSON.stringify(task.error))
-      await window.dawn!.invoke('renameSession', { sessionId: (task.data as { sessionId: string }).sessionId, title: '最近会话保持原位' })
+      for (let i = 1; i <= 14; i++) {
+        const task = await window.dawn!.invoke('createTask', { agentId: providers.agents[0]!.agentId, workspace: original.find(row => !row.temporary)!.workspace })
+        if (!task.ok) throw new Error(JSON.stringify(task.error))
+        const renamed = await window.dawn!.invoke('renameSession', { sessionId: (task.data as { sessionId: string }).sessionId, title: `滚动示例会话${String(i).padStart(2, '0')}` })
+        if (!renamed.ok) throw new Error(JSON.stringify(renamed.error))
+      }
     }, dawn.dir)
     await page.reload()
     await page.setViewportSize({ width: 1440, height: 800 })
@@ -67,6 +70,19 @@ test.describe('App homepage', () => {
     const bounds = (await projects.boundingBox())!
     expect(end!.y + end!.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1)
     await page.screenshot({ animations: 'disabled', path: info.outputPath('home-many-projects-scrolled.png') })
+    const conversations = page.locator('section[aria-labelledby="app-home-sessions"]')
+    await expect(conversations.locator('.app-home-session')).toHaveCount(14)
+    const leftScrollTop = await projects.evaluate(el => el.scrollTop)
+    await conversations.hover()
+    await page.mouse.wheel(0, 700)
+    await expect.poll(() => conversations.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+    expect(await projects.evaluate(el => el.scrollTop)).toBe(leftScrollTop)
+    expect((await page.locator('.app-home-hero').boundingBox())!.y).toBe(heroY)
+    expect(await page.locator('.app-home').evaluate(el => el.scrollTop)).toBe(0)
+    const lastConversation = conversations.locator('.app-home-session').last()
+    await lastConversation.scrollIntoViewIfNeeded()
+    await expect(lastConversation).toBeInViewport()
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-many-conversations-scrolled.png') })
     await page.setViewportSize({ width: 390, height: 760 })
     expect(await projects.evaluate(el => getComputedStyle(el).overflowY)).toBe('visible')
     expect(await page.locator('.app-home').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
@@ -74,10 +90,19 @@ test.describe('App homepage', () => {
     await expect(projects.locator('article').last()).toBeInViewport()
     await page.locator('#app-home-sessions').scrollIntoViewIfNeeded()
     await expect(page.locator('#app-home-sessions')).toBeInViewport()
+    expect(await conversations.evaluate(el => getComputedStyle(el).overflowY)).toBe('visible')
+    await lastConversation.scrollIntoViewIfNeeded()
+    await expect(lastConversation).toBeInViewport()
     await page.setViewportSize({ width: 1440, height: 500 })
     expect(await projects.evaluate(el => getComputedStyle(el).overflowY)).toBe('visible')
     await projects.locator('article').last().scrollIntoViewIfNeeded()
     await expect(projects.locator('article').last()).toBeInViewport()
+    await lastConversation.scrollIntoViewIfNeeded()
+    await expect(lastConversation).toBeInViewport()
+    const title = await lastConversation.locator('strong').innerText()
+    await lastConversation.click()
+    await expect(page.locator('.conv-title')).toHaveText(title)
+    await expect(page.locator('.composer textarea')).toBeVisible()
   })
 
   test('launches at home, preserves chat drafts and returns from the four-step guide', async ({ dawn }, info) => {

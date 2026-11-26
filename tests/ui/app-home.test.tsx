@@ -34,7 +34,7 @@ describe('App homepage', () => {
     expect(within(favorites).queryByText('Project a')).toBeNull()
     expect(within(screen.getByRole('group', { name: '其他项目' })).getByText('Project a')).toBeTruthy()
   })
-  it('lists remote workspaces beyond the six recent chats and opens the latest matching session', async () => {
+  it('lists remote workspaces independently of recent chat order and opens the latest matching session', async () => {
     const remote = { connectionId: 'server', label: '研究服务器', cwd: '/data/study' }
     const old = session('remote-old', 'scratch', { remote })
     const newest = session('remote-new', 'scratch', { remote, lastActiveAt: '2026-11-02T00:00:00Z' })
@@ -81,6 +81,17 @@ describe('App homepage', () => {
     render(<AppHome {...props} connections={[{ id: 'ipv6', username: 'user', host: '2001:db8::1', port: 2222 }]} />)
     const group = await screen.findByRole('group', { name: '远程工作区' })
     expect(group.textContent).toContain('ssh://user@[2001:db8::1]:2222/data/study')
+  })
+  it('keeps older conversations beyond six accessible in activity order', async () => {
+    const rows = Array.from({ length: 14 }, (_, i) => session(`history-${i}`, 'a', { lastActiveAt: `2026-11-${String(i + 1).padStart(2, '0')}T00:00:00Z` }))
+    const { props } = fixture([project('a')], { a: rows })
+    render(<AppHome {...props} />)
+    await screen.findByRole('button', { name: /上次进行到这里/ })
+    const list = screen.getByRole('region', { name: '最近会话' })
+    expect(within(list).getAllByRole('button')).toHaveLength(14)
+    expect(within(list).getAllByRole('button')[0]?.textContent).toContain('Chat history-13')
+    fireEvent.click(within(list).getByRole('button', { name: /Chat history-0/ }))
+    await waitFor(() => expect(props.onOpenSession).toHaveBeenCalledWith(rows[0]))
   })
   it('reports a project-list read failure instead of claiming there are no projects', async () => {
     const { props, get } = fixture([], {})

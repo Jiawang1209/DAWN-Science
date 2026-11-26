@@ -82,7 +82,7 @@ export function AppHome({ client, projects: knownProjects, connections = [], onP
     finally { setBusy(false) }
   }
   const formal = projects.filter(project => !project.temporary).sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite))
-  const recent = allSessions.slice(0, 6)
+  const recent = allSessions
   const remoteGroups = new Map<string, { session: SessionSummary; count: number }>()
   for (const session of allSessions) {
     if (!session.remote) continue

@@ -292,6 +292,15 @@ pre {
 .app-home-status > div { display: flex; align-items: center; gap: var(--dawn-space-2); }
 .app-home-status .icon { color: var(--dawn-accent); }
 .app-home-problem { color: var(--dawn-danger); margin-bottom: var(--dawn-space-4); }
+/* Wide windows keep navigation in place while each column scrolls independently. */
+@media (min-width: 701px) and (min-height: 561px) {
+  .app-home { overflow-y: hidden; }
+  .app-home-content { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .app-home-hero, .app-home-hint { flex-shrink: 0; }
+  .app-home-hint:empty { display: none; }
+  .app-home-columns { flex: 1; min-height: 0; }
+  .app-home-columns > section { min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; scrollbar-gutter: stable; padding: var(--dawn-space-1); }
+}
 @media (max-width: 700px) {
   .app-home-columns { grid-template-columns: minmax(0, 1fr); gap: var(--dawn-space-6); }
   .app-home-hero { align-items: flex-start; flex-direction: column; margin-bottom: var(--dawn-space-8); }

@@ -28,6 +28,58 @@ test.describe('App homepage', () => {
     await page.screenshot({ animations: 'disabled', path: info.outputPath('home-mobile-light.png') })
   })
 
+  test('scrolls many projects independently and keeps narrow windows usable', async ({ dawn }, info) => {
+    const { page } = dawn
+    await expect(page.locator('.app-home-project-card').first()).toBeVisible()
+    await page.evaluate(async parentDirectory => {
+      const original = (await window.dawn!.invoke('listProjects', {})).data as { temporary?: boolean; workspace: string }[]
+      for (let i = 1; i <= 12; i++) {
+        const created = await window.dawn!.invoke('createProject', { parentDirectory, name: `滚动示例项目${String(i).padStart(2, '0')}`, scienceLayout: false })
+        if (!created.ok) throw new Error(JSON.stringify(created.error))
+        if (i <= 3) {
+          const saved = await window.dawn!.invoke('updateProject', { projectId: (created.data as { projectId: string }).projectId, favorite: true })
+          if (!saved.ok) throw new Error(JSON.stringify(saved.error))
+        }
+      }
+      const providers = (await window.dawn!.invoke('getProviders', {})).data as { agents: { agentId: string }[] }
+      const task = await window.dawn!.invoke('createTask', { agentId: providers.agents[0]!.agentId, workspace: original.find(row => !row.temporary)!.workspace })
+      if (!task.ok) throw new Error(JSON.stringify(task.error))
+      await window.dawn!.invoke('renameSession', { sessionId: (task.data as { sessionId: string }).sessionId, title: '最近会话保持原位' })
+    }, dawn.dir)
+    await page.reload()
+    await page.setViewportSize({ width: 1440, height: 800 })
+    const projects = page.locator('section[aria-labelledby="app-home-projects"]')
+    await expect(projects.locator('article')).toHaveCount(13)
+    const metrics = await projects.evaluate(el => ({ overflow: getComputedStyle(el).overflowY, content: el.scrollHeight, height: el.clientHeight }))
+    expect(metrics.overflow).toBe('auto')
+    expect(metrics.content).toBeGreaterThan(metrics.height)
+    const heroY = (await page.locator('.app-home-hero').boundingBox())!.y
+    const recentY = (await page.locator('#app-home-sessions').boundingBox())!.y
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-many-projects-top.png') })
+    await projects.hover()
+    await page.mouse.wheel(0, 700)
+    await expect.poll(() => projects.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
+    expect((await page.locator('.app-home-hero').boundingBox())!.y).toBe(heroY)
+    expect((await page.locator('#app-home-sessions').boundingBox())!.y).toBe(recentY)
+    expect(await page.locator('.app-home').evaluate(el => el.scrollTop)).toBe(0)
+    await projects.evaluate(el => { el.scrollTop = el.scrollHeight })
+    const end = await projects.locator('article').last().boundingBox()
+    const bounds = (await projects.boundingBox())!
+    expect(end!.y + end!.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1)
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-many-projects-scrolled.png') })
+    await page.setViewportSize({ width: 390, height: 760 })
+    expect(await projects.evaluate(el => getComputedStyle(el).overflowY)).toBe('visible')
+    expect(await page.locator('.app-home').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await projects.locator('article').last().scrollIntoViewIfNeeded()
+    await expect(projects.locator('article').last()).toBeInViewport()
+    await page.locator('#app-home-sessions').scrollIntoViewIfNeeded()
+    await expect(page.locator('#app-home-sessions')).toBeInViewport()
+    await page.setViewportSize({ width: 1440, height: 500 })
+    expect(await projects.evaluate(el => getComputedStyle(el).overflowY)).toBe('visible')
+    await projects.locator('article').last().scrollIntoViewIfNeeded()
+    await expect(projects.locator('article').last()).toBeInViewport()
+  })
+
   test('launches at home, preserves chat drafts and returns from the four-step guide', async ({ dawn }, info) => {
     const { page } = dawn
     await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()

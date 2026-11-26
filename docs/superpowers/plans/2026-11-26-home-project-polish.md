@@ -33,3 +33,9 @@
 本地卡片保留原本地路径。远程卡片改用项目名（正式归属项目名，临时会话取远程目录末段）作为主标题，从既有连接状态取得username/host/port，位置显示user@host:/directory，非22端口采用ssh://user@host:port/directory，IPv6补方括号。连接配置缺失时显式说明，不把自定义服务器标签假装成SSH地址。不同远程目录继续独立卡片。
 
 测试先确认新两项失败后实现。4个Vitest文件128项通过，typecheck、build:ui通过；7项首页Electron测试通过并检查实际SSH地址与会话恢复。截图home-project-ssh-address.png已查看。服务器仍为隔离fake SSH，不代表真实服务器验收。
+
+## 同日反馈：项目多时独立滚动
+
+宽度大于700px且高度大于560px时，首页两列分别在剩余高度内滚动，顶部品牌与三个按钮保持原位；项目区使用现有细滚动条。窄屏或低高度窗口保留整页滚动，避免嵌套滚动导致底部不可达。
+
+新增Electron用例先在原实现上失败（项目区overflow为visible），实现后通过。使用13个隔离项目验证滚轮生效、能访问最后一个项目、顶部与右侧不跟随左侧滚动、390px窄屏和500px高度均可访问底部。最终4个Vitest文件128项通过，typecheck、build:ui通过，首页Electron8项通过。已查看滚动前后截图，保存为home-many-projects-top.png、home-many-projects-scrolled.png。

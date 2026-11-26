@@ -5372,7 +5372,6 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })() : null
   return (<>
     {appPage === 'home' ? <div className="app-shell app-home-shell" inert={向导中 && !跳过向导}>
-      <header className="topbar"><span className="brand"><img className="brand-mark" src={rpIcon} alt="" />DAWN Science</span></header>
       <AppHome client={client} projects={projects} onProjectsLoaded={setProjects} ready={ready}
         onCreateProject={() => setHomeProjectDialog({ revision: appPageRevision() })}
         onEditProject={project => setHomeProjectDialog({ project, revision: appPageRevision() })}

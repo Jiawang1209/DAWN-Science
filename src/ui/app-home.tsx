@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/react'
 import type { ProjectSummary, SessionSummary } from '../protocol/index.js'
 import type { WorkbenchClient } from './client.js'
 import { Button } from './primitives.js'
-import { 文件夹图标, 加号图标, 返回图标, 收藏图标, 设置图标, 对话描边图标 } from './icons.js'
+import { 文件夹图标, 加号图标, 返回图标, 收藏图标, 设置图标, 对话描边图标, 服务器图标 } from './icons.js'
 import rpIcon from '../../packaging/icon.svg'
 import { 短路径, 多久之前 } from './format.js'
 import { $lang, t, tf } from './i18n/index.js'
@@ -28,7 +28,7 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
   const [projects, setProjects] = useState<readonly ProjectSummary[]>([])
   const [projectsLoaded, setProjectsLoaded] = useState(false)
   const [projectProblem, setProjectProblem] = useState<string>()
-  const [recent, setRecent] = useState<readonly SessionSummary[]>([])
+  const [allSessions, setAllSessions] = useState<readonly SessionSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [problem, setProblem] = useState<string>()
   const [retry, setRetry] = useState(0)
@@ -42,7 +42,7 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
   useEffect(() => {
     let cancelled = false
     if (!ready) { setLoading(true); return }
-    setLoading(true); setProblem(undefined); setProjectProblem(undefined)
+    setLoading(true); setAllSessions([]); setProblem(undefined); setProjectProblem(undefined)
     void (async () => {
       let projects: readonly ProjectSummary[]
       try {
@@ -65,10 +65,9 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
         }
       }))
       if (cancelled) return
-      setRecent([...new Map(rows.map(row => [row.sessionId, row])).values()]
+      setAllSessions([...new Map(rows.map(row => [row.sessionId, row])).values()]
         .filter(row => row.kind !== 'pty' && !row.archivedAt)
-        .sort((a, b) => (b.lastActiveAt ?? b.createdAt).localeCompare(a.lastActiveAt ?? a.createdAt) || a.sessionId.localeCompare(b.sessionId))
-        .slice(0, 6))
+        .sort((a, b) => (b.lastActiveAt ?? b.createdAt).localeCompare(a.lastActiveAt ?? a.createdAt) || a.sessionId.localeCompare(b.sessionId)))
       setProblem(errors.length ? errors[0] : undefined)
       setLoading(false)
     })()
@@ -82,12 +81,21 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
     finally { setBusy(false) }
   }
   const formal = projects.filter(project => !project.temporary).sort((a, b) => Number(!!b.favorite) - Number(!!a.favorite))
+  const recent = allSessions.slice(0, 6)
+  const remoteGroups = new Map<string, { session: SessionSummary; count: number }>()
+  for (const session of allSessions) {
+    if (!session.remote) continue
+    const key = JSON.stringify([session.projectId, session.remote.connectionId, session.remote.cwd])
+    const existing = remoteGroups.get(key)
+    if (existing) existing.count++
+    else remoteGroups.set(key, { session, count: 1 })
+  }
   const sessionProject = (session: SessionSummary) => projects.find(project => project.projectId === session.projectId)
   return <main className="app-home" aria-label={t("首页")}><div className="app-home-content">
     <div className="app-home-hero">
       <div className="app-home-brand"><img src={rpIcon} alt="" /><div><h1>DAWN Science</h1><p>{t("让想法，在研究中生长。")}</p></div></div>
       <div className="app-home-actions">
-        <Button variant="ghost" size="sm" className="app-home-new-chat" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
+        <Button variant="ghost" size="sm" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
         <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => void act(onChooseProject)}><文件夹图标 />{t("打开项目")}</Button>
         {onCreateProject ? <Button variant="primary" size="sm" disabled={!ready || busy} onClick={onCreateProject}><加号图标 />{t("新建项目")}</Button> : null}
       </div>
@@ -96,15 +104,26 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
     <div className="app-home-columns">
       <section aria-labelledby="app-home-projects">
         <h2 id="app-home-projects">{t("项目")}</h2>
-        {projectProblem ? <div className="app-home-problem" role="alert"><p>{t("项目列表读取失败，请重试。")}</p><p className="hint">{projectProblem}</p><Button variant="text" size="inline" onClick={() => setRetry(value => value + 1)}>{t("重试")}</Button></div> : !ready || !projectsLoaded ? <p role="status" className="hint">{t("正在连接…")}</p> : formal.length ? <div className="app-home-list">{formal.map(project => <article key={project.projectId} className="app-home-project-card">
+        {projectProblem ? <div className="app-home-problem" role="alert"><p>{t("项目列表读取失败，请重试。")}</p><p className="hint">{projectProblem}</p><Button variant="text" size="inline" onClick={() => setRetry(value => value + 1)}>{t("重试")}</Button></div> : !ready || !projectsLoaded ? <p role="status" className="hint">{t("正在连接…")}</p> : formal.length ? <div className="app-home-list">{[true, false].map(favorite => {
+          const group = formal.filter(project => !!project.favorite === favorite)
+          if (!group.length) return null
+          const label = favorite ? t("已收藏 · 优先显示") : formal.some(project => project.favorite) ? t("其他项目") : t("本地项目")
+          return <div key={String(favorite)} role="group" aria-label={label} className="app-home-project-group"><h3>{label}</h3>{group.map(project => <article key={project.projectId} className="app-home-project-card" data-favorite={!!project.favorite}>
           <Button variant="ghost" size="inline" className="app-home-project" disabled={busy} onClick={() => onOpenProject(project)}>
             <span className="app-home-folder"><文件夹图标 /></span><span className="app-home-details"><strong>{project.name}</strong><span className="app-home-path" title={project.workspace}>{短路径(project.workspace)}</span>{project.description ? <span className="app-home-description" title={project.description}>{project.description}</span> : null}</span><span aria-hidden="true">›</span>
           </Button>
           <div className="app-home-project-footer"><span className="hint">{tf("{0} 个会话", project.totalSessionCount)}</span><div>
-            {onToggleFavorite ? <Button variant="ghost" size="row-action" disabled={busy} aria-pressed={!!project.favorite} aria-label={project.favorite ? tf("取消收藏项目：{0}", project.name) : tf("收藏项目：{0}", project.name)} onClick={() => void act(() => onToggleFavorite(project))}><收藏图标 /></Button> : null}
+            {onToggleFavorite ? <Button variant="ghost" size="row-action" disabled={busy} aria-pressed={!!project.favorite} aria-label={project.favorite ? tf("取消收藏项目：{0}", project.name) : tf("收藏项目：{0}", project.name)} onClick={() => void act(() => onToggleFavorite(project))}><收藏图标 />{project.favorite ? <span className="app-home-favorite-label">{t("已收藏")}</span> : null}</Button> : null}
             {onEditProject ? <Button variant="ghost" size="row-action" disabled={busy} aria-label={tf("项目设置：{0}", project.name)} onClick={() => onEditProject(project)}><设置图标 /></Button> : null}
           </div></div>
-        </article>)}</div> : <p className="hint">{t("还没有项目，打开一个文件夹即可开始。")}</p>}
+        </article>)}</div>
+        })}</div> : <p className="hint">{t("还没有项目，打开一个文件夹即可开始。")}</p>}
+        {!loading && remoteGroups.size ? <div role="group" aria-label={t("远程工作区")} className="app-home-project-group app-home-remotes">
+          <h3>{t("远程工作区")}</h3>
+          {[...remoteGroups].map(([key, { session, count }]) => <Button key={key} variant="ghost" size="card" className="app-home-project app-home-remote-card" disabled={busy} onClick={() => void act(() => onOpenSession(session))}>
+            <span className="app-home-folder"><服务器图标 /></span><span className="app-home-details"><strong>{session.remote!.label}</strong><span className="app-home-path" title={session.remote!.cwd}>{session.remote!.cwd}</span><span className="hint">{tf("{0} 个会话", count)} · {sessionProject(session)?.temporary ? t("普通对话") : sessionProject(session)?.name} · {t("继续远程会话")}</span></span><返回图标 className="app-home-forward" />
+          </Button>)}
+        </div> : null}
       </section>
       <section aria-labelledby="app-home-sessions" aria-busy={loading}>
         <h2 id="app-home-sessions">{t("最近会话")}</h2>

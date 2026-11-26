@@ -16,6 +16,12 @@
  * 一个漏网的中文串在英文界面上很刺眼，而刺眼正是它该有的样子。
  */
 export const EN: Readonly<Record<string, string>> = {
+  "已收藏": "Favorited",
+  "已收藏 · 优先显示": "Favorites · shown first",
+  "其他项目": "Other projects",
+  "本地项目": "Local projects",
+  "远程工作区": "Remote workspaces",
+  "继续远程会话": "Open remote workspace",
   "保存位置": "Save location",
   "选择文件夹": "Choose folder",
   "将创建": "Will create",

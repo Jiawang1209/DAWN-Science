@@ -5,6 +5,29 @@ import { mkdirSync } from 'node:fs'
 test.describe('App homepage', () => {
   test.use({ dawnOptions: { showHome: true } })
 
+  test('shows one brand, larger actions on one row, and persistent favorite groups', async ({ dawn }, info) => {
+    const { page } = dawn
+    await expect(page.locator('.app-home-project-card').first()).toBeVisible()
+    await expect(page.locator('.app-home-shell > header')).toHaveCount(0)
+    const actions = await page.locator('.app-home-actions button').evaluateAll(buttons => buttons.map(button => ({ y: button.getBoundingClientRect().y, height: button.getBoundingClientRect().height, icon: button.querySelector('svg')!.getBoundingClientRect().width })))
+    expect(actions).toHaveLength(3)
+    expect(new Set(actions.map(action => action.y)).size).toBe(1)
+    expect(actions.every(action => action.height >= 42 && action.icon >= 20)).toBe(true)
+    const star = page.locator('.app-home-project-card').first().getByRole('button', { name: /^收藏项目：/ })
+    await star.click()
+    const favorites = page.getByRole('group', { name: '已收藏 · 优先显示', exact: true })
+    await expect(favorites.locator('[aria-pressed="true"]')).toContainText('已收藏')
+    await page.reload()
+    await expect(favorites).toBeVisible()
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-favorites-light.png') })
+    await favorites.getByRole('button', { name: /^取消收藏项目：/ }).click()
+    await expect(favorites).toHaveCount(0)
+    await expect(page.getByRole('group', { name: '本地项目', exact: true })).toBeVisible()
+    await page.setViewportSize({ width: 390, height: 760 })
+    expect(await page.locator('.app-home').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-mobile-light.png') })
+  })
+
   test('launches at home, preserves chat drafts and returns from the four-step guide', async ({ dawn }, info) => {
     const { page } = dawn
     await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()
@@ -17,7 +40,7 @@ test.describe('App homepage', () => {
     await page.getByRole('button', { name: '首页', exact: true }).click()
     const recent = page.locator('.app-home').getByRole('button', { name: /上次进行到这里/ })
     await expect(recent).toContainText('只测试首页入口')
-    await page.screenshot({ path: info.outputPath('homepage-light.png') })
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('homepage-light.png') })
     await recent.click()
     await expect(field).toHaveValue('保留这份尚未发送的草稿')
     await page.locator('.app-statusbar').getByRole('button', { name: '导航栏', exact: true }).click()
@@ -32,7 +55,7 @@ test.describe('App homepage', () => {
     await page.setViewportSize({ width: 700, height: 700 })
     expect(await page.locator('.app-home').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
     await page.evaluate(() => document.documentElement.classList.add('dawn-dark'))
-    await page.screenshot({ path: info.outputPath('homepage-dark-narrow.png') })
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('homepage-dark-narrow.png') })
   })
 
   test('opens a recent conversation from a different project', async ({ dawn }) => {
@@ -98,5 +121,39 @@ test.describe('first-run home', () => {
     await expect(page.getByRole('heading', { name: 'DAWN Science', exact: true })).toBeVisible()
     await page.locator('.app-home').getByRole('button', { name: '新建对话', exact: true }).click()
     await expect(page.locator('.composer textarea')).toBeVisible()
+  })
+})
+
+
+test.describe('home remote workspace entry', () => {
+  test.use({ dawnOptions: { showHome: true, fakeSsh: true } })
+  test('shows a saved remote directory and restores that remote session', async ({ dawn }, info) => {
+    const { page } = dawn
+    const remote = await page.evaluate(async () => {
+      const call = async (op: string, req: unknown) => {
+        const result = await window.dawn!.invoke(op, req)
+        if (!result.ok) throw new Error(JSON.stringify(result.error))
+        return result.data as any
+      }
+      const providers = await call('getProviders', {})
+      const connection = await call('saveConnection', { label: '科研服务器', host: 'fake.example', username: 'dawn', secret: 'dawn' })
+      const session = await call('createRemoteSession', { connectionId: connection.id, agentId: providers.agents[0].agentId })
+      await call('renameSession', { sessionId: session.sessionId, title: '远程研究进度' })
+      return session
+    })
+    await page.reload()
+    const workspaces = page.getByRole('group', { name: '远程工作区', exact: true })
+    await expect(workspaces).toContainText('科研服务器')
+    await expect(workspaces).toContainText(remote.remote.cwd)
+    await page.locator('.app-home-project-card').first().getByRole('button', { name: /^收藏项目：/ }).click()
+    await expect(page.getByRole('group', { name: '已收藏 · 优先显示', exact: true })).toBeVisible()
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-remote-light.png') })
+    await page.evaluate(() => document.documentElement.classList.add('dawn-dark'))
+    await page.screenshot({ animations: 'disabled', path: info.outputPath('home-remote-dark.png') })
+    await workspaces.getByRole('button').click()
+    await expect(page.locator('.composer textarea')).toBeVisible()
+    await expect(page.locator('.app-home')).toHaveCount(0)
+    // The visible conversation heading confirms the existing remote session was restored.
+    await expect(page.locator('.conv-title')).toContainText('远程研究进度')
   })
 })

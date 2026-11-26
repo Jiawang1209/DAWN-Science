@@ -26,6 +26,41 @@ describe('App homepage', () => {
     fireEvent.click(screen.getByRole('button', { name: '取消收藏项目：Project b' }))
     await waitFor(() => expect(onToggleFavorite).toHaveBeenCalledWith(b))
   })
+  it('makes favorite placement explicit and keeps other projects in their own group', async () => {
+    const { props } = fixture([project('a'), { ...project('b'), favorite: true }], {})
+    render(<AppHome {...props} />)
+    const favorites = await screen.findByRole('group', { name: '已收藏 · 优先显示' })
+    expect(within(favorites).getByText('Project b')).toBeTruthy()
+    expect(within(favorites).queryByText('Project a')).toBeNull()
+    expect(within(screen.getByRole('group', { name: '其他项目' })).getByText('Project a')).toBeTruthy()
+  })
+  it('lists remote workspaces beyond the six recent chats and opens the latest matching session', async () => {
+    const remote = { connectionId: 'server', label: '研究服务器', cwd: '/data/study' }
+    const old = session('remote-old', 'scratch', { remote })
+    const newest = session('remote-new', 'scratch', { remote, lastActiveAt: '2026-11-02T00:00:00Z' })
+    const { props } = fixture([project('a'), project('scratch', true)], {
+      a: Array.from({ length: 7 }, (_, i) => session(`local-${i}`, 'a', { lastActiveAt: '2026-11-25T00:00:00Z' })),
+      scratch: [old, newest, session('archived', 'scratch', { remote: { ...remote, cwd: '/archive' }, archivedAt: '2026-11-03T00:00:00Z' })],
+    })
+    render(<AppHome {...props} />)
+    const group = await screen.findByRole('group', { name: '远程工作区' })
+    const button = within(group).getByRole('button', { name: /研究服务器/ })
+    expect(button.textContent).toContain('/data/study')
+    expect(button.textContent).toContain('2 个会话')
+    expect(within(group).queryByText('/archive')).toBeNull()
+    fireEvent.click(button)
+    await waitFor(() => expect(props.onOpenSession).toHaveBeenCalledWith(newest))
+  })
+  it('keeps identical directory names on different servers separate', async () => {
+    const a = session('a', 'scratch', { remote: { connectionId: 'one', label: 'Server one', cwd: '/data' } })
+    const b = session('b', 'scratch', { remote: { connectionId: 'two', label: 'Server two', cwd: '/data' } })
+    const { props } = fixture([project('scratch', true)], { scratch: [a, b] })
+    render(<AppHome {...props} />)
+    const group = await screen.findByRole('group', { name: '远程工作区' })
+    expect(within(group).getAllByRole('button')).toHaveLength(2)
+    fireEvent.click(within(group).getByRole('button', { name: /Server two/ }))
+    await waitFor(() => expect(props.onOpenSession).toHaveBeenCalledWith(b))
+  })
   it('reports a project-list read failure instead of claiming there are no projects', async () => {
     const { props, get } = fixture([], {})
     get.mockRejectedValueOnce(new Error('listProjects unavailable'))

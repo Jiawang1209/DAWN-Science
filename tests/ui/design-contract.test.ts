@@ -2164,3 +2164,14 @@ it("新建项目不收集自定义Agent Context，预览读取现有科研目录
   expect(source).toContain('aria-pressed={scienceLayout}')
   expect(source).toContain('aria-expanded={showScienceLayout}')
 })
+
+
+describe('首页入口布局', () => {
+  it('keeps one brand and lets the three larger actions share a row', () => {
+    const homeShell = read('app.tsx').split('className="app-shell app-home-shell"')[1]!.split('</footer>')[0]!
+    expect(homeShell).not.toContain('<header')
+    const css = read('styles.css')
+    expect(css).toContain('.app-home-actions .icon { width: 20px; height: 20px; }')
+    expect(css).not.toContain('.app-home-new-chat { flex-basis: 100%')
+  })
+})

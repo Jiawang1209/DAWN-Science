@@ -45,3 +45,13 @@
 右列沿用独立滚动区域，取消首页只显示六段会话的截断。仍按活动时间排序，归档和终端会话仍遵循原有过滤。
 
 新增单测先确认14段只显示6段的失败，再移除截断。扩展Electron用例同时放置13个项目和14段会话，验证左右滚轮互不影响、能访问最后一段会话、顶部保持原位、390px窄屏与500px高度窗口仍能滚到底，并点击最后一段会话验证正确恢复。129项针对性测试、typecheck、build:ui以及8项首页Electron用例均通过，已查看滚动截图home-many-conversations-scrolled.png。演示数据与正式App隔离。
+
+## 同日反馈：首页视觉与工作台统一
+
+三个入口使用secondary与40px action尺寸，保留20px图标，打开项目采用描边文件夹。按钮颜色、边框与悬停直接同工作台conv-actions共用CSS规则；几何定义回归Button primitive，移除首页调用处的按钮尺寸覆盖。
+
+保留双栏和品牌。两列标题增加主题色图标、总数及细分隔线；宽窗口滚动时标题固定，组标题使用轻分隔线；普通会话改用card-compact，最新会话继续突出。顶部与双栏间距从40减为32。保留已有收藏、SSH地址、独立滚动与窄屏整页滚动。
+
+129项针对性测试、typecheck、build:ui通过；首页8项+项目创建4项Electron功能检查通过，另1项隔离演示截图检查通过。已检查浅色、深色、390px窄屏截图，未更新视觉基线。既有eval/chunk-size警告仍在。
+
+演示截图home-refined-light.png、home-refined-dark.png、home-refined-narrow.png与复现夹具源home-refined-preview.spec.ts.txt保存在output/playwright/home-project-polish-20261126。演示远程目录仅在临时数据库中构造，截图不表示服务器目录真实存在；正式App配置和数据未改动。

@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/react'
 import type { ProjectSummary, SessionSummary, RemoteConnection } from '../protocol/index.js'
 import type { WorkbenchClient } from './client.js'
 import { Button } from './primitives.js'
-import { 文件夹图标, 加号图标, 返回图标, 收藏图标, 设置图标, 对话描边图标, 服务器图标 } from './icons.js'
+import { 文件夹图标, 加号图标, 返回图标, 收藏图标, 设置图标, 对话描边图标, 服务器图标, 文件夹描边图标 } from './icons.js'
 import rpIcon from '../../packaging/icon.svg'
 import { 短路径, 多久之前 } from './format.js'
 import { $lang, t, tf } from './i18n/index.js'
@@ -96,15 +96,15 @@ export function AppHome({ client, projects: knownProjects, connections = [], onP
     <div className="app-home-hero">
       <div className="app-home-brand"><img src={rpIcon} alt="" /><div><h1>DAWN Science</h1><p>{t("让想法，在研究中生长。")}</p></div></div>
       <div className="app-home-actions">
-        <Button variant="outline" size="sm" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
-        <Button variant="outline" size="sm" disabled={!ready || busy} onClick={() => void act(onChooseProject)}><文件夹图标 />{t("打开项目")}</Button>
-        {onCreateProject ? <Button variant="outline" size="sm" disabled={!ready || busy} onClick={onCreateProject}><加号图标 />{t("新建项目")}</Button> : null}
+        <Button variant="secondary" size="action" disabled={busy} onClick={onNewChat}><对话描边图标 />{t("新建对话")}</Button>
+        <Button variant="secondary" size="action" disabled={!ready || busy} onClick={() => void act(onChooseProject)}><文件夹描边图标 />{t("打开项目")}</Button>
+        {onCreateProject ? <Button variant="secondary" size="action" disabled={!ready || busy} onClick={onCreateProject}><加号图标 />{t("新建项目")}</Button> : null}
       </div>
     </div>
     {actionProblem ? <p className="caveat" role="alert">{actionProblem}</p> : null}
     <div className="app-home-columns">
       <section aria-labelledby="app-home-projects">
-        <h2 id="app-home-projects">{t("项目")}</h2>
+        <h2 id="app-home-projects" className="app-home-section-heading"><span className="app-home-section-icon"><文件夹描边图标 /></span>{t("项目")}{projectsLoaded && !projectProblem ? <span className="app-home-count" aria-hidden="true">{formal.length + (!loading ? remoteGroups.size : 0)}</span> : null}</h2>
         {projectProblem ? <div className="app-home-problem" role="alert"><p>{t("项目列表读取失败，请重试。")}</p><p className="hint">{projectProblem}</p><Button variant="text" size="inline" onClick={() => setRetry(value => value + 1)}>{t("重试")}</Button></div> : !ready || !projectsLoaded ? <p role="status" className="hint">{t("正在连接…")}</p> : formal.length ? <div className="app-home-list">{[true, false].map(favorite => {
           const group = formal.filter(project => !!project.favorite === favorite)
           if (!group.length) return null
@@ -137,14 +137,14 @@ export function AppHome({ client, projects: knownProjects, connections = [], onP
         </div> : null}
       </section>
       <section aria-labelledby="app-home-sessions" aria-busy={loading}>
-        <h2 id="app-home-sessions">{t("最近会话")}</h2>
+        <h2 id="app-home-sessions" className="app-home-section-heading"><span className="app-home-section-icon"><对话描边图标 /></span>{t("最近会话")}{!loading ? <span className="app-home-count" aria-hidden="true">{recent.length}</span> : null}</h2>
         {loading ? <p role="status" className="hint">{t("正在读取最近会话…")}</p> : null}
         {problem ? <div className="app-home-problem" role="alert"><p>{t("部分会话未能读取，请重试。")}</p><p className="hint">{problem}</p><Button variant="text" size="inline" onClick={() => setRetry(value => value + 1)}>{t("重试")}</Button></div> : null}
         {!loading && projectsLoaded && !recent.length && !problem ? <p className="hint">{t("还没有会话，开始一段新对话吧。")}</p> : null}
         {!loading ? <div className="app-home-list">{recent.map((session, index) => {
           const project = sessionProject(session)
           const context = session.remote?.label ?? (project && !project.temporary ? project.name : t("普通对话"))
-          return <Button key={session.sessionId} variant="ghost" size="card" className={`app-home-session${index === 0 ? ' app-home-resume' : ''}`} disabled={busy} onClick={() => void act(() => onOpenSession(session))}>
+          return <Button key={session.sessionId} variant="ghost" size={index === 0 ? "card" : "card-compact"} className={`app-home-session${index === 0 ? ' app-home-resume' : ''}`} disabled={busy} onClick={() => void act(() => onOpenSession(session))}>
             {index ? <对话描边图标 /> : null}<span className="app-home-details">{index === 0 ? <span className="app-home-resume-label">{t("上次进行到这里")}</span> : null}<strong>{session.title ?? t("新会话")}</strong><span className="hint">{context} · {多久之前(session.lastActiveAt ?? session.createdAt, now)}</span></span>
             <span className="app-home-continue">{index === 0 ? t("继续") : null}<返回图标 className="app-home-forward" /></span>
           </Button>

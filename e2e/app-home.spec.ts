@@ -12,7 +12,7 @@ test.describe('App homepage', () => {
     const actions = await page.locator('.app-home-actions button').evaluateAll(buttons => buttons.map(button => ({ y: button.getBoundingClientRect().y, height: button.getBoundingClientRect().height, icon: button.querySelector('svg')!.getBoundingClientRect().width })))
     expect(actions).toHaveLength(3)
     expect(new Set(actions.map(action => action.y)).size).toBe(1)
-    expect(actions.every(action => action.height >= 42 && action.icon >= 20)).toBe(true)
+    expect(actions.every(action => action.height >= 40 && action.icon >= 20)).toBe(true)
     const star = page.locator('.app-home-project-card').first().getByRole('button', { name: /^收藏项目：/ })
     await star.click()
     const favorites = page.getByRole('group', { name: '已收藏 · 优先显示', exact: true })
@@ -56,6 +56,7 @@ test.describe('App homepage', () => {
     const metrics = await projects.evaluate(el => ({ overflow: getComputedStyle(el).overflowY, content: el.scrollHeight, height: el.clientHeight }))
     expect(metrics.overflow).toBe('auto')
     expect(metrics.content).toBeGreaterThan(metrics.height)
+    const projectHeadingY = (await page.locator('#app-home-projects').boundingBox())!.y
     const heroY = (await page.locator('.app-home-hero').boundingBox())!.y
     const recentY = (await page.locator('#app-home-sessions').boundingBox())!.y
     await page.screenshot({ animations: 'disabled', path: info.outputPath('home-many-projects-top.png') })
@@ -64,6 +65,7 @@ test.describe('App homepage', () => {
     await expect.poll(() => projects.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
     expect((await page.locator('.app-home-hero').boundingBox())!.y).toBe(heroY)
     expect((await page.locator('#app-home-sessions').boundingBox())!.y).toBe(recentY)
+    expect((await page.locator('#app-home-projects').boundingBox())!.y).toBe(projectHeadingY)
     expect(await page.locator('.app-home').evaluate(el => el.scrollTop)).toBe(0)
     await projects.evaluate(el => { el.scrollTop = el.scrollHeight })
     const end = await projects.locator('article').last().boundingBox()
@@ -77,6 +79,7 @@ test.describe('App homepage', () => {
     await page.mouse.wheel(0, 700)
     await expect.poll(() => conversations.evaluate(el => el.scrollTop)).toBeGreaterThan(0)
     expect(await projects.evaluate(el => el.scrollTop)).toBe(leftScrollTop)
+    expect((await page.locator('#app-home-sessions').boundingBox())!.y).toBe(recentY)
     expect((await page.locator('.app-home-hero').boundingBox())!.y).toBe(heroY)
     expect(await page.locator('.app-home').evaluate(el => el.scrollTop)).toBe(0)
     const lastConversation = conversations.locator('.app-home-session').last()

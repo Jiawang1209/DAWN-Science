@@ -61,6 +61,27 @@ describe('App homepage', () => {
     fireEvent.click(within(group).getByRole('button', { name: /Server two/ }))
     await waitFor(() => expect(props.onOpenSession).toHaveBeenCalledWith(b))
   })
+  it('uses separate project cards for directories on one server and shows SSH locations', async () => {
+    const remote = { connectionId: 'server', label: '科研服务器', cwd: '/data/microbiome' }
+    const a = session('microbiome', 'scratch', { remote })
+    const b = session('soil', 'scratch', { remote: { ...remote, cwd: '/data/soil' } })
+    const { props } = fixture([project('scratch', true)], { scratch: [a, b] })
+    render(<AppHome {...props} connections={[{ id: 'server', username: 'research', host: 'lab.example', port: 22 }]} />)
+    const group = await screen.findByRole('group', { name: '远程工作区' })
+    const first = within(group).getByRole('button', { name: /microbiome/ })
+    const second = within(group).getByRole('button', { name: /soil/ })
+    expect(first.querySelector('strong')?.textContent).toBe('microbiome')
+    expect(first.textContent).toContain('research@lab.example:/data/microbiome')
+    expect(second.textContent).toContain('research@lab.example:/data/soil')
+    fireEvent.click(second)
+    await waitFor(() => expect(props.onOpenSession).toHaveBeenCalledWith(b))
+  })
+  it('includes nondefault SSH ports and brackets IPv6 hosts in the remote address', async () => {
+    const { props } = fixture([project('scratch', true)], { scratch: [session('ipv6', 'scratch', { remote: { connectionId: 'ipv6', label: 'IPv6', cwd: '/data/study' } })] })
+    render(<AppHome {...props} connections={[{ id: 'ipv6', username: 'user', host: '2001:db8::1', port: 2222 }]} />)
+    const group = await screen.findByRole('group', { name: '远程工作区' })
+    expect(group.textContent).toContain('ssh://user@[2001:db8::1]:2222/data/study')
+  })
   it('reports a project-list read failure instead of claiming there are no projects', async () => {
     const { props, get } = fixture([], {})
     get.mockRejectedValueOnce(new Error('listProjects unavailable'))

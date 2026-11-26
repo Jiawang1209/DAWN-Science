@@ -5372,7 +5372,7 @@ export function App({ client: injected }: { client?: WorkbenchClient }) {
   })() : null
   return (<>
     {appPage === 'home' ? <div className="app-shell app-home-shell" inert={向导中 && !跳过向导}>
-      <AppHome client={client} projects={projects} onProjectsLoaded={setProjects} ready={ready}
+      <AppHome client={client} projects={projects} connections={connections} onProjectsLoaded={setProjects} ready={ready}
         onCreateProject={() => setHomeProjectDialog({ revision: appPageRevision() })}
         onEditProject={project => setHomeProjectDialog({ project, revision: appPageRevision() })}
         onToggleFavorite={async project => {

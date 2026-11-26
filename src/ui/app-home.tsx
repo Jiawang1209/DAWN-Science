@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '@nanostores/react'
-import type { ProjectSummary, SessionSummary } from '../protocol/index.js'
+import type { ProjectSummary, SessionSummary, RemoteConnection } from '../protocol/index.js'
 import type { WorkbenchClient } from './client.js'
 import { Button } from './primitives.js'
 import { 文件夹图标, 加号图标, 返回图标, 收藏图标, 设置图标, 对话描边图标, 服务器图标 } from './icons.js'
@@ -11,6 +11,7 @@ import { $lang, t, tf } from './i18n/index.js'
 export interface AppHomeProps {
   client: Pick<WorkbenchClient, 'get'>
   projects: readonly ProjectSummary[]
+  connections?: readonly Pick<RemoteConnection, 'id' | 'username' | 'host' | 'port'>[] | undefined
   onProjectsLoaded?: ((projects: readonly ProjectSummary[]) => void) | undefined
   ready: boolean
   onOpenProject: (project: ProjectSummary) => void
@@ -23,7 +24,7 @@ export interface AppHomeProps {
 }
 
 /** Backend summaries are not written into the active project's session store. */
-export function AppHome({ client, projects: knownProjects, onProjectsLoaded, ready, onOpenProject, onOpenSession, onChooseProject, onNewChat, onCreateProject, onEditProject, onToggleFavorite }: AppHomeProps) {
+export function AppHome({ client, projects: knownProjects, connections = [], onProjectsLoaded, ready, onOpenProject, onOpenSession, onChooseProject, onNewChat, onCreateProject, onEditProject, onToggleFavorite }: AppHomeProps) {
   useStore($lang)
   const [projects, setProjects] = useState<readonly ProjectSummary[]>([])
   const [projectsLoaded, setProjectsLoaded] = useState(false)
@@ -120,9 +121,19 @@ export function AppHome({ client, projects: knownProjects, onProjectsLoaded, rea
         })}</div> : <p className="hint">{t("还没有项目，打开一个文件夹即可开始。")}</p>}
         {!loading && remoteGroups.size ? <div role="group" aria-label={t("远程工作区")} className="app-home-project-group app-home-remotes">
           <h3>{t("远程工作区")}</h3>
-          {[...remoteGroups].map(([key, { session, count }]) => <Button key={key} variant="ghost" size="card" className="app-home-project app-home-remote-card" disabled={busy} onClick={() => void act(() => onOpenSession(session))}>
-            <span className="app-home-folder"><服务器图标 /></span><span className="app-home-details"><strong>{session.remote!.label}</strong><span className="app-home-path" title={session.remote!.cwd}>{session.remote!.cwd}</span><span className="hint">{tf("{0} 个会话", count)} · {sessionProject(session)?.temporary ? t("普通对话") : sessionProject(session)?.name} · {t("继续远程会话")}</span></span><返回图标 className="app-home-forward" />
-          </Button>)}
+          {[...remoteGroups].map(([key, { session, count }]) => {
+            const remote = session.remote!
+            const connection = connections.find(row => row.id === remote.connectionId)
+            const host = connection?.host.includes(':') && !connection.host.startsWith('[') ? `[${connection.host}]` : connection?.host
+            const address = connection
+              ? connection.port === 22 ? `${connection.username}@${host}:${remote.cwd}` : `ssh://${connection.username}@${host}:${connection.port}${remote.cwd}`
+              : `${tf("服务器配置不可用：{0}", remote.label)} · ${remote.cwd}`
+            const owner = sessionProject(session)
+            const name = owner && !owner.temporary ? owner.name : remote.cwd.split('/').filter(Boolean).at(-1) ?? '/'
+            return <Button key={key} variant="ghost" size="card" className="app-home-project app-home-remote-card" disabled={busy} onClick={() => void act(() => onOpenSession(session))}>
+              <span className="app-home-folder"><服务器图标 /></span><span className="app-home-details"><strong>{name}</strong><span className="app-home-path" title={address}>{address}</span><span className="hint">{tf("{0} 个会话", count)} · {t("继续远程会话")}</span></span><返回图标 className="app-home-forward" />
+            </Button>
+          })}
         </div> : null}
       </section>
       <section aria-labelledby="app-home-sessions" aria-busy={loading}>
